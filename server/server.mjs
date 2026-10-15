@@ -2,11 +2,12 @@ import {createServer} from 'node:http';
 import {readFile,stat} from 'node:fs/promises';
 import {resolve,sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {createHash,createHmac,timingSafeEqual,randomBytes} from 'node:crypto';
+import {createHash} from 'node:crypto';
 import {gunzipSync,gzipSync} from 'node:zlib';
 import {neon} from '@neondatabase/serverless';
 export const symbols=['AAPL','MSFT','AMZN','GOOGL','META','NVDA','TSLA','QQQ','SPY','IWM'];
 const quickFields=new Set('symbol publishedMs startedMs stocks options ticks bars minutes chartHistory history metrics optionSnapshotStatus selection flow flowExpiry cvd offExchange dailyAtr dailyRange positionMaps wallPull wallFlow adjustedReadings adjustedAlignment levelDeltas magnetConfirmations optionBaselineRecords gapReport priceAlerts qqq_report treasury auctionMap structuralPaths directionOi rawOptions levelDynamics intradayAtr priceNow snapshotUnavailable contractChain'.split(' '));
+for(const field of ['rangeContext','localVolume','greekSupport','thetaVega','optionLiquidity','swingReport','neuroContext','qqqReport','optionTiming','etfBlocks','etfCvd','etfFlow','dataService','ivHistory'])quickFields.add(field);
 const root=resolve(fileURLToPath(new URL('..',import.meta.url)));
 const caches=new Map();
 const hash=value=>createHash('sha256').update(value).digest('hex');
@@ -25,39 +26,19 @@ async function latest(symbol='QQQ'){
  if(value.available&&!validAssetBundle(value,symbol))throw Error('Invalid capture');
  caches.set(symbol,{value,until:Date.now()+30000});return value;
 }
-const equal=(a,b)=>{const x=Buffer.from(a),y=Buffer.from(b);return x.length===y.length&&timingSafeEqual(x,y)};
 export function validAssetBundle(b,symbol,now=Date.now()){
  if(validBundle(b,now))return true;
  const f=b?.frames?.[symbol];return b?.completeBatchVerified===true&&Number.isFinite(b.capturedMs)&&b.capturedMs<=now&&f?.symbol===symbol&&(!(typeof f.publishedMs==='number')||f.publishedMs<=b.capturedMs);
 }
-const signature=(payload,password)=>createHmac('sha256',password).update(payload).digest('hex');
-export function newSession(password,now=Date.now()){const payload=`${now+8*3600000}.${randomBytes(16).toString('hex')}`;return `${payload}.${signature(payload,password)}`;}
-export function validSession(token,password,now=Date.now()){
- if(typeof token!=='string'||token.length>180||!password)return false;
- const [expires,nonce,sig,...rest]=token.split('.');if(rest.length||!/^[a-f0-9]{32}$/.test(nonce??'')||!/^[a-f0-9]{64}$/.test(sig??'')||!Number.isFinite(Number(expires))||Number(expires)<=now)return false;
- return equal(signature(`${expires}.${nonce}`,password),sig);
-}
-export function makeHandler({provider=latest,password=process.env.SNIPERS_WEB_PASSWORD??'',requireAuth=false}={}){
- if(requireAuth&&!password)throw Error('SNIPERS_WEB_PASSWORD is required for external access');
+export function makeHandler({provider=latest}={}){
  return async(req,res)=>{
   res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','same-origin');res.setHeader('X-Frame-Options','DENY');
   res.setHeader('Content-Security-Policy',"default-src 'self'; connect-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'");
   const json=(status,body)=>{let bytes=Buffer.from(JSON.stringify(body));const headers={'Content-Type':'application/json','Cache-Control':'no-store','Vary':'Accept-Encoding'};if(bytes.length>1024&&/\bgzip\b/.test(req.headers['accept-encoding']??'')){bytes=gzipSync(bytes);headers['Content-Encoding']='gzip';}res.writeHead(status,headers);res.end(bytes)};
   try{
    const url=new URL(req.url,'http://localhost');
-   if(url.pathname==='/api/login'&&req.method==='POST'){
-    if(req.headers.origin&&new URL(req.headers.origin).host!==req.headers.host)return json(403,{error:'origin'});
-    let value=req.body;
-    if(value===undefined){let text='';for await(const chunk of req){text+=chunk;if(text.length>4096)return json(413,{error:'size'})}value=JSON.parse(text)}
-    else{if(Buffer.byteLength(JSON.stringify(value))>4096)return json(413,{error:'size'});if(typeof value==='string')value=JSON.parse(value)}
-    if(!password||!equal(String(value?.password??''),password))return json(401,{error:'unauthorized'});
-    const id=newSession(password);
-    res.setHeader('Set-Cookie',`snipers_session=${id}; HttpOnly; SameSite=Strict; Path=/${process.env.VERCEL||process.env.SNIPERS_SECURE_COOKIE==='1'?'; Secure':''}`);return json(200,{ok:true});
-   }
    if(url.pathname.startsWith('/api/')){
     if(req.method!=='GET')return json(405,{error:'read_only'});
-    const id=/(?:^|;\s*)snipers_session=([^;]+)/.exec(req.headers.cookie??'')?.[1];
-    if(password&&!validSession(id,password))return json(401,{error:'unauthorized'});
     if(url.pathname!=='/api/frame'&&url.pathname!=='/api/health')return json(404,{error:'not_found'});
     if(url.pathname==='/api/health')return json(200,{service:'snipers-web',mode:'saved-data',refreshMs:300000,ordersEnabled:false});
     const symbol=url.searchParams.get('symbol')??'QQQ';if(!symbols.includes(symbol))return json(400,{error:'symbol'});
@@ -79,5 +60,5 @@ export function makeHandler({provider=latest,password=process.env.SNIPERS_WEB_PA
 }
 export function makeServer(options={}){return createServer(makeHandler(options));}
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
- const host=process.env.HOST??'127.0.0.1';makeServer({requireAuth:!['127.0.0.1','localhost','::1'].includes(host)}).listen(Number(process.env.PORT??8080),host,()=>console.log('Snipers web started; credentials remain server-side'));
+ const host=process.env.HOST??'127.0.0.1';makeServer().listen(Number(process.env.PORT??8080),host,()=>console.log('Snipers web started; credentials remain server-side'));
 }

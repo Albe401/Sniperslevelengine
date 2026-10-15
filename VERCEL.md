@@ -11,12 +11,9 @@ SPA. No ejecuta Rust, el escritor, bots ni el receptor del escritorio.
 En **Settings → Environment Variables**, añadir para Production y Preview:
 
 - `DATABASE_URL`: conexión de la nueva base Neon, como secreto del servidor.
-- `SNIPERS_WEB_PASSWORD`: contraseña para acceder al visor; elegir una larga.
 
-La API no devuelve datos si faltan esas variables. No utilizar variables con
-prefijo `VITE_` para secretos. No configurar clave de Massive en este proyecto.
-En Vercel las cookies llevan Secure automáticamente. La sesión se firma para
-seguir siendo válida cuando cambia la instancia de la función.
+La web abre directamente sin contraseña. Solo necesita DATABASE_URL en el servidor.
+No usar prefijo VITE_ para secretos ni configurar claves de Massive.
 
 La función lee solo el activo solicitado y verifica que el lote tenga los diez
 activos completos. Las cadenas se transmiten comprimidas cuando el navegador
@@ -28,10 +25,8 @@ la pantalla de importación y elegir un proyecto único con raíz `.`.
 
 ## Verificación
 
-`npm test` incluye pruebas de rutas reescritas, cuerpos JSON ya procesados por
-Vercel, cookie válida entre instancias, rechazo de sesiones adulteradas o
-caducadas, compresión y configuración de construcción. Estas pruebas no
-certifican un despliegue remoto; confirmar el resultado en el panel de Vercel.
+Las pruebas comprueban acceso público, bloqueo de escrituras, compresión y rutas.
+El despliegue remoto debe confirmarse en Vercel.
 
 Fuentes primarias: [Node Functions](https://vercel.com/docs/functions/runtimes/node-js),
 [configuración](https://vercel.com/docs/project-configuration),

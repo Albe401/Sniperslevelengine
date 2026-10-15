@@ -12,6 +12,7 @@ export function usableComponentReport(r:ComponentRead|undefined,now=Date.now()):
  return [r.leaders,r.dailyLeaders,r.openingLeaders].every(rows=>Array.isArray(rows)&&rows.length<=12&&new Set(rows.map(v=>v.symbol)).size===rows.length&&rows.every(v=>/^[A-Z.]+$/.test(v.symbol)&&Number.isFinite(v.contribution)));
 }
 export function currentComponentRead(now=Date.now()){return usableComponentReport(cached,now)?cached:pending();}
+export function seedCapturedComponentRead(report:ComponentRead|undefined,now:number){cached=usableComponentReport(report,now)?report:undefined;}
 export function componentLabel(r:ComponentRead){return `Componentes QQQ · ${r.phase==='Premarket'?'PRE · ':''}${r.call==null?'Pendiente':`CALL ${r.call}% / PUT ${r.put}%`} · ${r.relation}`;}
 export function componentQuickPercent(r=currentComponentRead()):string {return `<span class="qqq-percent-up">${r.call==null?'—':r.call+'%'}</span><span class="qqq-percent-down">${r.put==null?'—':r.put+'%'}</span>`;}
 export function componentQuickActors(r=currentComponentRead()):string {

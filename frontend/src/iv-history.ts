@@ -3,6 +3,11 @@ import {ivRank} from './iv-rank';
 interface Observation {date:string;at:number;iv:number;ivLow?:number;ivHigh?:number;modelVersion?:number}
 interface History {symbol:string;status:string;expected:number;start:string;end:string;observations:Observation[];running?:boolean;modelVersion?:number;experimentalProgress?:number}
 const cache=new Map<string,History>(),requested=new Map<string,number>();
+export function seedCapturedIvHistory(value:unknown,symbol:string,now:number):void{
+ cache.delete(symbol);if(!value||typeof value!=='object')return;
+ const h=value as History;
+ if(h.symbol===symbol&&Array.isArray(h.observations)&&h.observations.length<=10000&&h.observations.every(o=>Number.isFinite(o.at)&&o.at<=now))cache.set(symbol,h);
+}
 export function readIvHistory(h:History|undefined,symbol:string,now:number){
  const unique=new Map<string,Observation>();
  for(const o of h?.symbol===symbol?h.observations??[]:[]){if((h?.modelVersion!==2||o.modelVersion===2)&&Number.isFinite(o.iv)&&o.iv>0&&Number.isFinite(o.at)&&o.at<=now&&now-o.at<=364*86400000&&/^\d{4}-\d{2}-\d{2}$/.test(o.date))unique.set(o.date,o);}

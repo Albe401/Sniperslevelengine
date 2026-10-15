@@ -1,6 +1,6 @@
 # Snipers · Web de snapshots JSON
 
-La web tiene únicamente **Lectura rápida completa** y **Radar de inversión →
+La web tiene únicamente **Lectura rápida completa**, **Lectura detallada** y **Radar de inversión →
 Cadena de opciones**. Utiliza los componentes originales, con sus colores y
 gráfica interactiva. No utiliza fotos. No conecta a Massive, no ejecuta bots y
 no genera órdenes. Lee exclusivamente los datos guardados en PostgreSQL/Neon.
@@ -41,9 +41,8 @@ node --env-file=.env server/server.mjs
 ```
 
 Configurar `.env` siguiendo `.env.example`. `DATABASE_URL` queda exclusivamente
-en el servidor: no se necesita clave de Massive en la web. Para acceso externo,
-`HOST=0.0.0.0` exige `SNIPERS_WEB_PASSWORD`. Servir detrás de HTTPS y usar
-`SNIPERS_SECURE_COOKIE=1`. Nunca subir `.env`, contraseñas ni datos locales.
+en el servidor. El visor abre sin contraseña y solo permite lectura. No configurar
+claves de Massive en la web ni publicar secretos.
 
 El Dockerfile permite desplegar el servidor. GitHub almacena el código;
 GitHub Pages por sí solo no ejecuta la API Node. Este repositorio no implica un
