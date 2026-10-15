@@ -4,6 +4,18 @@ import snapshot_service as service
 from snapshot_neon_http import Connection
 
 class SnapshotTests(unittest.TestCase):
+    def test_cache_recovers_from_windows_replace_lock(self):
+        original=service.os.replace
+        with tempfile.TemporaryDirectory(dir=service.DATA) as folder,patch.object(service,'DATA',pathlib.Path(folder)),patch.object(service.STOP,'wait'):
+            with patch.object(service.os,'replace',side_effect=[PermissionError('locked'),None]) as replace:
+                service.write_cache('status.json',{'alive':True})
+                self.assertEqual(replace.call_count,2)
+            self.assertEqual(list(pathlib.Path(folder).glob('*.tmp')),[])
+    def test_cache_persistent_lock_is_bounded_and_cleans_temporary(self):
+        with tempfile.TemporaryDirectory(dir=service.DATA) as folder,patch.object(service,'DATA',pathlib.Path(folder)),patch.object(service.STOP,'wait'),patch.object(service.os,'replace',side_effect=PermissionError('locked')) as replace:
+            with self.assertRaises(PermissionError):service.write_cache('status.json',{})
+            self.assertEqual(replace.call_count,6)
+            self.assertEqual(list(pathlib.Path(folder).glob('*.tmp')),[])
     def test_recovery_sends_newest_first_and_preserves_monotonic_saved_time(self):
         sent=[]
         class Fake:

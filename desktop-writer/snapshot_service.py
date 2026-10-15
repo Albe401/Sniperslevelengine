@@ -237,7 +237,19 @@ def token():
     return path.read_text().strip()
 
 def write_cache(name,value):
-    temporary=DATA/(name+'.tmp');temporary.write_text(encode(value),encoding='utf-8');os.replace(temporary,DATA/name)
+    temporary=DATA/(name+'.'+uuid.uuid4().hex+'.tmp')
+    try:
+        temporary.write_text(encode(value),encoding='utf-8')
+        for attempt in range(6):
+            try:
+                os.replace(temporary,DATA/name)
+                return
+            except PermissionError:
+                if attempt==5:raise
+                STOP.wait(0.05*(attempt+1))
+    finally:
+        try:temporary.unlink(missing_ok=True)
+        except OSError:pass
 
 def drain_observations():
     # Bound startup catch-up so capture/flush health is not starved by old observations.
@@ -376,7 +388,12 @@ def capture_loop():
         except Exception as error:record_database_error(error)
         with LOCK: STATE['pending']=db.execute('SELECT count(*) FROM outbox WHERE sent=0').fetchone()[0]
         with LOCK: health=dict(STATE)
-        health['writtenMs']=now_ms();write_cache('status.json',health)
+        health['writtenMs']=now_ms()
+        try:write_cache('status.json',health)
+        except OSError:
+            # A Windows reader may temporarily deny replacement. Health-file
+            # publication must never stop capture or durable database delivery.
+            pass
         STOP.wait(5)
 
 def main():
