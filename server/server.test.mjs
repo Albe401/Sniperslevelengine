@@ -1,5 +1,9 @@
 import {test} from 'node:test';import assert from 'node:assert/strict';import {gzipSync} from 'node:zlib';import {createHash} from 'node:crypto';
 import {makeServer,decodeFrame,validBundle,symbols} from './server.mjs';
+test('quota failure gives safe actionable message and five-minute retry',async()=>{
+ const server=makeServer({provider:async()=>{throw Error('HTTP 402: account exceeded quota; private diagnostic')}});await new Promise(r=>server.listen(0,'127.0.0.1',r));
+ try{const r=await fetch(`http://127.0.0.1:${server.address().port}/api/frame?symbol=QQQ`);const body=await r.json();assert.equal(r.status,503);assert.equal(r.headers.get('retry-after'),'300');assert.equal(body.error,'database_quota_exceeded');assert.equal(body.retryAfterMs,300000);assert(!JSON.stringify(body).includes('private diagnostic'));}finally{await new Promise(r=>server.close(r))}
+});
 const bundle=()=>({available:true,id:'test',capturedMs:Date.now()-300001,frames:Object.fromEntries(symbols.map(symbol=>[symbol,{symbol,publishedMs:Date.now()-300002}]))});
 test('rejects future data and requires correct identity for all ten',()=>{const b=bundle();assert(validBundle(b));b.frames.AAPL.symbol='QQQ';assert(!validBundle(b));b.frames.AAPL.symbol='AAPL';b.capturedMs=Date.now()+1000;assert(!validBundle(b))});
 test('archives are exact and corruption fails',()=>{const raw=Buffer.from('{"symbol":"AAPL","price":123.45}');const f={compressedBase64:gzipSync(raw).toString('base64'),sha256:createHash('sha256').update(raw).digest('hex')};assert.equal(decodeFrame(f).price,123.45);assert.throws(()=>decodeFrame({...f,sha256:'bad'}))});

@@ -63,7 +63,15 @@ async function pull(){
  const token=++generation;
  try{
   const response=await fetch(`/api/frame?symbol=${encodeURIComponent(selected)}`,{cache:'no-store',signal:AbortSignal.timeout(60000)});
-  if(!response.ok)throw Error('Base de datos no disponible');
+  if(!response.ok){
+   const failure=await response.json().catch(()=>({}));if(token!==generation)return;
+   if(failure.error==='database_quota_exceeded'){
+    document.querySelector<HTMLElement>('#web-status')!.textContent='Neon: cuota excedida · comprobación automática cada 5 min';
+    if(!saved)content.innerHTML='<section class="panel">Neon ha bloqueado la base de datos porque se superó una cuota. Hay que revisar los límites o el plan del proyecto en Neon. La web volverá a comprobar la conexión automáticamente.</section>';
+    return;
+   }
+   throw Error('Base de datos no disponible');
+  }
   const value=await response.json() as Saved;if(token!==generation)return;
   if(!value.available){document.querySelector<HTMLElement>('#web-status')!.textContent=`${selected} · pendiente de datos guardados`;if(!saved)content.innerHTML=`<section class="panel">${esc(selected)} todavía no tiene un snapshot disponible en Neon. Se comprobará automáticamente; no se consultará Massive desde la web.</section>`;setTimeout(()=>{if(token===generation)void pull()},15000);return;}
   if(value.frame.symbol!==selected||value.capturedMs>Date.now())throw Error('Lote inválido');

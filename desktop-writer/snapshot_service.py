@@ -31,11 +31,20 @@ def connection(secret_file=None):
         ctypes.memset(target.data,0,target.size);ctypes.windll.kernel32.LocalFree(target.data)
 
 def connect_db():
+    if now_ms()<STATE.get('databaseRetryAtMs',0):raise RuntimeError('database_quota_exceeded')
     from snapshot_neon_http import Connection
     web_secret=ROOT/'data/web-runtime/connection.secret'
     # The newly supplied database is the direct snapshot destination. This does
     # not alter Massive feed credentials or drive the selected desktop view.
     return Connection(connection(web_secret if web_secret.exists() else None))
+
+def record_database_error(error):
+    message=str(error).lower()
+    quota=message=='database_quota_exceeded' or ('quota' in message and ('402' in message or 'exceed' in message))
+    with LOCK:
+        STATE['database']='quota_exceeded' if quota else 'unavailable'
+        if quota and now_ms()>=STATE.get('databaseRetryAtMs',0):STATE['databaseRetryAtMs']=now_ms()+INTERVAL
+    return quota
 
 def local_db():
     DATA.mkdir(parents=True, exist_ok=True)
@@ -272,7 +281,7 @@ def cache_loop():
                 value=latest()
                 if value.get('available'):
                     write_cache('latest-from-neon.json',value);last_id=(value['id'],len(value.get('images',{})))
-        except Exception:pass
+        except Exception as error:record_database_error(error)
         STOP.wait(30)
 
 def render_photos(db,identity,text,sha):
@@ -354,9 +363,8 @@ def capture_loop():
         try:
             if not migrated: migrate(); migrated=True
             flush(db)
-            with LOCK: STATE['database']='connected'
-        except Exception:
-            with LOCK: STATE['database']='unavailable'
+            with LOCK: STATE.update(database='connected',databaseRetryAtMs=0)
+        except Exception as error:record_database_error(error)
         with LOCK: STATE['pending']=db.execute('SELECT count(*) FROM outbox WHERE sent=0').fetchone()[0]
         with LOCK: health=dict(STATE)
         health['writtenMs']=now_ms();write_cache('status.json',health)

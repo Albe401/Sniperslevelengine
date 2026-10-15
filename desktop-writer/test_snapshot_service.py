@@ -4,6 +4,20 @@ import snapshot_service as service
 from snapshot_neon_http import Connection
 
 class SnapshotTests(unittest.TestCase):
+    def test_quota_backoff_keeps_local_capture_and_does_not_slide_retry_forever(self):
+        with patch.dict(service.STATE,{},clear=True),patch.object(service,'now_ms',return_value=1_000_000):
+            self.assertTrue(service.record_database_error(RuntimeError('Server error HTTP status 402: project exceeded quota')))
+            retry=service.STATE['databaseRetryAtMs']
+            service.record_database_error(RuntimeError('database_quota_exceeded'))
+            self.assertEqual(service.STATE['databaseRetryAtMs'],retry)
+            with self.assertRaisesRegex(RuntimeError,'database_quota_exceeded'):service.connect_db()
+            with tempfile.TemporaryDirectory(dir=service.DATA) as folder,patch.object(service,'DATA',pathlib.Path(folder)):
+                db=service.local_db();service.stage(db,self.bundle(),'test-local-during-quota')
+                self.assertEqual(db.execute('SELECT count(*) FROM outbox WHERE sent=0').fetchone()[0],1);db.close()
+    def test_transient_errors_are_not_reported_as_quota(self):
+        with patch.dict(service.STATE,{},clear=True):
+            self.assertFalse(service.record_database_error(RuntimeError('network timeout')))
+            self.assertEqual(service.STATE['database'],'unavailable')
     def test_empty_startup_lanes_do_not_replace_saved_data(self):
         with tempfile.TemporaryDirectory(dir=service.DATA) as folder,patch.object(service,'DATA',pathlib.Path(folder)):
             db=service.local_db();b=self.bundle();b['coverage']={'independentLanes':10}

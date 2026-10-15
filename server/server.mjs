@@ -12,17 +12,23 @@ const quickFields=new Set('symbol publishedMs startedMs stocks options ticks bar
 for(const field of ['rangeContext','localVolume','greekSupport','thetaVega','optionLiquidity','swingReport','neuroContext','qqqReport','optionTiming','etfBlocks','etfCvd','etfFlow','dataService','ivHistory'])quickFields.add(field);
 const root=resolve(fileURLToPath(new URL('..',import.meta.url)));
 const caches=new Map();
+let quotaRetryAt=0;
+export function isQuotaError(error){const message=String(error?.message??'');return /quota/i.test(message)&&/402|exceed/i.test(message);}
+function quotaError(){return Object.assign(new Error('Database quota exceeded'),{code:'database_quota_exceeded'});}
 const hash=value=>createHash('sha256').update(value).digest('hex');
 export function decodeFrame(value){if(!value?.compressedBase64)return value;const raw=gunzipSync(Buffer.from(value.compressedBase64,'base64'));if(hash(raw)!==value.sha256)throw Error('Frame integrity');return JSON.parse(raw);}
 export function validBundle(value,now=Date.now()){
  return !!value?.available&&Number.isFinite(value.capturedMs)&&value.capturedMs<=now&&symbols.every(s=>value.frames?.[s]?.symbol===s&&(!(typeof value.frames[s].publishedMs==='number')||value.frames[s].publishedMs<=value.capturedMs));
 }
 async function latest(symbol='QQQ'){
+ if(Date.now()<quotaRetryAt)throw quotaError();
  const cached=caches.get(symbol);if(cached?.until>Date.now())return cached.value;
  let value;
  if(process.env.DATABASE_URL){
   const sql=neon(process.env.DATABASE_URL);
-  const rows=await sql.query(`SELECT b.id::text,b.captured_ms,b.coverage,b.extras,a.symbol,CASE WHEN a.payload_compressed IS NULL THEN a.payload ELSE jsonb_build_object('compressedBase64',encode(a.payload_compressed,'base64'),'sha256',a.payload_sha256) END AS frame FROM snipers_snapshots.batches b JOIN snipers_snapshots.assets a ON a.batch_id=b.id WHERE b.id=(SELECT id FROM snipers_snapshots.batches WHERE captured_ms<=$1 AND asset_count=10 ORDER BY captured_ms DESC LIMIT 1) AND a.symbol=$2 AND (SELECT count(*) FROM snipers_snapshots.assets complete WHERE complete.batch_id=b.id)=10`,[Date.now(),symbol]);
+  let rows;
+  try{rows=await sql.query(`SELECT b.id::text,b.captured_ms,b.coverage,b.extras,a.symbol,CASE WHEN a.payload_compressed IS NULL THEN a.payload ELSE jsonb_build_object('compressedBase64',encode(a.payload_compressed,'base64'),'sha256',a.payload_sha256) END AS frame FROM snipers_snapshots.batches b JOIN snipers_snapshots.assets a ON a.batch_id=b.id WHERE b.id=(SELECT id FROM snipers_snapshots.batches WHERE captured_ms<=$1 AND asset_count=10 ORDER BY captured_ms DESC LIMIT 1) AND a.symbol=$2 AND (SELECT count(*) FROM snipers_snapshots.assets complete WHERE complete.batch_id=b.id)=10`,[Date.now(),symbol]);}
+  catch(error){if(isQuotaError(error)){quotaRetryAt=Date.now()+300000;throw quotaError();}throw error;}
   const row=rows[0];value=row?{available:true,id:row.id,capturedMs:Number(row.captured_ms),coverage:row.coverage,extras:row.extras,frames:{[row.symbol]:decodeFrame(row.frame)},completeBatchVerified:true}:{available:false};
  }else value={available:false};
  if(value.available&&!validAssetBundle(value,symbol))throw Error('Invalid capture');
@@ -57,7 +63,7 @@ export function makeHandler({provider=latest}={}){
    try{if(!(await stat(path)).isFile())throw Error('file')}catch{path=resolve(base,'index.html')}
    const type=path.endsWith('.html')?'text/html':path.endsWith('.js')?'text/javascript':path.endsWith('.css')?'text/css':path.endsWith('.png')?'image/png':path.endsWith('.woff2')?'font/woff2':'application/octet-stream';
    res.writeHead(200,{'Content-Type':type});res.end(await readFile(path));
-  }catch{json(503,{error:'data_unavailable',detail:'La captura o conexiÃ³n estÃ¡ pendiente. No se sustituyen los datos.'})}
+  }catch(error){if(error?.code==='database_quota_exceeded'||isQuotaError(error)){res.setHeader('Retry-After','300');json(503,{error:'database_quota_exceeded',retryAfterMs:300000,detail:'Neon ha bloqueado la base de datos por cuota excedida. Revisa los límites o el plan en Neon. Se conservará la captura visible, si existe.'});}else json(503,{error:'data_unavailable',detail:'La captura o conexión está pendiente. No se sustituyen los datos.'})}
  };
 }
 export function makeServer(options={}){return createServer(makeHandler(options));}
