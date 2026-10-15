@@ -1,5 +1,14 @@
 import {test} from 'node:test';import assert from 'node:assert/strict';import {gzipSync} from 'node:zlib';import {createHash} from 'node:crypto';
 import {makeServer,decodeFrame,validBundle,symbols} from './server.mjs';
+import {loadSavedAsset} from './server.mjs';
+test('unchanged capture checks metadata without downloading the archive again',async()=>{
+ const b=bundle();const calls=[];const sql={query:async(q,p)=>{calls.push({q,p});return [{id:b.id}]}};
+ assert.equal(await loadSavedAsset(sql,'QQQ',b),b);assert.equal(calls.length,1);assert(!calls[0].q.includes('payload_compressed'));
+});
+test('changed capture downloads the requested asset from the same complete batch',async()=>{
+ const now=Date.now();const calls=[];const sql={query:async(q,p)=>{calls.push({q,p});return calls.length===1?[{id:'new'}]:[{id:'new',captured_ms:now-1000,coverage:{},extras:{},symbol:'QQQ',frame:{symbol:'QQQ',publishedMs:now-1001}}]}};
+ const r=await loadSavedAsset(sql,'QQQ',bundle(),now);assert.equal(r.id,'new');assert.deepEqual(calls[1].p,['new','QQQ']);assert.equal(r.frames.QQQ.symbol,'QQQ');assert(calls[1].q.includes('count(*)'));
+});
 test('quota failure gives safe actionable message and five-minute retry',async()=>{
  const server=makeServer({provider:async()=>{throw Error('HTTP 402: account exceeded quota; private diagnostic')}});await new Promise(r=>server.listen(0,'127.0.0.1',r));
  try{const r=await fetch(`http://127.0.0.1:${server.address().port}/api/frame?symbol=QQQ`);const body=await r.json();assert.equal(r.status,503);assert.equal(r.headers.get('retry-after'),'300');assert.equal(body.error,'database_quota_exceeded');assert.equal(body.retryAfterMs,300000);assert(!JSON.stringify(body).includes('private diagnostic'));}finally{await new Promise(r=>server.close(r))}

@@ -20,16 +20,22 @@ export function decodeFrame(value){if(!value?.compressedBase64)return value;cons
 export function validBundle(value,now=Date.now()){
  return !!value?.available&&Number.isFinite(value.capturedMs)&&value.capturedMs<=now&&symbols.every(s=>value.frames?.[s]?.symbol===s&&(!(typeof value.frames[s].publishedMs==='number')||value.frames[s].publishedMs<=value.capturedMs));
 }
+/** Check a tiny batch identifier before downloading the same archived asset again. */
+export async function loadSavedAsset(sql,symbol,cached,now=Date.now()){
+ const heads=await sql.query(`SELECT b.id::text FROM snipers_snapshots.batches b WHERE b.captured_ms<=$1 AND b.asset_count=10 AND (SELECT count(*) FROM snipers_snapshots.assets complete WHERE complete.batch_id=b.id)=10 ORDER BY b.captured_ms DESC LIMIT 1`,[now]);
+ if(!heads[0])return {available:false};
+ if(cached?.available&&cached.id===heads[0].id&&validAssetBundle(cached,symbol,now))return cached;
+ const rows=await sql.query(`SELECT b.id::text,b.captured_ms,b.coverage,b.extras,a.symbol,CASE WHEN a.payload_compressed IS NULL THEN a.payload ELSE jsonb_build_object('compressedBase64',encode(a.payload_compressed,'base64'),'sha256',a.payload_sha256) END AS frame FROM snipers_snapshots.batches b JOIN snipers_snapshots.assets a ON a.batch_id=b.id WHERE b.id=$1::uuid AND a.symbol=$2 AND b.asset_count=10 AND (SELECT count(*) FROM snipers_snapshots.assets complete WHERE complete.batch_id=b.id)=10`,[heads[0].id,symbol]);
+ const row=rows[0];return row?{available:true,id:row.id,capturedMs:Number(row.captured_ms),coverage:row.coverage,extras:row.extras,frames:{[row.symbol]:decodeFrame(row.frame)},completeBatchVerified:true}:{available:false};
+}
 async function latest(symbol='QQQ'){
  if(Date.now()<quotaRetryAt)throw quotaError();
  const cached=caches.get(symbol);if(cached?.until>Date.now())return cached.value;
  let value;
  if(process.env.DATABASE_URL){
   const sql=neon(process.env.DATABASE_URL);
-  let rows;
-  try{rows=await sql.query(`SELECT b.id::text,b.captured_ms,b.coverage,b.extras,a.symbol,CASE WHEN a.payload_compressed IS NULL THEN a.payload ELSE jsonb_build_object('compressedBase64',encode(a.payload_compressed,'base64'),'sha256',a.payload_sha256) END AS frame FROM snipers_snapshots.batches b JOIN snipers_snapshots.assets a ON a.batch_id=b.id WHERE b.id=(SELECT id FROM snipers_snapshots.batches WHERE captured_ms<=$1 AND asset_count=10 ORDER BY captured_ms DESC LIMIT 1) AND a.symbol=$2 AND (SELECT count(*) FROM snipers_snapshots.assets complete WHERE complete.batch_id=b.id)=10`,[Date.now(),symbol]);}
+  try{value=await loadSavedAsset(sql,symbol,cached?.value);}
   catch(error){if(isQuotaError(error)){quotaRetryAt=Date.now()+300000;throw quotaError();}throw error;}
-  const row=rows[0];value=row?{available:true,id:row.id,capturedMs:Number(row.captured_ms),coverage:row.coverage,extras:row.extras,frames:{[row.symbol]:decodeFrame(row.frame)},completeBatchVerified:true}:{available:false};
  }else value={available:false};
  if(value.available&&!validAssetBundle(value,symbol))throw Error('Invalid capture');
  caches.set(symbol,{value,until:Date.now()+30000});return value;
