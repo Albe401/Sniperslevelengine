@@ -2,9 +2,10 @@ import {quickChartLevels} from './quick-chart-levels';
 import {quickReadingPanels} from './quick-reading-panels';
 import {bindLevelCardSpacing} from './level-card-spacing';
 import {buildIntradayControl} from './intraday-control';
-import {bindGammaLive} from './gamma-live';
+import {bindGammaLive,setCapturedProfileClock} from './gamma-live';
 import {optionOiHeatmapPanel,bindOptionOiHeatmap} from './option-oi-heatmap-panel';
 import {scopeContractReport} from './contract-profile';
+import {seedCapturedInventory} from './contract-inventory';
 import {seedCapturedAnalystTargets} from './analyst-targets';
 import {seedCapturedIvHistory} from './iv-history';
 import {seedCapturedComponentRead,type ComponentRead} from './qqq-components';
@@ -30,8 +31,11 @@ tickerSelect.onchange=()=>selectTicker(tickerSelect.value);searchInput.onkeydown
 function paint(){
  if(!saved?.available)return;
  const data=saved,frame=data.frame,now=data.capturedMs;
+ setCapturedProfileClock(now);
  const fields=frame as LiveState&{ivHistory?:{observation:Extra};qqqReport?:ComponentRead};
  const iv=fields.ivHistory?.observation;
+ const inventory=(frame as LiveState&{contractChain?:{observation:Extra}}).contractChain?.observation;
+ seedCapturedInventory(inventory&&inventory.observedMs<=now?inventory.value as EtfReport:undefined,selected,now);
  seedCapturedIvHistory(iv&&iv.observedMs<=now?iv.value:undefined,selected,now);
  seedCapturedComponentRead(frame.qqq_report??fields.qqqReport,now);
  const targets=Object.values(data.extras??{}).filter(r=>r.command==='get_fmp_targets'&&r.observedMs<=now).sort((a,b)=>b.observedMs-a.observedMs)[0];

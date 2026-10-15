@@ -46,6 +46,10 @@ import {controlOutlook} from './control-outlook';
 import './gamma-live.css';
 let interval=2,expanded=false,profileMetric:"gex"|"oi"|"volume"|"bidask"="oi",profileCenter:number|undefined,profileSymbol='';
 let profileHorizon:ProfileHorizon='NEXT4';
+let capturedProfileClock:number|undefined;
+/** Saved-data viewer uses its capture clock; desktop defaults remain wall-clock based. */
+export function setCapturedProfileClock(at:number|undefined){capturedProfileClock=at;}
+const profileNow=()=>capturedProfileClock??Date.now();
 function profileHorizonTools(s:LiveState|undefined,symbol:string,now:number){
  const report=s?.symbol===symbol?s.optionSnapshotStatus?.structuralEnrichment:undefined;
  const dates=profileExpirations(report,profileHorizon,now);
@@ -267,7 +271,7 @@ export function bindGammaLive(s:LiveState|undefined,symbol:string,active:boolean
 let flowRows:StrikeFlow[]=[];
 let retained:ReturnType<typeof retainedContractProfile>;
 function profileRows(){
- const full=inventoryProfile(profileSymbol,Date.now());
+ const full=inventoryProfile(profileSymbol,profileNow());
  if(profileMetric==='oi'){if(!full)return [];try{return reportOiProfile(full).rows;}catch{return [];}}
  if(full&&profileMetric!=='bidask')return full.rows.map(r=>({strike:r.strike,call:profileMetric==='volume'?r.call.volume:profileMetric==='oi'?r.call.oi:r.call.gamma,put:profileMetric==='volume'?r.put.volume:profileMetric==='oi'?r.put.oi:r.put.gamma}));
  if(profileMetric==='bidask')return flowRows;
@@ -278,7 +282,7 @@ function profileRows(){
 function profile(){
  const svg=document.getElementById('gamma-live-profile');if(!svg||!host||!candles)return;
  const datesLabel=document.querySelector<HTMLElement>('.gl-profile-dates');
- const fullInventory=inventoryProfile(profileSymbol,Date.now());
+ const fullInventory=inventoryProfile(profileSymbol,profileNow());
  const included=profileMetric==='oi'?(fullInventory?.expirations??[]):fullInventory?.expirations??latest?.contractProfile?.expirations??retained?.expirations??[];
  const dateSummary=fullInventory?`${included.length} expiraciones · ${included[0]??'—'} a ${included.at(-1)??'—'}`:included.join(' / ');
  if(datesLabel){

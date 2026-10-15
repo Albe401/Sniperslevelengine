@@ -26,6 +26,12 @@ export function validInventory(r:EtfReport,symbol:string,now:number):boolean {
  return !!ds&&r.symbol===symbol&&r.days===183&&Number.isFinite(r.at)&&r.at<=now&&now-r.at<=300000&&day(r.at)===day(now)&&r.contracts===ds.length&&ds.length<=100000&&new Set(ds.map(c=>c.ticker)).size===ds.length&&ds.every(c=>Number.isFinite(c.strike)&&c.strike>0&&['call','put'].includes(c.kind)&&/^\d{4}-\d{2}-\d{2}$/.test(c.expiration)&&c.expiration>=today&&c.expiration<=end&&[c.oi,c.volume,c.dex,c.gex].every(v=>v==null||Number.isFinite(v)&&v>=0));
 }
 const memory=new Map<string,{report?:EtfReport;busy:boolean;error:string;attempt:number}>();
+/** Populate the existing reader from a saved frame; never start a provider request. */
+export function seedCapturedInventory(report:EtfReport|undefined,symbol:string,capturedMs:number){
+ memory.delete(symbol);scoped=undefined;
+ if(report&&validInventory(report,symbol,capturedMs))memory.set(symbol,{report,busy:false,error:'',attempt:capturedMs});
+ while(memory.size>4)memory.delete(memory.keys().next().value!);
+}
 let horizon:InventoryHorizon='SIX_MONTHS',expiry='',page=0,search='',sideFilter='call';
 let scoped:{report:EtfReport;key:string;value:EtfReport}|undefined;
 export function inventoryProfile(symbol:string,now:number):EtfReport|undefined {
