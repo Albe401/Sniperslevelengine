@@ -134,6 +134,14 @@ def storage_layout(payload):
 
 def stage(db,value,source):
     validate_bundle(value)
+    # Do not replace a useful saved batch with the ten empty startup lanes.
+    # Recorded failures and partial observations still publish normally.
+    if value.get('coverage',{}).get('independentLanes')==len(SYMBOLS) and all(
+        not frame.get('chartHistory',{}).get('minutes')
+        and frame.get('history',{}).get('phase','') in {'','pending','loading'}
+        and frame.get('optionSnapshotStatus',{}).get('phase','') in {'','pending','loading'}
+        for frame in value['frames'].values()
+    ): raise RuntimeError('capture_warming_up')
     captured=value['capturedMs']; slot=captured//INTERVAL*INTERVAL
     allowed={'symbol','publishedMs','startedMs','stocks','options','ticks','bars','minutes','chartHistory','history','metrics','optionSnapshotStatus','selection','flow','flowExpiry','cvd','offExchange','dailyAtr','dailyRange','positionMaps','wallPull','wallFlow','adjustedReadings','adjustedAlignment','levelDeltas','magnetConfirmations','optionBaselineRecords','gapReport','priceAlerts','qqq_report','treasury','auctionMap','structuralPaths','directionOi','rawOptions','levelDynamics','intradayAtr','priceNow','snapshotUnavailable'}
     allowed.update({'rangeContext','localVolume','greekSupport','thetaVega','optionLiquidity','swingReport','neuroContext','qqqReport','optionTiming','etfBlocks','etfCvd','etfFlow','dataService'})
@@ -341,8 +349,8 @@ def capture_loop():
             try:
                 value,source=bundle(); last_slot=stage(db,value,source)
                 with LOCK: STATE.update(feed='connected',lastCapturedMs=value['capturedMs'])
-            except Exception:
-                with LOCK: STATE['feed']='unavailable'
+            except Exception as error:
+                with LOCK: STATE['feed']='warming_up' if str(error)=='capture_warming_up' else 'unavailable'
         try:
             if not migrated: migrate(); migrated=True
             flush(db)

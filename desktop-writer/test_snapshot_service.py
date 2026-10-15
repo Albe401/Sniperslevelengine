@@ -4,6 +4,15 @@ import snapshot_service as service
 from snapshot_neon_http import Connection
 
 class SnapshotTests(unittest.TestCase):
+    def test_empty_startup_lanes_do_not_replace_saved_data(self):
+        with tempfile.TemporaryDirectory(dir=service.DATA) as folder,patch.object(service,'DATA',pathlib.Path(folder)):
+            db=service.local_db();b=self.bundle();b['coverage']={'independentLanes':10}
+            with self.assertRaisesRegex(RuntimeError,'capture_warming_up'):service.stage(db,b,'native-file-handoff-v1')
+            self.assertEqual(db.execute('SELECT count(*) FROM outbox').fetchone()[0],0)
+            b['frames']['QQQ']['history']={'phase':'failed'}
+            service.stage(db,b,'native-file-handoff-v1')
+            self.assertEqual(db.execute('SELECT count(*) FROM outbox').fetchone()[0],1)
+            db.close()
     def test_chain_storage_is_lossless_and_not_duplicated_in_batch_extras(self):
         payload={'bundle':self.bundle(),'extras':{'chain-key':{'command':'get_contract_inventory','args':{'symbol':'AAPL'},'observedMs':1,'value':{'contracts':[{'strike':101.25,'oi':123}]}}}}
         frames,extras=service.storage_layout(payload)
