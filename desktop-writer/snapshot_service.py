@@ -127,6 +127,8 @@ def storage_layout(payload):
         symbol=record.get('args',{}).get('symbol')
         if record.get('command')=='get_contract_inventory' and symbol in frames:
             frames[symbol]['contractChain']={'key':key,'observation':record}
+        elif record.get('command')=='get_iv_history' and symbol in frames:
+            frames[symbol]['ivHistory']={'key':key,'observation':record}
         else:extras[key]=record
     return frames,extras
 
@@ -134,8 +136,9 @@ def stage(db,value,source):
     validate_bundle(value)
     captured=value['capturedMs']; slot=captured//INTERVAL*INTERVAL
     allowed={'symbol','publishedMs','startedMs','stocks','options','ticks','bars','minutes','chartHistory','history','metrics','optionSnapshotStatus','selection','flow','flowExpiry','cvd','offExchange','dailyAtr','dailyRange','positionMaps','wallPull','wallFlow','adjustedReadings','adjustedAlignment','levelDeltas','magnetConfirmations','optionBaselineRecords','gapReport','priceAlerts','qqq_report','treasury','auctionMap','structuralPaths','directionOi','rawOptions','levelDynamics','intradayAtr','priceNow','snapshotUnavailable'}
-    value={**value,'frames':{symbol:{k:v for k,v in frame.items() if k in allowed} for symbol,frame in value['frames'].items()},'webSections':['quick','contract-chain'],'coverage':{**value.get('coverage',{}),'webSections':['quick','contract-chain'],'format':'json','photosEnabled':False}}
-    with LOCK: extras=json.loads(encode({k:v for k,v in EXTRAS.items() if v['observedMs']<=captured and v['command'] in {'get_contract_inventory','get_fmp_targets','preview_route_4h'}}))
+    allowed.update({'rangeContext','localVolume','greekSupport','thetaVega','optionLiquidity','swingReport','neuroContext','qqqReport','optionTiming','etfBlocks','etfCvd','etfFlow','dataService'})
+    value={**value,'frames':{symbol:{k:v for k,v in frame.items() if k in allowed} for symbol,frame in value['frames'].items()},'webSections':['quick','detailed','contract-chain'],'coverage':{**value.get('coverage',{}),'webSections':['quick','detailed','contract-chain'],'format':'json','photosEnabled':False}}
+    with LOCK: extras=json.loads(encode({k:v for k,v in EXTRAS.items() if v['observedMs']<=captured and v['command'] in {'get_contract_inventory','get_iv_history','get_fmp_targets','preview_route_4h'}}))
     payload={'bundle':secret_free(value),'source':source,'extras':extras}
     text=encode(payload); identity=str(uuid.uuid4())
     db.execute('INSERT OR IGNORE INTO outbox(id,slot,captured,payload,sha) VALUES(?,?,?,?,?)', (identity,slot,captured,text,digest(payload)))
@@ -186,7 +189,7 @@ def latest(at=None):
             'minimumDelayMs':INTERVAL,'ageMs':now_ms()-int(row[1]),'mode':'snapshot'}
 
 def safe_command(command):
-    return command in {'get_contract_inventory','get_fmp_targets','preview_route_4h'}
+    return command in {'get_contract_inventory','get_iv_history','get_fmp_targets','preview_route_4h'}
 
 def secret_free(value):
     if isinstance(value,dict):

@@ -12,6 +12,7 @@ import type {TargetRow} from './analyst-targets-cache';
 import type {EtfReport} from './etf-dealers';
 import type {LiveState} from './live';
 import {escapeHtml as esc} from './model';
+import './day-map.css';
 import './styles.css';import './restrained.css';import './visual-readings.css';import './brand.css';import './route-design.css';import './reading-tabs.css';import './compact-reading-height.css';import '@fontsource-variable/inter';import './web.css';
 const symbols=['AAPL','MSFT','AMZN','GOOGL','META','NVDA','TSLA','QQQ','SPY','IWM'];
 type Extra={command:string;args?:{symbol?:string};observedMs:number;value:unknown};
@@ -51,13 +52,13 @@ function paint(){
 async function pull(){
  const token=++generation;
  try{
-  const response=await fetch(`/api/frame?symbol=${encodeURIComponent(selected)}`,{cache:'no-store'});
+  const response=await fetch(`/api/frame?symbol=${encodeURIComponent(selected)}`,{cache:'no-store',signal:AbortSignal.timeout(60000)});
   if(!response.ok)throw Error('Base de datos no disponible');
   const value=await response.json() as Saved;if(token!==generation)return;
-  if(!value.available){content.innerHTML='<section class="panel">Todavía no hay datos guardados. Esperando el próximo lote del escritorio.</section>';return;}
+  if(!value.available){document.querySelector<HTMLElement>('#web-status')!.textContent='Esperando datos guardados · reintento automático';if(!saved)content.innerHTML='<section class="panel">Todavía no hay datos guardados. Reintentando automáticamente.</section>';setTimeout(()=>{if(token===generation)void pull()},15000);return;}
   if(value.frame.symbol!==selected||value.capturedMs>Date.now())throw Error('Lote inválido');
   saved=value;paint();
- }catch(e){document.querySelector<HTMLElement>('#web-status')!.textContent='Conexión a base de datos pendiente';if(!saved)content.innerHTML=`<section class="panel">${esc(String(e))}</section>`;}
+ }catch(e){if(token!==generation)return;document.querySelector<HTMLElement>('#web-status')!.textContent='Conexión pendiente · reintento automático';if(!saved)content.innerHTML=`<section class="panel">${esc(String(e))}</section>`;setTimeout(()=>{if(token===generation)void pull()},15000);}
 }
 document.querySelectorAll<HTMLButtonElement>('[data-symbol]').forEach(b=>b.onclick=()=>{selected=b.dataset.symbol!;saved=undefined;expiry='';void pull()});
 document.querySelectorAll<HTMLButtonElement>('[data-view]').forEach(b=>b.onclick=()=>{view=b.dataset.view as 'quick'|'detailed'|'chain';if(saved)paint();else void pull()});

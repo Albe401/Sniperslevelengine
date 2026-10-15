@@ -15,7 +15,7 @@ class SnapshotTests(unittest.TestCase):
             db=service.local_db();b=self.bundle();b['frames']['AAPL']['learningReport']={'must_not_ship':True}
             with patch.dict(service.EXTRAS,{'unrelated':{'command':'get_benzinga_news','observedMs':0,'value':{}},'chain':{'command':'get_contract_inventory','observedMs':0,'value':{},'args':{'symbol':'AAPL'}}},clear=True):service.stage(db,b,'test')
             payload=json.loads(db.execute('SELECT payload FROM outbox').fetchone()[0]);db.close()
-            self.assertEqual(payload['bundle']['webSections'],['quick','contract-chain'])
+            self.assertEqual(payload['bundle']['webSections'],['quick','detailed','contract-chain'])
             self.assertNotIn('learningReport',payload['bundle']['frames']['AAPL'])
             self.assertNotIn('unrelated',payload['extras']);self.assertIn('chain',payload['extras'])
     def bundle(self):
@@ -74,3 +74,4 @@ class SnapshotTests(unittest.TestCase):
         with self.assertRaises(ValueError):service.decode_frame({'compressedBase64':compressed,'sha256':'wrong'})
 
 if __name__=='__main__':unittest.main()
+
