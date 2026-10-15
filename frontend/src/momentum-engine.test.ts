@@ -1,0 +1,22 @@
+import {describe,it,expect} from 'vitest';
+import {MomentumEngine,type MomentumInput} from './momentum-engine';
+const row=(i:number,over:Partial<MomentumInput>={}):MomentumInput=>({symbol:'QQQ',session:'2026-10-05',at:1000000+i*60000,price:100,baseline:'CALL',direction:1,flow:.1+i*.03,volumeRatio:1.2,priceAligned:true,routeConfirmed:true,target:103,stop:99,atr:1,ready:true,reason:'Datos faltantes',...over});
+const warmed=(override:Partial<MomentumInput>={})=>{const e=new MomentumEngine();for(let i=0;i<5;i++)e.feed(row(i));return e.feed(row(5,override));};
+describe('Momentum experimental',()=>{
+ it('requires two disjoint windows',()=>expect(warmed({flow:null}).score).toBeNull());
+ it('activates only with persistence and verified route',()=>expect(warmed().state).toBe('ACTIVO'));
+ it('route not sustained stays preparing',()=>expect(warmed({routeConfirmed:false}).state).toBe('PREPARÁNDOSE'));
+ it('near target is extended',()=>expect(warmed({target:100.2}).state).toBe('EXTENDIDO'));
+ it('weak pressure does not reverse direction',()=>{const r=warmed({flow:-.05});expect(r.state).toBe('NO CONFIRMA');expect(r.side).toBe('CALL');});
+ it('falling aligned pressure loses force',()=>{const e=new MomentumEngine();for(let i=0;i<5;i++)e.feed(row(i,{flow:.5}));expect(e.feed(row(5,{flow:.2})).state).toBe('PIERDE FUERZA');});
+ it('bad reward risk cannot activate',()=>expect(warmed({target:100.5}).state).toBe('PREPARÁNDOSE'));
+ it('missing invalidation cannot activate',()=>expect(warmed({stop:null}).state).toBe('PREPARÁNDOSE'));
+ it('missing local volume cannot activate',()=>expect(warmed({volumeRatio:null}).state).toBe('PREPARÁNDOSE'));
+ it('disconnect resets comparison',()=>{const e=new MomentumEngine();e.feed(row(0));expect(e.feed(row(6)).score).toBeNull();});
+ it('symbol change resets',()=>expect(warmed({symbol:'AAPL'}).score).toBeNull());
+ it('session change resets',()=>expect(warmed({session:'2026-10-06'}).score).toBeNull());
+ it('rejects missing evidence',()=>expect(warmed({ready:false}).score).toBeNull());
+ it('PUT mirrors CALL without flipping signs',()=>{const e=new MomentumEngine();for(let i=0;i<5;i++)e.feed(row(i,{direction:-1,flow:-.1-i*.03}));const r=e.feed(row(5,{direction:-1,flow:-.25,target:97,stop:101}));expect(r.side).toBe('PUT');expect(r.state).toBe('ACTIVO');});
+ it('single opposite direction is not an activation',()=>expect(warmed({direction:-1,flow:-.4,target:97,stop:101}).state).toBe('PREPARÁNDOSE'));
+ it('rejects duplicate and future chronology',()=>{const e=new MomentumEngine();e.feed(row(0));expect(e.feed(row(0)).score).toBeNull();expect(e.feed(row(-1)).score).toBeNull();});
+});

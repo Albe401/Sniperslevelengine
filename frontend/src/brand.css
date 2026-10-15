@@ -1,0 +1,8 @@
+.brand{position:relative;justify-content:center;margin:-12px -17px 25px;padding:12px 17px 22px;min-height:166px;letter-spacing:normal;background:radial-gradient(ellipse at 50% 36%,#b48b3c16,transparent 73%)}
+/* Screen blends the image's black backdrop into the actual platform color.
+   Keep the full original artwork; do not clip it into a circular badge. */
+.brand-lion{display:block;width:140px;height:140px;object-fit:contain;flex-shrink:0;border-radius:0;mix-blend-mode:screen}
+.brand::after{content:"";position:absolute;bottom:0;left:16px;right:16px;height:1px;background:linear-gradient(90deg,transparent,#d6b66d55,transparent);pointer-events:none}
+@media(max-width:1000px){.brand{margin:-8px -12px 25px;padding:8px 12px 18px;min-height:74px}.brand-lion{width:48px;height:48px}}
+@media(max-width:500px){.brand{margin-left:-7px;margin-right:-7px;padding-left:7px;padding-right:7px;min-height:64px}.brand-lion{width:38px;height:38px}}
+[data-massive-connection]{position:relative;display:flex;align-items:center}.massive-connection-button{white-space:nowrap;border:1px solid #21d8b3;border-radius:6px;padding:7px 10px;color:#35efc7;background:#052b29;font-size:11px;font-weight:600;cursor:pointer}.massive-connection-button:hover{background:#084438}.massive-connection-button:disabled{opacity:.55;cursor:wait}.massive-connection-button.is-connected{color:#ffd16b;border-color:#a37b35;background:#2b2413}.massive-connection-error:not([hidden]){position:absolute;top:calc(100% + 8px);right:0;width:280px;z-index:60;padding:10px;border:1px solid #fa6581;border-radius:6px;background:#111a2b;color:#ffabbc;font-size:11px;overflow-wrap:anywhere}

@@ -1,0 +1,19 @@
+.etf-toolbar,.etf-metrics,.etf-scroll-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.etf-scanner .scanner-heading{display:flex;justify-content:space-between;align-items:center;gap:20px}.etf-scanner .scanner-heading .primary-button{width:auto;flex:0 0 auto;white-space:nowrap}
+.etf-scanner button,.etf-scanner select{background:#102039;color:#c7d9ee;border:1px solid #30435c;padding:8px 12px;border-radius:7px;cursor:pointer}
+.etf-scanner button[aria-pressed=true]{border-color:#af81ff;color:#e1caff;background:#44256d}
+.etf-profiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:16px}
+.etf-profile{background:#091321;border:1px solid #283951;border-radius:12px;padding:16px;min-width:0}
+.etf-profile-head{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}.etf-profile-head h2{margin:0;font-size:28px}.etf-profile small{color:#93aac5;font-size:11px}
+.etf-profile [data-etf-profile-wheel]{height:600px;overflow:hidden;overscroll-behavior:contain;touch-action:none}
+.etf-profile svg{display:block;width:100%;height:600px}.etf-profile svg [role=button]{cursor:pointer}.etf-profile svg [role=button]:focus{outline:none;stroke:#e9daff}
+.etf-scroll-tools{margin-top:8px}.etf-card-status{font-size:11px;color:#93aac5;min-height:16px}
+.etf-strike-detail table{width:100%;font-size:12px}.etf-strike-detail th,.etf-strike-detail td{padding:6px;text-align:right}.etf-strike-detail th:first-child{text-align:left}
+.etf-flow{display:grid;gap:12px;margin-top:16px}.etf-scanner details{margin:12px 0}.etf-scanner details p{color:#93aac5;font-size:12px;line-height:1.6}
+.etf-expiry{display:flex;gap:8px;align-items:center;margin:8px 0;font-size:12px}.etf-ranking{display:flex;gap:5px;flex-wrap:wrap;margin:10px 0}.etf-ranking small{flex-basis:100%}.etf-ranking button{padding:5px 7px;font-size:11px}.etf-quality{margin-top:14px;padding:10px;background:#101e30;border:1px solid #30435c;border-radius:8px;font-size:11px}.etf-quality p{margin:6px 0;line-height:1.5}.etf-table-scroll{overflow-x:auto;max-height:360px;overflow-y:auto}.etf-table-scroll table{width:100%;font-size:11px;white-space:nowrap}.etf-table-scroll td,.etf-table-scroll th{padding:5px;text-align:right}.etf-table-scroll th:first-child{text-align:left}.etf-option-flow summary,.etf-contracts summary{cursor:pointer;font-size:12px}
+
+.etf-profile-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.etf-profile-heading>.etf-profile-head{min-width:0}.etf-profile-heading>[data-qqq-components]{flex:0 1 58%;min-width:0}.qqq-component-card{border:1px solid #28536a;border-radius:8px;padding:8px;background:#0a1d2c;font-size:10px}.qqq-component-card strong,.qqq-component-card small{display:block;line-height:1.5}.qqq-component-card details{margin:3px 0}.qqq-component-card summary{cursor:pointer}
+
+.qqq-component-assets{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:5px 0}.qqq-component-assets>div>div{display:flex;flex-wrap:wrap;gap:3px}.qqq-component-symbol{display:inline-flex;gap:4px;padding:2px 4px;border:1px solid currentColor;border-radius:4px;font-size:9px}.qqq-component-up{color:#20dfaa}.qqq-component-down{color:#ff688a}.qqq-component-assets .qqq-component-up>small{color:#20dfaa}.qqq-component-assets .qqq-component-down>small{color:#ff688a}
+
+.qqq-period-tools{display:flex;align-items:center;gap:3px}.etf-scanner .qqq-period-tools button{font-size:9px;padding:2px 5px}.qqq-period-tools small{margin-left:auto}

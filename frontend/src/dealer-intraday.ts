@@ -1,0 +1,43 @@
+import type {DealerQuickLink} from './dealer-quick-link';
+import {deriveView,magnet} from '../../integrations/neuro-trader-engine/runtime/frontend/src/lib/analytics';
+import {fmtLvl,fmtMoney,fmtPx,pct} from '../../integrations/neuro-trader-engine/runtime/frontend/src/lib/format';
+import type {NeuroContext} from './neuro-context';
+import {escapeHtml as esc} from './model';
+import './dealer-intraday.css';
+
+const labels=['Control de dealers','Riesgo de expansión de volatilidad','Prueba del Call Wall','Prueba del Put Wall','Presión de pin','Deriva por charm'];
+const colors=['#8b5cff','#ff3d6e','#b79bff','#3ee6ff','#ffc24b','#35f2a1'];
+const score=(n:number)=>Math.max(0,Math.min(100,n));
+function bar(label:string,value:number|null,color:string,note=''):string {
+ return `<div class="dealer-bar"><div><span>${label}${note?` · <small>${esc(note)}</small>`:''}</span><b style="color:${color}">${value==null?'—':Math.round(score(value))+'%'}</b></div><div class="dealer-track"><i style="width:${value==null?0:score(value)}%;background:${color}"></i></div></div>`;
+}
+export function dealerIntradayPanel(c:NeuroContext|undefined,symbol:string,active:boolean,now=Date.now(),linked?:DealerQuickLink,compact=false):string {
+ const link=linked?.symbol===symbol&&Number.isFinite(linked.at)&&linked.at<=now&&now-linked.at<=3000?linked:undefined;
+ const evidence=link?'<details><summary>Engranaje con lectura rápida</summary><p>'+esc(link.detail)+'</p>'+link.rows.map(row=>'<p>'+esc(row)+'</p>').join('')+'<p>Se reutiliza la confluencia de Snipers; horizontes solapados e índice teórico no se suman como votos.</p></details>':'';
+ const compactPanel=(values:(number|null)[],notes:string[]=[])=>`<div class="dealer-combined dealer-compact"><section class="dealer-card"><div class="dealer-metrics">${labels.slice(0,2).map((l,i)=>bar(l,values[i],colors[i],notes[i])).join('')}</div>${evidence||'<details><summary>Engranaje con lectura rápida</summary><p>Esperando lectura rápida vigente de '+esc(symbol)+'.</p></details>'}</section></div>`;
+ const waiting=`<div class="dealer-combined"><div class="dealer-overview"><section class="dealer-card"><h3>CONTEXTO TEÓRICO DE DEALERS</h3><div class="dealer-head"><strong>—%</strong><div><b>Sesgo pendiente</b><p>Esperando perfil vigente de ${esc(symbol)}.</p></div></div><div class="dealer-metrics">${labels.map((l,i)=>bar(l,null,colors[i])).join('')}</div></section><section class="dealer-card dealer-magnet"><h3>IMÁN DE LIQUIDEZ</h3><div class="dealer-maghead"><b>—</b><span>Esperando datos</span></div>${bar('FUERZA',null,'#ff5cf0')}<p class="dealer-candidates-label">CANDIDATOS · ATRACCIÓN</p><p>Sin imanes verificables para este activo.</p></section></div></div>`;
+ const linkedShare=link?.call==null?null:link.side==='PUT'?100-link.call:link.call;
+ const fallback=link?waiting.replace('CONTEXTO TEÓRICO DE DEALERS','CONFLUENCIA INTRADÍA · SNIPERS').replace('—%</strong>',(linkedShare==null?'—':Math.round(linkedShare))+'/100</strong>').replace('Sesgo pendiente',esc(link.headline)).replace(`Esperando perfil vigente de ${esc(symbol)}.`,esc(link.detail)):waiting;
+ const p=c?.modelPayload;
+ if(!active||!c?.available||c.symbol!==symbol||c.at>now||now-c.at>45000||!p||p.symbol!==symbol||!p.profile?.strikes?.length||!(p.market.spot>0)||!p.profile.fine||!p.profile.totals)return compact?compactPanel([null,null]):fallback+evidence;
+ try {
+ const v=deriveView(p,true,'std'),m=magnet(p,v),b=score(v.sc.bias);
+ if(compact)return [v.sc.control,v.sc.volx].every(Number.isFinite)?compactPanel([v.sc.control,v.sc.volx],[(v.netG>=0?'Γ larga':'Γ corta'),`${v.flipPct>=0?'+':''}${v.flipPct.toFixed(2)}% vs flip`]):compactPanel([null,null]);
+ if(![...Object.values(v.sc),v.netG,v.charmFlow,m.strength,m.em].every(Number.isFinite))return fallback+evidence;
+ const hasMomentum=p.path.some(([minute,value])=>minute<=v.minute-30&&Number.isFinite(value)&&value>0);
+ const momentum=hasMomentum?`${v.mom>=0?'+':''}${v.mom.toFixed(2)}% · ${v.mom>0?'alcista':v.mom<0?'bajista':'sin desplazamiento'}`:'Pendiente de 30 minutos de precio';
+ const display=link?linkedShare:b;
+ const color=link?(link.headline.startsWith('DIVERGENCIA')?'#ffc24b':link.side==='CALL'?'#35f2a1':link.side==='PUT'?'#ff3d6e':'#ffc24b'):b>=60?'#35f2a1':b<=40?'#ff3d6e':'#ffc24b',bias=link?link.headline:b>=60?'Contexto comprador':b<=40?'Contexto vendedor':'Contexto mixto';
+ const gammaStrike=v.strikes.filter(s=>Number.isFinite(s.K)&&s.K>0&&Number.isFinite(s.call+s.put)&&Math.abs(s.call+s.put)>0).sort((a,b)=>Math.abs(b.call+b.put)-Math.abs(a.call+a.put))[0]?.K;
+ const notes=[(v.netG>=0?'Γ larga':'Γ corta')+' · K '+fmtLvl(gammaStrike??null),`${v.flipPct>=0?'+':''}${v.flipPct.toFixed(2)}% vs flip`,'K '+fmtLvl(v.cw),'K '+fmtLvl(v.pw),'K '+fmtLvl(v.mg),fmtMoney(v.charmFlow)+'/día'];
+ const values=[v.sc.control,v.sc.volx,v.sc.cwt,v.sc.pwt,v.sc.pin,v.sc.charm];
+ const strength=m.strength>=66?'fuerte':m.strength>=38?'moderada':'débil';
+ const reference=(label:string,n:number|null)=>`<div><span>${esc(label)}</span><b>${fmtLvl(n)}${n==null?'':` <small>${pct(n,v.S)}</small>`}</b></div>`;
+ return `<div class="dealer-combined"><div class="dealer-overview"><section class="dealer-card"><h3>${link?'CONFLUENCIA INTRADÍA · SNIPERS':'CONTEXTO TEÓRICO DE DEALERS'}</h3><div class="dealer-head"><svg viewBox="0 0 76 76" aria-label="${link?'Confluencia Snipers':'Índice teórico'} ${display==null?'pendiente':Math.round(display)} sobre 100"><circle cx="38" cy="38" r="31" fill="none" stroke="#ffffff12" stroke-width="6"/><circle cx="38" cy="38" r="31" fill="none" stroke="${color}" stroke-width="6" stroke-linecap="round" stroke-dasharray="194.78" stroke-dashoffset="${194.78*(1-(display??0)/100)}" transform="rotate(-90 38 38)"/><text x="38" y="43" text-anchor="middle">${display==null?'—':Math.round(display)}</text></svg><div><b style="color:${color}">${esc(bias)}${display==null?'':' · '+Math.round(display)+'/100'}</b><p>${link?esc(link.detail):(v.netG>=0?'Gamma larga, amortiguado':'Gamma corta, amplificado')+' · '+(v.charmFlow>=0?'el charm apoya hacia el cierre':'el charm pesa hacia el cierre')}</p></div></div><div class="dealer-metrics">${labels.map((l,i)=>bar(l,values[i],colors[i],notes[i])).join('')}</div><div class="dealer-momentum"><span>MOMENTUM · 30 MIN</span><b>${esc(momentum)}</b></div></section><section class="dealer-card dealer-magnet"><h3>IMÁN DE LIQUIDEZ <small>mov. esperado hoy ±${fmtPx(m.em)}</small></h3><div class="dealer-maghead"><b>${fmtLvl(m.K)}</b><span>${m.K==null?'Sin atracción gamma positiva':pct(m.K,v.S)+' del precio'}</span></div>${bar('FUERZA',m.K==null?null:m.strength,'#ff5cf0',m.K==null?'':strength)}${!m.regimeLong?'<p>Gamma negativa: menor fuerza del imán y posible amplificación.</p>':''}<p class="dealer-candidates-label">CANDIDATOS · ATRACCIÓN</p>${m.rows.map(r=>`<div class="dealer-candidate"><b>${fmtLvl(r.K)}</b><div class="dealer-track"><i style="width:${score(r.share*100)}%"></i></div><span>${Math.round(r.share*100)}%</span></div>`).join('')||'<p>Sin candidatos de gamma positiva.</p>'}<div class="dealer-references">${reference('Max pain · vencimiento más cercano'+(m.maxPainDays==null?'':` (en ${m.maxPainDays} días háb.)`),m.maxPain)}${reference('Zona de aceleración (gamma negativa)',m.accel)}</div><details><summary>Cómo se calcula</summary><p>Atracción = gamma neta positiva × proximidad al precio, ponderada por el movimiento esperado restante. Cada % es su parte de la atracción total, incluidos candidatos fuera de esta lista. Fuerza según concentración, régimen, hora y confluencia con max pain. Convención +CALL/−PUT; siete días con 0DTE incluido. OI sin fecha certificada.</p></details></section></div><div class="dealer-combined-evidence"><details><summary>Cómo se calculan las puntuaciones</summary><p>Índice teórico Neuro ${Math.round(b)}/100. Charm ${v.sc.charm.toFixed(0)}/100 · momentum ${hasMomentum?v.mom.toFixed(2)+"%":"pendiente"} · flip ${v.flip==null?"no disponible (la fórmula usa un sustituto por régimen)":v.flipPct.toFixed(2)+"%"}. Cobertura ${c.used}/${c.contracts}; no se penaliza en el índice.</p><p>K = strike. El K de control es la mayor concentración absoluta de gamma neta por strike, no una posición real identificada de dealers. El control agrega todo el perfil. Índice dominado por charm, distancia al flip y momentum; no incluye flujo observado ni fuerza del Put Wall. No es probabilidad ni confirmación direccional. Mismas fórmulas de Neuro: gamma neta/bruta, distancia al flip y a los muros, presión de pin según hora, charm normalizado y momentum de 30 minutos. Porcentajes de escala del modelo; no probabilidades de subida.</p>${evidence}</details></div></div>`;
+ } catch {return compact?compactPanel([null,null]):fallback+evidence;}
+}
+
+
+
+
+

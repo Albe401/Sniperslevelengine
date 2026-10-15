@@ -1,0 +1,12 @@
+import {expect,it} from 'vitest';
+import {treasuryContext,type Treasury} from './treasury';
+import {readDirectionScore,directionBadge} from './direction-scanner';
+import {selectedPriceMarkup} from './selected-price';
+import type {LiveState} from './live';
+import type {ControlReading} from './intraday-control';
+const now=Date.UTC(2026,9,2,15),t=():Treasury=>({phase:'ready',date:'2026-10-01',previousDate:'2026-09-30',yieldPercent:5.24,changeBps:-5,checkedMs:now,detail:'Massive Economy'});
+it('displays daily rate and basis-point change, with provenance hidden in detail',()=>{const v=treasuryContext(t(),now);expect(v.label).toContain('5.24%');expect(v.label).toContain('-5.0 pb');expect(v.detail).toContain('2026-10-01');expect(v.detail).toContain('sin velocidad intradía');});
+it('flags failed refresh and old observations',()=>{const v=t();v.phase='failed';expect(treasuryContext(v,now).label).toContain('revisar');v.phase='ready';v.date='2026-09-20';v.previousDate='2026-09-19';expect(treasuryContext(v,now).label).toContain('revisar');});
+it('missing and future observations never invent a yield',()=>{expect(treasuryContext(undefined,now).label).toContain('pendiente');const v=t();v.date='2026-10-03';expect(treasuryContext(v,now).label).toContain('pendiente');});
+it('macro does not fabricate a CALL/PUT score without trading evidence',()=>{const r={symbol:'QQQ'} as ControlReading;const s={symbol:'QQQ',treasury:t()} as LiveState;const d=readDirectionScore(s,r,false,now);expect(d.call).toBeNull();expect(d.put).toBeNull();expect(directionBadge(d)).toContain('5.24%');});
+it('compact price contains only symbol and price, without a visible sentence',()=>{const html=selectedPriceMarkup({symbol:'QQQ',value:749.55,at:now,live:false,label:'Cierre de vela'},true);expect(html).toContain('QQQ');expect(html).toContain('$749.55');expect(html).not.toContain('spot-detail');expect(html).not.toContain('<small');});

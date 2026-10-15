@@ -1,0 +1,935 @@
+{
+  "basis": "synthetic replay; not real-market profitability validation",
+  "benchmark": {
+    "events": 10000,
+    "maxMs": 3.7582,
+    "medianMs": 2.3662,
+    "p95Ms": 2.8946,
+    "samples": 120
+  },
+  "breakthrough": {
+    "at": 1790949630000,
+    "available": true,
+    "bigTradeDrops": 0,
+    "bigTrades": [
+      {
+        "at": 1790949621000,
+        "notional": 200040.0,
+        "price": 100.02,
+        "sequence": 22,
+        "shares": 2000.0,
+        "side": 1
+      },
+      {
+        "at": 1790949622000,
+        "notional": 200040.0,
+        "price": 100.02,
+        "sequence": 23,
+        "shares": 2000.0,
+        "side": 1
+      },
+      {
+        "at": 1790949623000,
+        "notional": 200040.0,
+        "price": 100.02,
+        "sequence": 24,
+        "shares": 2000.0,
+        "side": 1
+      },
+      {
+        "at": 1790949624000,
+        "notional": 200040.0,
+        "price": 100.02,
+        "sequence": 25,
+        "shares": 2000.0,
+        "side": 1
+      },
+      {
+        "at": 1790949625000,
+        "notional": 200040.0,
+        "price": 100.02,
+        "sequence": 26,
+        "shares": 2000.0,
+        "side": 1
+      },
+      {
+        "at": 1790949626000,
+        "notional": 200040.0,
+        "price": 100.02,
+        "sequence": 27,
+        "shares": 2000.0,
+        "side": 1
+      },
+      {
+        "at": 1790949627000,
+        "notional": 200040.0,
+        "price": 100.02,
+        "sequence": 28,
+        "shares": 2000.0,
+        "side": 1
+      },
+      {
+        "at": 1790949628000,
+        "notional": 200040.0,
+        "price": 100.02,
+        "sequence": 29,
+        "shares": 2000.0,
+        "side": 1
+      },
+      {
+        "at": 1790949629000,
+        "notional": 200040.0,
+        "price": 100.02,
+        "sequence": 30,
+        "shares": 2000.0,
+        "side": 1
+      },
+      {
+        "at": 1790949630000,
+        "notional": 200040.0,
+        "price": 100.02,
+        "sequence": 31,
+        "shares": 2000.0,
+        "side": 1
+      }
+    ],
+    "date": "2026-10-02",
+    "executionEvidence": {
+      "absorption": {
+        "candidates": [],
+        "reason": "Provisional thresholds: >=5 same-side executions over >=2s, >=80% classified coverage, >=70% same-side pressure, >=1.5x preceding activity and >=3x displayed size; NBBO hold is not identified order replenishment",
+        "status": "observing",
+        "version": "execution-absorption-v1"
+      },
+      "grouping": "USD 0.01 price buckets, provisional grouping; not exchange tick size or structural levels",
+      "observedSinceMs": 1790949600000,
+      "quoteDrops": 0,
+      "rejectedQuotes": 0,
+      "source": "Massive Stocks T/Q · NBBO; no order IDs or hidden reserve",
+      "status": "observing",
+      "tradeDrops": 0,
+      "version": "execution-evidence-v1",
+      "windows": [
+        {
+          "classifiedPct": 100.0,
+          "complete": true,
+          "endMs": 1790949630000,
+          "excludedZones": 0,
+          "quoteUpdates": 12,
+          "seconds": 10,
+          "startMs": 1790949620000,
+          "trades": 11
+        },
+        {
+          "classifiedPct": 100.0,
+          "complete": true,
+          "endMs": 1790949630000,
+          "excludedZones": 0,
+          "quoteUpdates": 32,
+          "seconds": 30,
+          "startMs": 1790949600000,
+          "trades": 31
+        },
+        {
+          "classifiedPct": 100.0,
+          "complete": false,
+          "endMs": 1790949630000,
+          "excludedZones": 0,
+          "quoteUpdates": 32,
+          "seconds": 60,
+          "startMs": 1790949570000,
+          "trades": 31
+        }
+      ]
+    },
+    "premarket": {
+      "buy": 0.0,
+      "changeFive": -0.0,
+      "changeOne": -0.0,
+      "coveragePct": null,
+      "delta": 0.0,
+      "gaps": 0,
+      "history": [],
+      "lastMs": null,
+      "sell": 0.0,
+      "sinceMs": null,
+      "unknown": 0.0
+    },
+    "recentFive": {
+      "buy": 22100.0,
+      "complete": false,
+      "delta": 22100.0,
+      "endMs": 1790949630000,
+      "sell": 0.0,
+      "startMs": 1790949330000,
+      "unknown": 0.0
+    },
+    "regular": {
+      "buy": 22100.0,
+      "changeFive": 22100.0,
+      "changeOne": 22100.0,
+      "coveragePct": 100.0,
+      "delta": 22100.0,
+      "gaps": 0,
+      "history": [
+        {
+          "at": 1790949630000,
+          "value": 22100.0
+        }
+      ],
+      "lastMs": 1790949630000,
+      "sell": 0.0,
+      "sinceMs": 1790949600000,
+      "unknown": 0.0
+    },
+    "rejected": 0,
+    "symbol": "QQQ"
+  },
+  "buyer": {
+    "at": 1790949630000,
+    "available": true,
+    "bigTradeDrops": 0,
+    "bigTrades": [
+      {
+        "at": 1790949621000,
+        "notional": 200000.0,
+        "price": 100.0,
+        "sequence": 22,
+        "shares": 2000.0,
+        "side": -1
+      },
+      {
+        "at": 1790949622000,
+        "notional": 200000.0,
+        "price": 100.0,
+        "sequence": 23,
+        "shares": 2000.0,
+        "side": -1
+      },
+      {
+        "at": 1790949623000,
+        "notional": 200000.0,
+        "price": 100.0,
+        "sequence": 24,
+        "shares": 2000.0,
+        "side": -1
+      },
+      {
+        "at": 1790949624000,
+        "notional": 200000.0,
+        "price": 100.0,
+        "sequence": 25,
+        "shares": 2000.0,
+        "side": -1
+      },
+      {
+        "at": 1790949625000,
+        "notional": 200000.0,
+        "price": 100.0,
+        "sequence": 26,
+        "shares": 2000.0,
+        "side": -1
+      },
+      {
+        "at": 1790949626000,
+        "notional": 200000.0,
+        "price": 100.0,
+        "sequence": 27,
+        "shares": 2000.0,
+        "side": -1
+      },
+      {
+        "at": 1790949627000,
+        "notional": 200000.0,
+        "price": 100.0,
+        "sequence": 28,
+        "shares": 2000.0,
+        "side": -1
+      },
+      {
+        "at": 1790949628000,
+        "notional": 200000.0,
+        "price": 100.0,
+        "sequence": 29,
+        "shares": 2000.0,
+        "side": -1
+      },
+      {
+        "at": 1790949629000,
+        "notional": 200000.0,
+        "price": 100.0,
+        "sequence": 30,
+        "shares": 2000.0,
+        "side": -1
+      },
+      {
+        "at": 1790949630000,
+        "notional": 200000.0,
+        "price": 100.0,
+        "sequence": 31,
+        "shares": 2000.0,
+        "side": -1
+      }
+    ],
+    "date": "2026-10-02",
+    "executionEvidence": {
+      "absorption": {
+        "candidates": [
+          {
+            "absorbingSide": "buy",
+            "activityRatio": 20.1,
+            "adverseExcursion": -0.0,
+            "aggressiveSide": "sell",
+            "allowedExcursion": 0.01999999999999602,
+            "classifiedPct": 100.0,
+            "displayedSizeRatio": 201.0,
+            "dominancePct": 100.0,
+            "firstMs": 1790949620000,
+            "lastMs": 1790949630000,
+            "observationMs": 10000,
+            "price": 100.0,
+            "shares": 20100.0,
+            "trades": 11
+          }
+        ],
+        "reason": "Provisional thresholds: >=5 same-side executions over >=2s, >=80% classified coverage, >=70% same-side pressure, >=1.5x preceding activity and >=3x displayed size; NBBO hold is not identified order replenishment",
+        "status": "possible-absorption",
+        "version": "execution-absorption-v1"
+      },
+      "grouping": "USD 0.01 price buckets, provisional grouping; not exchange tick size or structural levels",
+      "observedSinceMs": 1790949600000,
+      "quoteDrops": 0,
+      "rejectedQuotes": 0,
+      "source": "Massive Stocks T/Q · NBBO; no order IDs or hidden reserve",
+      "status": "observing",
+      "tradeDrops": 0,
+      "version": "execution-evidence-v1",
+      "windows": [
+        {
+          "classifiedPct": 100.0,
+          "complete": true,
+          "endMs": 1790949630000,
+          "excludedZones": 0,
+          "quoteUpdates": 11,
+          "seconds": 10,
+          "startMs": 1790949620000,
+          "trades": 11
+        },
+        {
+          "classifiedPct": 100.0,
+          "complete": true,
+          "endMs": 1790949630000,
+          "excludedZones": 0,
+          "quoteUpdates": 31,
+          "seconds": 30,
+          "startMs": 1790949600000,
+          "trades": 31
+        },
+        {
+          "classifiedPct": 100.0,
+          "complete": false,
+          "endMs": 1790949630000,
+          "excludedZones": 0,
+          "quoteUpdates": 31,
+          "seconds": 60,
+          "startMs": 1790949570000,
+          "trades": 31
+        }
+      ]
+    },
+    "premarket": {
+      "buy": 0.0,
+      "changeFive": -0.0,
+      "changeOne": -0.0,
+      "coveragePct": null,
+      "delta": 0.0,
+      "gaps": 0,
+      "history": [],
+      "lastMs": null,
+      "sell": 0.0,
+      "sinceMs": null,
+      "unknown": 0.0
+    },
+    "recentFive": {
+      "buy": 0.0,
+      "complete": false,
+      "delta": -22100.0,
+      "endMs": 1790949630000,
+      "sell": 22100.0,
+      "startMs": 1790949330000,
+      "unknown": 0.0
+    },
+    "regular": {
+      "buy": 0.0,
+      "changeFive": -22100.0,
+      "changeOne": -22100.0,
+      "coveragePct": 100.0,
+      "delta": -22100.0,
+      "gaps": 0,
+      "history": [
+        {
+          "at": 1790949630000,
+          "value": -22100.0
+        }
+      ],
+      "lastMs": 1790949630000,
+      "sell": 22100.0,
+      "sinceMs": 1790949600000,
+      "unknown": 0.0
+    },
+    "rejected": 0,
+    "symbol": "QQQ"
+  },
+  "disconnected": {
+    "at": 1790949630000,
+    "available": false,
+    "bigTradeDrops": 0,
+    "bigTrades": [
+      {
+        "at": 1790949621000,
+        "notional": 200000.0,
+        "price": 100.0,
+        "sequence": 22,
+        "shares": 2000.0,
+        "side": -1
+      },
+      {
+        "at": 1790949622000,
+        "notional": 200000.0,
+        "price": 100.0,
+        "sequence": 23,
+        "shares": 2000.0,
+        "side": -1
+      },
+      {
+        "at": 1790949623000,
+        "notional": 200000.0,
+        "price": 100.0,
+        "sequence": 24,
+        "shares": 2000.0,
+        "side": -1
+      },
+      {
+        "at": 1790949624000,
+        "notional": 200000.0,
+        "price": 100.0,
+        "sequence": 25,
+        "shares": 2000.0,
+        "side": -1
+      },
+      {
+        "at": 1790949625000,
+        "notional": 200000.0,
+        "price": 100.0,
+        "sequence": 26,
+        "shares": 2000.0,
+        "side": -1
+      },
+      {
+        "at": 1790949626000,
+        "notional": 200000.0,
+        "price": 100.0,
+        "sequence": 27,
+        "shares": 2000.0,
+        "side": -1
+      },
+      {
+        "at": 1790949627000,
+        "notional": 200000.0,
+        "price": 100.0,
+        "sequence": 28,
+        "shares": 2000.0,
+        "side": -1
+      },
+      {
+        "at": 1790949628000,
+        "notional": 200000.0,
+        "price": 100.0,
+        "sequence": 29,
+        "shares": 2000.0,
+        "side": -1
+      },
+      {
+        "at": 1790949629000,
+        "notional": 200000.0,
+        "price": 100.0,
+        "sequence": 30,
+        "shares": 2000.0,
+        "side": -1
+      },
+      {
+        "at": 1790949630000,
+        "notional": 200000.0,
+        "price": 100.0,
+        "sequence": 31,
+        "shares": 2000.0,
+        "side": -1
+      }
+    ],
+    "date": "2026-10-02",
+    "executionEvidence": {
+      "absorption": {
+        "candidates": [],
+        "reason": "Needs uninterrupted thirty-second observation and fresh trades/NBBO",
+        "status": "pending",
+        "version": "execution-absorption-v1"
+      },
+      "grouping": "USD 0.01 price buckets, provisional grouping; not exchange tick size or structural levels",
+      "observedSinceMs": 1790949600000,
+      "quoteDrops": 0,
+      "rejectedQuotes": 0,
+      "source": "Massive Stocks T/Q · NBBO; no order IDs or hidden reserve",
+      "status": "disconnected",
+      "tradeDrops": 0,
+      "version": "execution-evidence-v1",
+      "windows": [
+        {
+          "classifiedPct": 100.0,
+          "complete": false,
+          "endMs": 1790949630000,
+          "excludedZones": 0,
+          "quoteUpdates": 11,
+          "seconds": 10,
+          "startMs": 1790949620000,
+          "trades": 11
+        },
+        {
+          "classifiedPct": 100.0,
+          "complete": false,
+          "endMs": 1790949630000,
+          "excludedZones": 0,
+          "quoteUpdates": 31,
+          "seconds": 30,
+          "startMs": 1790949600000,
+          "trades": 31
+        },
+        {
+          "classifiedPct": 100.0,
+          "complete": false,
+          "endMs": 1790949630000,
+          "excludedZones": 0,
+          "quoteUpdates": 31,
+          "seconds": 60,
+          "startMs": 1790949570000,
+          "trades": 31
+        }
+      ]
+    },
+    "premarket": {
+      "buy": 0.0,
+      "changeFive": -0.0,
+      "changeOne": -0.0,
+      "coveragePct": null,
+      "delta": 0.0,
+      "gaps": 0,
+      "history": [],
+      "lastMs": null,
+      "sell": 0.0,
+      "sinceMs": null,
+      "unknown": 0.0
+    },
+    "recentFive": {
+      "buy": 0.0,
+      "complete": false,
+      "delta": -22100.0,
+      "endMs": 1790949630000,
+      "sell": 22100.0,
+      "startMs": 1790949330000,
+      "unknown": 0.0
+    },
+    "regular": {
+      "buy": 0.0,
+      "changeFive": -22100.0,
+      "changeOne": -22100.0,
+      "coveragePct": 100.0,
+      "delta": -22100.0,
+      "gaps": 0,
+      "history": [
+        {
+          "at": 1790949630000,
+          "value": -22100.0
+        }
+      ],
+      "lastMs": 1790949630000,
+      "sell": 22100.0,
+      "sinceMs": 1790949600000,
+      "unknown": 0.0
+    },
+    "rejected": 0,
+    "symbol": "QQQ"
+  },
+  "noDepth": {
+    "at": 1790949630000,
+    "available": true,
+    "bigTradeDrops": 0,
+    "bigTrades": [
+      {
+        "at": 1790949621000,
+        "notional": 200000.0,
+        "price": 100.0,
+        "sequence": 22,
+        "shares": 2000.0,
+        "side": -1
+      },
+      {
+        "at": 1790949622000,
+        "notional": 200000.0,
+        "price": 100.0,
+        "sequence": 23,
+        "shares": 2000.0,
+        "side": -1
+      },
+      {
+        "at": 1790949623000,
+        "notional": 200000.0,
+        "price": 100.0,
+        "sequence": 24,
+        "shares": 2000.0,
+        "side": -1
+      },
+      {
+        "at": 1790949624000,
+        "notional": 200000.0,
+        "price": 100.0,
+        "sequence": 25,
+        "shares": 2000.0,
+        "side": -1
+      },
+      {
+        "at": 1790949625000,
+        "notional": 200000.0,
+        "price": 100.0,
+        "sequence": 26,
+        "shares": 2000.0,
+        "side": -1
+      },
+      {
+        "at": 1790949626000,
+        "notional": 200000.0,
+        "price": 100.0,
+        "sequence": 27,
+        "shares": 2000.0,
+        "side": -1
+      },
+      {
+        "at": 1790949627000,
+        "notional": 200000.0,
+        "price": 100.0,
+        "sequence": 28,
+        "shares": 2000.0,
+        "side": -1
+      },
+      {
+        "at": 1790949628000,
+        "notional": 200000.0,
+        "price": 100.0,
+        "sequence": 29,
+        "shares": 2000.0,
+        "side": -1
+      },
+      {
+        "at": 1790949629000,
+        "notional": 200000.0,
+        "price": 100.0,
+        "sequence": 30,
+        "shares": 2000.0,
+        "side": -1
+      },
+      {
+        "at": 1790949630000,
+        "notional": 200000.0,
+        "price": 100.0,
+        "sequence": 31,
+        "shares": 2000.0,
+        "side": -1
+      }
+    ],
+    "date": "2026-10-02",
+    "executionEvidence": {
+      "absorption": {
+        "candidates": [],
+        "reason": "Insufficient classified volume with visible-size coverage (minimum 80%)",
+        "status": "pending",
+        "version": "execution-absorption-v1"
+      },
+      "grouping": "USD 0.01 price buckets, provisional grouping; not exchange tick size or structural levels",
+      "observedSinceMs": 1790949600000,
+      "quoteDrops": 0,
+      "rejectedQuotes": 0,
+      "source": "Massive Stocks T/Q · NBBO; no order IDs or hidden reserve",
+      "status": "observing",
+      "tradeDrops": 0,
+      "version": "execution-evidence-v1",
+      "windows": [
+        {
+          "classifiedPct": 100.0,
+          "complete": true,
+          "endMs": 1790949630000,
+          "excludedZones": 0,
+          "quoteUpdates": 11,
+          "seconds": 10,
+          "startMs": 1790949620000,
+          "trades": 11
+        },
+        {
+          "classifiedPct": 100.0,
+          "complete": true,
+          "endMs": 1790949630000,
+          "excludedZones": 0,
+          "quoteUpdates": 31,
+          "seconds": 30,
+          "startMs": 1790949600000,
+          "trades": 31
+        },
+        {
+          "classifiedPct": 100.0,
+          "complete": false,
+          "endMs": 1790949630000,
+          "excludedZones": 0,
+          "quoteUpdates": 31,
+          "seconds": 60,
+          "startMs": 1790949570000,
+          "trades": 31
+        }
+      ]
+    },
+    "premarket": {
+      "buy": 0.0,
+      "changeFive": -0.0,
+      "changeOne": -0.0,
+      "coveragePct": null,
+      "delta": 0.0,
+      "gaps": 0,
+      "history": [],
+      "lastMs": null,
+      "sell": 0.0,
+      "sinceMs": null,
+      "unknown": 0.0
+    },
+    "recentFive": {
+      "buy": 0.0,
+      "complete": false,
+      "delta": -22100.0,
+      "endMs": 1790949630000,
+      "sell": 22100.0,
+      "startMs": 1790949330000,
+      "unknown": 0.0
+    },
+    "regular": {
+      "buy": 0.0,
+      "changeFive": -22100.0,
+      "changeOne": -22100.0,
+      "coveragePct": 100.0,
+      "delta": -22100.0,
+      "gaps": 0,
+      "history": [
+        {
+          "at": 1790949630000,
+          "value": -22100.0
+        }
+      ],
+      "lastMs": 1790949630000,
+      "sell": 22100.0,
+      "sinceMs": 1790949600000,
+      "unknown": 0.0
+    },
+    "rejected": 0,
+    "symbol": "QQQ"
+  },
+  "now": 1790949630000,
+  "seller": {
+    "at": 1790949630000,
+    "available": true,
+    "bigTradeDrops": 0,
+    "bigTrades": [
+      {
+        "at": 1790949621000,
+        "notional": 200040.0,
+        "price": 100.02,
+        "sequence": 22,
+        "shares": 2000.0,
+        "side": 1
+      },
+      {
+        "at": 1790949622000,
+        "notional": 200040.0,
+        "price": 100.02,
+        "sequence": 23,
+        "shares": 2000.0,
+        "side": 1
+      },
+      {
+        "at": 1790949623000,
+        "notional": 200040.0,
+        "price": 100.02,
+        "sequence": 24,
+        "shares": 2000.0,
+        "side": 1
+      },
+      {
+        "at": 1790949624000,
+        "notional": 200040.0,
+        "price": 100.02,
+        "sequence": 25,
+        "shares": 2000.0,
+        "side": 1
+      },
+      {
+        "at": 1790949625000,
+        "notional": 200040.0,
+        "price": 100.02,
+        "sequence": 26,
+        "shares": 2000.0,
+        "side": 1
+      },
+      {
+        "at": 1790949626000,
+        "notional": 200040.0,
+        "price": 100.02,
+        "sequence": 27,
+        "shares": 2000.0,
+        "side": 1
+      },
+      {
+        "at": 1790949627000,
+        "notional": 200040.0,
+        "price": 100.02,
+        "sequence": 28,
+        "shares": 2000.0,
+        "side": 1
+      },
+      {
+        "at": 1790949628000,
+        "notional": 200040.0,
+        "price": 100.02,
+        "sequence": 29,
+        "shares": 2000.0,
+        "side": 1
+      },
+      {
+        "at": 1790949629000,
+        "notional": 200040.0,
+        "price": 100.02,
+        "sequence": 30,
+        "shares": 2000.0,
+        "side": 1
+      },
+      {
+        "at": 1790949630000,
+        "notional": 200040.0,
+        "price": 100.02,
+        "sequence": 31,
+        "shares": 2000.0,
+        "side": 1
+      }
+    ],
+    "date": "2026-10-02",
+    "executionEvidence": {
+      "absorption": {
+        "candidates": [
+          {
+            "absorbingSide": "sell",
+            "activityRatio": 20.1,
+            "adverseExcursion": 0.0,
+            "aggressiveSide": "buy",
+            "allowedExcursion": 0.01999999999999602,
+            "classifiedPct": 100.0,
+            "displayedSizeRatio": 201.0,
+            "dominancePct": 100.0,
+            "firstMs": 1790949620000,
+            "lastMs": 1790949630000,
+            "observationMs": 10000,
+            "price": 100.02,
+            "shares": 20100.0,
+            "trades": 11
+          }
+        ],
+        "reason": "Provisional thresholds: >=5 same-side executions over >=2s, >=80% classified coverage, >=70% same-side pressure, >=1.5x preceding activity and >=3x displayed size; NBBO hold is not identified order replenishment",
+        "status": "possible-absorption",
+        "version": "execution-absorption-v1"
+      },
+      "grouping": "USD 0.01 price buckets, provisional grouping; not exchange tick size or structural levels",
+      "observedSinceMs": 1790949600000,
+      "quoteDrops": 0,
+      "rejectedQuotes": 0,
+      "source": "Massive Stocks T/Q · NBBO; no order IDs or hidden reserve",
+      "status": "observing",
+      "tradeDrops": 0,
+      "version": "execution-evidence-v1",
+      "windows": [
+        {
+          "classifiedPct": 100.0,
+          "complete": true,
+          "endMs": 1790949630000,
+          "excludedZones": 0,
+          "quoteUpdates": 11,
+          "seconds": 10,
+          "startMs": 1790949620000,
+          "trades": 11
+        },
+        {
+          "classifiedPct": 100.0,
+          "complete": true,
+          "endMs": 1790949630000,
+          "excludedZones": 0,
+          "quoteUpdates": 31,
+          "seconds": 30,
+          "startMs": 1790949600000,
+          "trades": 31
+        },
+        {
+          "classifiedPct": 100.0,
+          "complete": false,
+          "endMs": 1790949630000,
+          "excludedZones": 0,
+          "quoteUpdates": 31,
+          "seconds": 60,
+          "startMs": 1790949570000,
+          "trades": 31
+        }
+      ]
+    },
+    "premarket": {
+      "buy": 0.0,
+      "changeFive": -0.0,
+      "changeOne": -0.0,
+      "coveragePct": null,
+      "delta": 0.0,
+      "gaps": 0,
+      "history": [],
+      "lastMs": null,
+      "sell": 0.0,
+      "sinceMs": null,
+      "unknown": 0.0
+    },
+    "recentFive": {
+      "buy": 22100.0,
+      "complete": false,
+      "delta": 22100.0,
+      "endMs": 1790949630000,
+      "sell": 0.0,
+      "startMs": 1790949330000,
+      "unknown": 0.0
+    },
+    "regular": {
+      "buy": 22100.0,
+      "changeFive": 22100.0,
+      "changeOne": 22100.0,
+      "coveragePct": 100.0,
+      "delta": 22100.0,
+      "gaps": 0,
+      "history": [
+        {
+          "at": 1790949630000,
+          "value": 22100.0
+        }
+      ],
+      "lastMs": 1790949630000,
+      "sell": 0.0,
+      "sinceMs": 1790949600000,
+      "unknown": 0.0
+    },
+    "rejected": 0,
+    "symbol": "QQQ"
+  }
+}

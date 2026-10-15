@@ -1,0 +1,37 @@
+import {levelOpenInterest} from './level-open-interest';
+import {sameStrike} from './strike-key';
+import {barrierFlow} from './barrier-flow';
+import type {EtfReport} from './etf-dealers';
+import type {BidAskWindow} from './strike-bid-ask';
+import type {MarketEvidence} from './market-evidence';
+import type {LevelEvent} from './intraday-map';
+export function levelDefense(strike:number,market:MarketEvidence|undefined,events:LevelEvent[]=[],now=Date.now()){
+ const pending={label:'Defensa pendiente',detail:'Falta interacción sostenida y CVD vigente comparable. La concentración no prueba defensa.'};
+ if(!Number.isFinite(now)||!market||!Number.isFinite(market.at)||market.at>now||now-market.at>3000||!market.price.ready)return pending;
+ const event=events.find(e=>e.level===strike&&e.sustained&&Number.isFinite(e.at)&&e.at<=now&&now-e.at<=300000&&[1,-1].includes(e.direction)&&['Defensa observada','Rechazo observado'].includes(e.action));
+ const c=market.cvd;
+ if(!event||market.price.spot==null||!Number.isFinite(market.price.spot)||(market.price.spot-strike)*event.direction<=0)return pending;
+ if(!event||c.signal==null||!Number.isFinite(c.signal)||Math.abs(c.signal)>1||c.coverage==null||!Number.isFinite(c.coverage)||c.coverage<80||c.coverage>100||c.at==null||!Number.isFinite(c.at)||c.at>now||now-c.at>3000)return pending;
+ if(Math.abs(c.signal)<.1)return {label:'Defensa sin presión clara',detail:'Interacción sostenida, pero el CVD global no tiene predominio suficiente.'};
+ if(Math.sign(c.signal)!==event.direction)return {label:'Defensa contradicha',detail:'La reacción del nivel y el CVD global van en sentidos opuestos; no confirma defensa.'};
+ return {label:event.direction>0?'Defensa compradora observada':'Defensa vendedora observada',detail:`Reacción sostenida del precio y CVD 5 min alineado, cobertura ${c.coverage.toFixed(1)}%. El CVD es del activo, no atribuible a órdenes de ese strike. Lectura provisional; no identifica quién defiende ni garantiza continuidad.`};
+}
+/** Composition and sampled contract pressure; neither dealer inventory nor calibrated probability. */
+export function quantitativeLevel(strike:number,report:EtfReport|undefined,rows:BidAskWindow[]|undefined,expirations:string[],fresh:boolean){
+ const oi=levelOpenInterest(report,strike,expirations),flow=barrierFlow(rows,strike,expirations,fresh);
+ let bullish:number|null=null,bearish:number|null=null,imbalance:number|null=null;
+ if(flow&&flow.coverage>=80){
+  const selected=rows!.filter(r=>sameStrike(r.strike,strike)&&expirations.includes(r.expiration)&&['call','put'].includes(r.kind));
+  bullish=selected.reduce((n,r)=>n+(r.kind==='call'?r.ask!:r.bid!),0);
+  bearish=selected.reduce((n,r)=>n+(r.kind==='call'?r.bid!:r.ask!),0);
+  const known=bullish+bearish;
+  if(Number.isFinite(known)&&known>0)imbalance=(bullish-bearish)/known;else {bullish=null;bearish=null;}
+ }
+ const label=imbalance==null?'Presión pendiente':Math.abs(imbalance)<.1?'Presión equilibrada':imbalance>0?'Presión alcista inferida':'Presión bajista inferida';
+ const detail=[oi?`OI CALL ${oi.call} (${oi.callPct}%) · PUT ${oi.put} (${oi.putPct}%).`:'OI por lado pendiente.',
+  imbalance==null?'Presión no evaluable: necesita ventana vigente y ≥80% de volumen clasificado.':`${label}: ${(100*(imbalance+1)/2).toFixed(1)}% alcista / ${(100*(1-imbalance)/2).toFixed(1)}% bajista; desequilibrio ${imbalance.toFixed(3)}.`,
+  flow?`Cobertura clasificada ${flow.coverage.toFixed(1)}% de la muestra · sin clasificar ${flow.unknown} contratos.`:'Sin ventana de operaciones cubierta.',
+  '5 min · strike exacto · contratos de la muestra suscrita. Alcista = CALL ASK + PUT BID; bajista = CALL BID + PUT ASK. Desequilibrio = (alcista − bajista)/(alcista + bajista). ASK/BID infiere agresor, no apertura/cierre ni inventario dealer.',
+  'La fuerza estructural es concentración, no presión activa. Probabilidad de llegada/rechazo/ruptura pendiente de calibración; no se deduce de OI ni de este porcentaje.'].join(' ');
+ return {oi,flow,bullish,bearish,imbalance,label,detail,probability:null};
+}

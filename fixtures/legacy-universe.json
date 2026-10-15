@@ -1,0 +1,95 @@
+{
+  "source": "Default ten assets requested for this web application",
+  "assets": {
+    "AAPL": {
+      "name": "AAPL",
+      "kind": "STOCK",
+      "sector": null,
+      "live_range": 5,
+      "quick_range": 35,
+      "level_range": 25,
+      "role": "STOCK"
+    },
+    "MSFT": {
+      "name": "MSFT",
+      "kind": "STOCK",
+      "sector": null,
+      "live_range": 5,
+      "quick_range": 35,
+      "level_range": 25,
+      "role": "STOCK"
+    },
+    "AMZN": {
+      "name": "AMZN",
+      "kind": "STOCK",
+      "sector": null,
+      "live_range": 5,
+      "quick_range": 35,
+      "level_range": 25,
+      "role": "STOCK"
+    },
+    "GOOGL": {
+      "name": "GOOGL",
+      "kind": "STOCK",
+      "sector": null,
+      "live_range": 5,
+      "quick_range": 35,
+      "level_range": 25,
+      "role": "STOCK"
+    },
+    "META": {
+      "name": "META",
+      "kind": "STOCK",
+      "sector": null,
+      "live_range": 5,
+      "quick_range": 35,
+      "level_range": 25,
+      "role": "STOCK"
+    },
+    "NVDA": {
+      "name": "NVDA",
+      "kind": "STOCK",
+      "sector": null,
+      "live_range": 5,
+      "quick_range": 35,
+      "level_range": 25,
+      "role": "STOCK"
+    },
+    "TSLA": {
+      "name": "TSLA",
+      "kind": "STOCK",
+      "sector": null,
+      "live_range": 5,
+      "quick_range": 35,
+      "level_range": 25,
+      "role": "STOCK"
+    },
+    "QQQ": {
+      "name": "QQQ",
+      "kind": "ETF",
+      "sector": null,
+      "live_range": 5,
+      "quick_range": 35,
+      "level_range": 25,
+      "role": "STOCK"
+    },
+    "SPY": {
+      "name": "SPY",
+      "kind": "ETF",
+      "sector": null,
+      "live_range": 5,
+      "quick_range": 35,
+      "level_range": 25,
+      "role": "STOCK"
+    },
+    "IWM": {
+      "name": "IWM",
+      "kind": "ETF",
+      "sector": null,
+      "live_range": 5,
+      "quick_range": 35,
+      "level_range": 25,
+      "role": "STOCK"
+    }
+  }
+}

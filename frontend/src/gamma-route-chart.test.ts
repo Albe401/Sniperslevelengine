@@ -1,0 +1,4 @@
+import {expect,it} from 'vitest';
+import {gammaRouteChart,gammaLivePage} from './gamma-live';
+it('reuses the gamma chart/profile host without duplicating intraday control or the movement panel',()=>{const html=gammaRouteChart(undefined,'QQQ',false);expect(html).toContain('id="gamma-live-chart" data-chart-preserve');expect(html).toContain('id="gamma-live-profile"');expect(html).toContain('data-route-overlay="structure"');expect(html).not.toContain('data-route-overlay="bb"');expect(html).toContain('data-gl-interval="240"');expect(html).not.toContain('LECTURA DEL MOVIMIENTO');expect(html).not.toContain('CONTROL INTRADÍA');expect(html).not.toContain('data-refresh-options');});
+it('keeps the original gamma layout and readings',()=>{const html=gammaLivePage(undefined,'QQQ',false);expect(html).toContain('LECTURA DEL MOVIMIENTO');expect(html).not.toContain('data-route-overlay');});

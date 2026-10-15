@@ -1,0 +1,7 @@
+import {it,expect} from 'vitest';
+import {GammaSampling} from './gamma-reading';
+import type {gammaObservation} from './gamma-reading';
+const payload=(t:number,kind='aligned',direction=1)=>({symbol:'QQQ',capturedMs:t,complete:true,movement:{kind,direction},levels:[{id:'call',strike:100,dominant:true}]} as ReturnType<typeof gammaObservation>);
+it('records first frame and periodic snapshots without duplicating render updates',()=>{const x=new GammaSampling();expect(x.shouldRecord(payload(1000))).toBe(true);expect(x.shouldRecord(payload(1000))).toBe(false);expect(x.shouldRecord(payload(30999))).toBe(false);expect(x.shouldRecord(payload(31000))).toBe(true);});
+it('retains both trend changes immediately between periodic snapshots',()=>{const x=new GammaSampling();x.shouldRecord(payload(1000));expect(x.shouldRecord(payload(3000,'forming',0))).toBe(true);expect(x.shouldRecord(payload(5000,'reversal',-1))).toBe(true);expect(x.shouldRecord(payload(7000,'reversal',1))).toBe(true);});
+it('captures changes in dominant strikes, identity, coverage and backwards clock',()=>{const x=new GammaSampling();x.shouldRecord(payload(1000));let p=payload(2000);p.levels[0].dominant=false;expect(x.shouldRecord(p)).toBe(true);p=payload(3000);p.symbol='AAPL';expect(x.shouldRecord(p)).toBe(true);p={...p,capturedMs:4000,complete:false};expect(x.shouldRecord(p)).toBe(true);p.capturedMs=2000;expect(x.shouldRecord(p)).toBe(true);});

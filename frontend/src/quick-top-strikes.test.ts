@@ -1,0 +1,10 @@
+import {expect,it} from 'vitest';
+import {quickTopStrikes} from './quick-top-strikes';
+import type {LiveState} from './live';
+const now=Date.parse('2026-10-02T15:00:00Z');
+const contract={ticker:'O:QQQ261002C00750000',expiration:'2026-10-02',strike:750,score:80,oi:1000,volume:200};
+const state=()=>({symbol:'QQQ',publishedMs:now,optionSnapshotStatus:{phase:'ready',observedMs:now,horizons:[{mode:'DAY',observedMs:now,expirations:['2026-10-02'],structure:{topContracts:{covered:2,total:3,calls:[contract],puts:[{...contract,strike:730}]}}}]}} as unknown as LiveState);
+it('reuses the selected daily ranking with separate CALL/PUT tables and coverage',()=>{const html=quickTopStrikes(state(),'QQQ',true,now);for(const text of ['TOP 5 STRIKES CALL','TOP 5 STRIKES PUT','750.00','730.00','Diario','Provisional','2/3'])expect(html).toContain(text);});
+it('withholds foreign, inactive, stale, future, failed or stale-horizon rows',()=>{const s=state();const cases=[quickTopStrikes(s,'SPY',true,now),quickTopStrikes(s,'QQQ',false,now),quickTopStrikes(s,'QQQ',true,now+20000)];s.optionSnapshotStatus.phase='failed';cases.push(quickTopStrikes(s,'QQQ',true,now));s.optionSnapshotStatus.phase='ready';s.optionSnapshotStatus.horizons[0].observedMs=now+1;cases.push(quickTopStrikes(s,'QQQ',true,now));s.optionSnapshotStatus.horizons[0].observedMs=now-900001;cases.push(quickTopStrikes(s,'QQQ',true,now));for(const html of cases){expect(html).not.toContain('750.00');expect(html).toContain('Esperando contratos');}});
+it('uses next-session fallback without presenting it as today',()=>{const s=state();s.optionSnapshotStatus.horizons[0].mode='NEXT_SESSION';expect(quickTopStrikes(s,'QQQ',true,now)).toContain('Próxima sesión');});
+it('escapes the symbol and renders a safe empty state',()=>{const html=quickTopStrikes(undefined,'<QQQ>',false,now);expect(html).toContain('&lt;QQQ&gt;');expect(html).not.toContain('NaN');expect(html).toContain('Esperando contratos');});

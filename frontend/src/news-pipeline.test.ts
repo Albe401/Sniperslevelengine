@@ -1,0 +1,7 @@
+import {it,expect,vi} from 'vitest';
+const mocks=vi.hoisted(()=>({invoke:vi.fn()}));
+vi.mock('@tauri-apps/api/core',()=>({invoke:mocks.invoke}));
+import {queryNews} from './news-pipeline';
+it('uses one global fetch when the bounded query is complete',async()=>{mocks.invoke.mockReset();mocks.invoke.mockResolvedValue({items:[],fetchedMs:100,truncated:false});const p=await queryNews(['ON','SONY']);expect(mocks.invoke).toHaveBeenCalledTimes(1);expect(p.coverage.symbols.every(s=>s.status==='global')).toBe(true);});
+it('publishes targeted coverage even when the global query fails',async()=>{mocks.invoke.mockReset();mocks.invoke.mockImplementation(async(_c,args)=>{if(args.ticker==='')throw Error('provider unavailable');return {items:[],fetchedMs:100,truncated:false};});const p=await queryNews(['ON']);expect(mocks.invoke).toHaveBeenCalledTimes(2);expect(p.report).not.toBeNull();expect(p.report!.truncated).toBe(true);expect(p.coverage.global.status).toBe('error');});
+it('keeps oldest successful freshness, failures and newest article revisions',async()=>{mocks.invoke.mockReset();mocks.invoke.mockImplementation(async(_c,args)=>{if(args.ticker==='SONY')throw Error('failed');return {items:[{id:'1',revision:args.ticker===''?1:2,translated:args.ticker!==''}],fetchedMs:args.ticker===''?100:200,truncated:args.ticker===''};});const p=await queryNews(['ON','SONY']);expect(p.report!.fetchedMs).toBe(100);expect(p.items[0].revision).toBe(2);expect(p.coverage.failures).toBe(1);});

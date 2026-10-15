@@ -1,0 +1,33 @@
+import {it,expect} from 'vitest';
+import {priceExtension,priceExtensionPanel} from './price-extension';
+import type {LiveState} from './live';
+import type {AtrRead} from './intraday-atr';
+import type {MarketEvidence} from './market-evidence';
+import {readMarketEvidence} from './market-evidence';
+const now=Date.parse('2026-10-05T16:00:00Z'),open=Date.parse('2026-10-05T13:30:00Z');
+function fixture(){
+ const s={symbol:'QQQ',publishedMs:now,stocks:{phase:'streaming'},ticks:{QQQ:{symbol:'QQQ',price:103,tradeMs:now}},metrics:{session:'2026-10-05',phase:'Sesión RTH',vwap:100,asofMs:now},chartHistory:{sessions:[{date:'2026-10-02',openMs:open-259200000,closeMs:open-259200000+23400000},{date:'2026-10-05',openMs:open,closeMs:open+23400000}],minutes:Array.from({length:11},(_,i)=>({timestampMs:now-(11-i)*60000,open:100,low:99,high:104,close:i<=5?100+i*.4:102+(i-5)*.1,volume:100}))}} as unknown as LiveState;
+ const a:AtrRead={value:1,percent:1,lastRangeRatio:1,endMs:now,reason:'',daily:{symbol:'QQQ',through:'2026-10-02',value:5,close:100,detail:''},context:{label:'',detail:'',moveFive:null,rthRangeDaily:1.2,cvd:''}};
+ const m={symbol:'QQQ',session:'QQQ:2026-10-05:0',at:now,levels:[],cvd:{signal:-.5,coverage:90,at:now},flow:{signal:-.5,coverage:90,at:now}} as unknown as MarketEvidence;
+ return {s,a,m};
+}
+it.each([[101.99,'normal'],[102,'extended'],[103,'extreme'],[97,'extreme']])('classifies %s without turning extension into direction',(spot,state)=>{const {s,a,m}=fixture();s.ticks.QQQ.price=Number(spot);const r=priceExtension(s,'QQQ',true,a,m,now);expect(r.state).toBe(state);expect(r.side).toBe(Number(spot)<100?'lower':'upper');});
+it('requires both contrary pressures and fading closed-bar advance for possible exhaustion',()=>{const {s,a,m}=fixture();expect(priceExtension(s,'QQQ',true,a,m,now).support).toBe('weakening');m.flow.signal=.5;expect(priceExtension(s,'QQQ',true,a,m,now).support).toBe('mixed');m.flow.signal=-.5;s.chartHistory!.minutes[10].close=104;expect(priceExtension(s,'QQQ',true,a,m,now).support).toBe('mixed');});
+it('identifies strong continuation separately from extreme distance',()=>{const {s,a,m}=fixture();m.flow.signal=.5;m.cvd.signal=.5;const r=priceExtension(s,'QQQ',true,a,m,now);expect(r.state).toBe('extreme');expect(r.support).toBe('strong');});
+it.each(['asset','inactive','stale','future','vwap','atr','session','tick','calendar'])('rejects %s inputs',kind=>{const {s,a,m}=fixture();if(kind==='asset')s.symbol='SPY';if(kind==='stale')s.publishedMs=now-3001;if(kind==='future')s.publishedMs=now+1;if(kind==='vwap')s.metrics.asofMs=now-180001;if(kind==='atr')a.value=NaN;if(kind==='session')s.metrics.session='2026-10-02';if(kind==='tick')s.ticks.QQQ.tradeMs=now-15001;if(kind==='calendar')s.chartHistory!.sessions[1].closeMs=now;expect(priceExtension(s,'QQQ',kind!=='inactive',a,m,now).state).toBe('pending');});
+it.each(['gap','duplicate','low-coverage','stale-cvd','other-asset'])('retains distance but withholds confirmation for %s',kind=>{const {s,a,m}=fixture();if(kind==='gap')s.chartHistory!.minutes.pop();if(kind==='duplicate')s.chartHistory!.minutes[1].timestampMs=s.chartHistory!.minutes[0].timestampMs;if(kind==='low-coverage')m.cvd.coverage=69;if(kind==='stale-cvd')m.cvd.at=now-3001;if(kind==='other-asset')m.symbol='SPY';expect(priceExtension(s,'QQQ',true,a,m,now).support).toBe('pending');});
+it('does not treat a large daily range as directional extension and drops old daily context',()=>{const {s,a,m}=fixture();s.ticks.QQQ.price=100.5;a.context!.rthRangeDaily=4;expect(priceExtension(s,'QQQ',true,a,m,now).state).toBe('normal');a.daily!.through='2026-10-01';expect(priceExtension(s,'QQQ',true,a,m,now).range).toBeNull();});
+it('escapes nearby references and does not mutate inputs',()=>{const {s,a,m}=fixture();m.levels=[{name:'<img>',price:103,expiration:'2026-10-05',observed:now,provisional:true}];const before=JSON.stringify({s,a,m});expect(priceExtensionPanel(priceExtension(s,'QQQ',true,a,m,now))).toContain('&lt;img&gt;');expect(JSON.stringify({s,a,m})).toBe(before);});
+it('keeps the calculation inexpensive with a full session history',()=>{const {s,a,m}=fixture();s.chartHistory!.minutes.unshift(...Array.from({length:5000},(_,i)=>({...s.chartHistory!.minutes[0],timestampMs:now-(5011-i)*60000})));const start=performance.now();for(let i=0;i<1000;i++)priceExtension(s,'QQQ',true,a,m,now);const mean=(performance.now()-start)/1000;console.log(`Extensión del precio: ${mean.toFixed(3)} ms/cálculo · 5011 minutos`);expect(mean).toBeLessThan(10);});
+
+it('uses the real composite session and rejects another connection',()=>{const {s,a,m}=fixture();s.startedMs=123;m.session='QQQ:2026-10-05:123';expect(priceExtension(s,'QQQ',true,a,m,now).support).toBe('weakening');m.session='QQQ:2026-10-05:122';const r=priceExtension(s,'QQQ',true,a,m,now);expect(r.state).toBe('extreme');expect(r.support).toBe('pending');expect(r.supportReason).toContain('sesión');});
+it.each(['SPY','AAPL','QCOM','NVDA'])('confirms only the matching session after selecting %s',symbol=>{const {s,a,m}=fixture();s.symbol=symbol;s.startedMs=123;s.ticks[symbol]={...s.ticks.QQQ,symbol};m.symbol=symbol;m.session=`${symbol}:2026-10-05:123`;expect(priceExtension(s,symbol,true,a,m,now).support).toBe('weakening');m.session='QQQ:2026-10-05:123';expect(priceExtension(s,symbol,true,a,m,now).support).toBe('pending');});
+it('explains missing classified flow without discarding measured extension',()=>{const {s,a,m}=fixture();m.flow.signal=null;m.flow.reason='Prima 5m pendiente';const r=priceExtension(s,'QQQ',true,a,m,now);expect(r.state).toBe('extreme');expect(r.support).toBe('pending');expect(priceExtensionPanel(r)).toContain('Prima 5m pendiente');});
+it('confirms extension using the actual shared evidence producer',()=>{
+ const {s,a}=fixture();s.startedMs=open;s.options={phase:'streaming',lastEventMs:now} as LiveState['options'];
+ s.flow={asof_ms:now,intraday_windows:[{minutes:5,premium_complete:true,event_count:4,buckets:Object.fromEntries(['CALL BUY','PUT SELL','PUT BUY','CALL SELL','UNKNOWN'].map(k=>[k,{premium:k==='PUT BUY'?100:0}]))}]} as LiveState['flow'];
+ s.cvd={symbol:'QQQ',date:'2026-10-05',at:now,available:true,regular:{sinceMs:open,lastMs:now},recentFive:{startMs:now-300000,endMs:now,complete:true,buy:0,sell:100,unknown:0,delta:-100}} as LiveState['cvd'];
+ const market=readMarketEvidence(s,'QQQ',true,now,{price:{} as MarketEvidence['price'],signal:1});
+ expect(market.session).toBe(`QQQ:2026-10-05:${open}`);expect(market.cvd.signal).toBe(-1);expect(market.flow.signal).toBe(-1);
+ expect(priceExtension(s,'QQQ',true,a,market,now).support).toBe('weakening');
+});

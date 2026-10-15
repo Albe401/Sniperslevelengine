@@ -1,0 +1,6 @@
+import {expect,it,vi} from 'vitest';
+import {gapPanel} from './gap-panel';
+import {gapReading} from './gap-engine';
+vi.mock('./gap-engine',()=>({gapReading:vi.fn(()=>({state:'pending',above:[],inside:[],below:[],detail:'Esperando datos'}))}));
+it('shows a pending asset panel without inventing a zone or a probability',()=>{const html=gapPanel(undefined,'QQQ',false);expect(html).toContain('GAP ENGINE · QQQ');expect(html).toContain('Esperando historial vigente');expect(html).not.toContain('/100');expect(html).toContain('no probabilidad');});
+it('renders price, fill, age and route coverage independently of FVG',()=>{vi.mocked(gapReading).mockReturnValueOnce({state:'ready',above:[{gap:{remainingLower:103,remainingUpper:104,state:'PARTIAL',kind:'OPENING',fillPct:18,ageSessions:3,exDividend:false},distancePct:.42,distanceAtr:.6,fillTarget:104,attractionScore:78,path:'barrier',expectedBand:'inside',reasons:['Barrera CW']}],inside:[],below:[],detail:'Cobertura completa'} as unknown as ReturnType<typeof gapReading>);const html=gapPanel(undefined,'QQQ',true);for(const text of ['$103.00–$104.00','Relleno 18%','edad 3 sesiones','78/100','barrera en ruta','Dentro de banda esperada'])expect(html).toContain(text);});

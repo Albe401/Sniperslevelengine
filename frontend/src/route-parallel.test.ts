@@ -1,0 +1,11 @@
+import {it,expect} from 'vitest';
+import {parallelScenarios} from './route-parallel';
+import type {MarketEvidence} from './market-evidence';
+import type {RouteResult} from './route-engine';
+const now=1000000;
+const market=()=>({at:now,price:{ready:true,spot:100},levels:[98,99,101,102,103].map(price=>({price,observed:now,asof:now,role:'barrier',provisional:false}))} as unknown as MarketEvidence);
+const result=():RouteResult=>({state:'waiting',direction:0,level:null,target:null,stop:null,reason:'waiting',at:now,key:''});
+it('uses current distinct structural references for both conditional alternatives',()=>{const [call,put]=parallelScenarios(market(),result(),now);expect(call).toMatchObject({side:'CALL',trigger:101,target:102,next:103,actual:false,stop:null});expect(put).toMatchObject({side:'PUT',trigger:99,target:98,actual:false,stop:null});});
+it('does not manufacture an opposite stop or confirmed signal',()=>{const r={...result(),state:'sustained' as const,direction:1,level:99,target:101,stop:98};const [call,put]=parallelScenarios(market(),r,now);expect(call).toMatchObject({actual:true,target:101,stop:98});expect(put.actual).toBe(false);expect(put.stop).toBeNull();});
+it('suppresses scenarios with stale or missing own price and stale levels',()=>{const m=market();m.price.ready=false;expect(parallelScenarios(m,result(),now).every(s=>s.trigger===null&&s.target===null)).toBe(true);m.price.ready=true;m.at=now-3001;expect(parallelScenarios(m,result(),now)[0].trigger).toBeNull();m.at=now;m.levels.forEach(l=>l.asof=now-900001);expect(parallelScenarios(m,result(),now)[0].trigger).toBeNull();});
+it('does not turn pull or vacuum edges into activation levels',()=>{const m=market();m.levels.forEach(l=>l.role='pull');expect(parallelScenarios(m,result(),now).every(s=>s.trigger===null)).toBe(true);});

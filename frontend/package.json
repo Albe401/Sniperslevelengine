@@ -1,0 +1,24 @@
+{
+  "name": "@snipers/web-interface",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc --noEmit && vite build",
+    "check": "tsc --noEmit",
+    "test": "vitest run src/snapshot-model.test.ts src/contract-inventory.test.ts src/option-oi-heatmap.test.ts src/quick-chart-levels.test.ts"
+  },
+  "dependencies": {
+    "@fontsource-variable/inter": "^5.2.8",
+    "@tauri-apps/api": "^2.0.0",
+    "lightweight-charts": "^5.2.1",
+    "lucide": "^0.468.0"
+  },
+  "devDependencies": {
+    "@types/node": "25.9.5",
+    "typescript": "^5.9.0",
+    "vite": "^7.0.0",
+    "vitest": "^5.0.4"
+  }
+}

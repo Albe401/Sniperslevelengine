@@ -1,0 +1,11 @@
+import {expect,it} from 'vitest';
+import {intradaySummary} from './intraday-summary';
+import type {PriceNow} from './price-now';
+const p=(direction:number,ready=true)=>({ready,direction} as PriceNow);
+const f=(tone:string,partial=false)=>({tone,headline:partial?'MUESTRA · PARCIAL':'VENTAJA · INFERIDA',change:'Ventaja sostenida',evidence:'Flujo observado'});
+it.each([[1,'buyers','COMPRADORES'],[-1,'sellers','VENDEDORES']])('aligned advantage %s',(d,t,who)=>expect(intradaySummary(p(d),undefined,f(t)).headline).toBe(`${who} TIENEN VENTAJA`));
+it.each([[-1,'buyers'],[1,'sellers']])('opposed evidence %s',(d,t)=>expect(intradaySummary(p(d),undefined,f(t))).toMatchObject({headline:'CONTROL EN DISPUTA · SIN GANADOR',direction:0}));
+it('partial is not equilibrium',()=>expect(intradaySummary(p(0),undefined,f('buyers',true)).headline).toContain('EVIDENCIA PARCIAL'));
+it('sideways pressure has no winner',()=>expect(intradaySummary(p(0),undefined,f('buyers')).direction).toBe(0));
+it('balanced evidence has no advantage',()=>expect(intradaySummary(p(0),undefined,f('balanced')).headline).toContain('SIN VENTAJA CLARA'));
+it('price alone or missing price cannot confirm control',()=>{expect(intradaySummary(p(-1),undefined,f('waiting')).headline).toBe('VENTAJA SIN DETERMINAR');expect(intradaySummary(p(1,false),undefined,f('buyers')).direction).toBe(0);});

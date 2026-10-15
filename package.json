@@ -1,0 +1,1 @@
+{"name":"snipers-web","private":true,"type":"module","version":"0.1.0","scripts":{"build":"npm --prefix frontend run build","start":"node server/server.mjs","test":"node --test server/*.test.mjs"},"dependencies":{"@neondatabase/serverless":"^1.2.0"},"engines":{"node":">=22"}}

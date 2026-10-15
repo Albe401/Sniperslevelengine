@@ -1,0 +1,1 @@
+{"main-window":{"identifier":"main-window","description":"Local market workspace; no shell, filesystem or network plugins exposed to the webview.","local":true,"windows":["main"],"permissions":["core:default"]}}

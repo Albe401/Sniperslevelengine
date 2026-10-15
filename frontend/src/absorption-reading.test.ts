@@ -1,0 +1,10 @@
+import {it,expect} from 'vitest';
+import {absorptionReading} from './absorption-reading';
+import type {ControlReading} from './intraday-control';
+const now=Date.UTC(2026,8,28,15);
+const fixture=()=>({priceNow:{ready:true,spot:100.1,direction:1},flowControl:{tone:'sellers',quality:'ready',headline:'VENDEDORES'},participation:{rvol:1.2,at:now},intradayMap:{levels:[{name:'PUT WALL',level:100}],events:[{name:'PUT WALL',level:100,at:now-120000,direction:1,sustained:true}]}} as unknown as ControlReading);
+it('flags only a possible downside absorption and explains its limitation',()=>{const a=absorptionReading(fixture(),now);expect(a.kind).toBe('fall');expect(a.detail).toContain('no confirma absorción');});
+it('handles the inverse upside scenario',()=>{const r=fixture();r.priceNow!.spot=99.9;r.priceNow!.direction=-1;r.flowControl!.tone='buyers';r.intradayMap!.events[0].direction=-1;expect(absorptionReading(r,now).kind).toBe('rise');});
+it.each(['expired','future','partial','rvol','rvol-stale','rvol-future','far','moved','price','no-hold','same-flow'])('rejects unsupported absorption: %s',kind=>{const r=fixture();if(kind==='expired')r.intradayMap!.events[0].at=now-180001;if(kind==='future')r.intradayMap!.events[0].at=now+1;if(kind==='partial')r.flowControl!.quality='partial';if(kind==='rvol')r.participation!.rvol=.9;if(kind==='rvol-stale')r.participation!.at=now-180001;if(kind==='rvol-future')r.participation!.at=now+1;if(kind==='far')r.priceNow!.spot=102;if(kind==='moved')r.intradayMap!.levels[0].level=101;if(kind==='price')r.priceNow!.ready=false;if(kind==='no-hold')r.intradayMap!.events[0].sustained=false;if(kind==='same-flow')r.flowControl!.tone='buyers';expect(absorptionReading(r,now).kind).toBe('waiting');});
+import {controlPanel} from './intraday-control';
+it('keeps absorption outside the simplified intraday control',()=>{const r=fixture();r.symbol='QQQ';r.readingAt=now;expect(controlPanel(r,true)).not.toContain('POSIBLE ABSORCIÓN DE LA CAÍDA');});

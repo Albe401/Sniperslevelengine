@@ -1,0 +1,12 @@
+{
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "category": "Finance",
+    "shortDescription": "Análisis de mercado y simulación local",
+    "windows": {
+      "webviewInstallMode": {"type": "downloadBootstrapper", "silent": true},
+      "nsis": {"installMode": "currentUser", "languages": ["Spanish"], "displayLanguageSelector": false}
+    }
+  }
+}

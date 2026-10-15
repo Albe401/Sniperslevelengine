@@ -1,0 +1,39 @@
+/* Original staggered layout, dimensions and colors; only reduce vertical gaps. */
+[data-live-view="detailed"] .quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation .day-map-track{flex:none;align-content:start;row-gap:2px}
+[data-live-view="detailed"] .quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation .day-map-node:not(:first-child){margin-top:-64px}
+/* Short placeholder cards need less staggering to stay separate. */
+[data-live-view="detailed"] .quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation .day-map-track:not(:has(.atr-inline-summary)) .day-map-node:not(:first-child){margin-top:-40px}
+/* Remove the legacy empty second row beneath the structural map. */
+@media(min-width:1151px){[data-live-view="detailed"] .quick-command-layout.route-command-layout>.intraday-control.auction-map-stack{grid-row:1}}
+[data-live-view="detailed"] .quick-command-layout.route-command-layout>.intraday-control.auction-map-stack{margin-bottom:0;padding-bottom:0}
+/* Preserve each original column; remove shared-row gaps between unequal cards. */
+[data-live-view="detailed"] .quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation .day-map-track.level-cards-close{display:block;position:relative;flex:none;padding:0}
+[data-live-view="detailed"] .quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation .day-map-track.level-cards-close>.day-map-node{position:absolute;width:calc((100% - 50px)/2);margin:0!important;left:10px;right:auto}
+[data-live-view="detailed"] .quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation .day-map-track.level-cards-close>.day-map-node:nth-child(even){left:auto;right:10px}
+[data-live-view="detailed"] .quick-command-layout.route-command-layout>.levels-route-design{align-self:start;align-items:start}
+[data-live-view="detailed"] .quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation{align-self:start}
+[data-live-view="detailed"] .levels-route-design .flow-column{align-self:start}
+
+/* The map's exterior is a layout constant, independent of market data/counts. */
+[data-live-view="detailed"] .quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation{height:800px;min-height:800px;max-height:800px;overflow:hidden}
+[data-live-view="detailed"] .levels-route-design .day-map.day-map-constellation>header{flex-shrink:0}
+[data-live-view="detailed"] .quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation .day-map-track.level-cards-close{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;scrollbar-gutter:stable;scrollbar-width:thin;overscroll-behavior:contain}
+[data-live-view="detailed"] .quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation .day-map-track.level-cards-close>.day-map-node[data-level-column="0"]{left:10px;right:auto}
+[data-live-view="detailed"] .quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation .day-map-track.level-cards-close>.day-map-node[data-level-column="1"]{left:auto;right:10px}
+[data-live-view="detailed"] .quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation .day-map-track.level-cards-close>.day-map-node[data-level-column="0"]:before{left:100%;right:auto}
+[data-live-view="detailed"] .quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation .day-map-track.level-cards-close>.day-map-node[data-level-column="1"]:before{left:auto;right:100%}
+[data-live-view="detailed"] .quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation .day-map-track.level-cards-close>.day-map-node[data-level-column="0"]:after{left:calc(100% + 12px);right:auto}
+[data-live-view="detailed"] .quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation .day-map-track.level-cards-close>.day-map-node[data-level-column="1"]:after{left:auto;right:calc(100% + 12px)}
+/* Keep the adjacent readings from increasing the enclosing map panel. */
+[data-live-view="detailed"] .quick-command-layout.route-command-layout>.levels-route-design{height:824px;min-height:824px;max-height:824px;overflow:hidden}
+[data-live-view="detailed"] .levels-route-design .flow-column{height:800px;min-height:0;max-height:800px;overflow-y:auto;overscroll-behavior:contain}
+/* Both sides share the original right-hand stack height, frozen before packing. */
+[data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed{height:var(--level-overview-height);min-height:var(--level-overview-height);max-height:var(--level-overview-height);grid-template-rows:minmax(0,1fr);align-items:stretch}
+[data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed>.levels-route-design{height:100%;min-height:0;max-height:100%;grid-template-rows:minmax(0,1fr);align-self:stretch}
+[data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed .levels-route-design .day-map.day-map-constellation{height:100%;min-height:0;max-height:100%;align-self:stretch}
+[data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed .flow-column{height:100%;min-height:0;max-height:100%}
+[data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed>.auction-map-stack{height:100%;min-height:0;max-height:100%;align-self:stretch;overflow:hidden}
+[data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed>.auction-map-stack>.auction-map-panel{flex:1;min-height:0;overflow-y:auto}
+[data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed>.auction-map-stack>.structural-map-preview:not(.auction-map-panel){flex:none}
+@media(max-width:1150px){[data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed{height:auto;min-height:0;max-height:none;grid-template-rows:var(--level-overview-height) var(--level-overview-height)}}
+

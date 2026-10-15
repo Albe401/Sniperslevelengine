@@ -1,0 +1,24 @@
+.dealer-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}.dealer-card{background:linear-gradient(140deg,#17102e,#100b21);border:1px solid #332650;border-radius:12px;padding:16px;color:#b8afe4;font-size:12px}.dealer-card h3{font-size:11px;letter-spacing:1.6px;color:#aca0ec;margin:0 0 14px}.dealer-card h3 small{float:right;font-size:10px;letter-spacing:0;color:#8072b3}.dealer-head{display:flex;gap:12px;align-items:center;margin-bottom:14px}.dealer-head svg{width:64px;flex-shrink:0}.dealer-head text{fill:#ede9ff;font:600 15px monospace}.dealer-head b{font-size:14px}.dealer-head p{margin:5px 0;line-height:1.5}.dealer-bar{margin:10px 0}.dealer-bar>div:first-child{display:flex;justify-content:space-between;gap:8px;margin-bottom:5px}.dealer-bar small{color:#8273b1}.dealer-track{height:6px;background:#ffffff0b;border-radius:8px;overflow:hidden}.dealer-track i{display:block;height:100%;border-radius:8px}.dealer-card details{margin-top:12px;font-size:11px;line-height:1.6}.dealer-card summary{cursor:pointer;color:#b3a2ff}.dealer-maghead{display:flex;gap:12px;align-items:center;margin:16px 0}.dealer-maghead>b{font-size:28px;color:#ff5cf0}.dealer-candidate{display:grid;grid-template-columns:60px 1fr 42px;gap:12px;align-items:center;margin:13px 0}.dealer-candidate .dealer-track i{background:#cf4bf3}.dealer-candidate>span{text-align:right}.dealer-candidates-label{font-size:10px;letter-spacing:1px;color:#8877b6;margin-top:18px}.dealer-references{border-top:1px solid #38264a;margin-top:18px;padding-top:8px}.dealer-references>div{display:flex;justify-content:space-between;gap:12px;margin:10px 0}.dealer-references b{white-space:nowrap;color:#e0d5ff}.dealer-references small{font-weight:normal;color:#897bb5}.dealer-source{font-size:10px;color:#8a8eac;margin-bottom:16px}@media(max-width:1000px){.dealer-cards{grid-template-columns:1fr}}
+.dealer-momentum{display:flex;justify-content:space-between;gap:12px;border-top:1px solid #38264a;padding-top:12px;margin-top:14px}.dealer-momentum b{color:#3ee6ff}
+
+.dealer-confirmation{padding:14px;border:1px solid #465579;border-radius:10px;background:#10192f;margin:12px 0}.dealer-confirmation h3{font-size:14px;color:#efce70}.dealer-confirmation p,.dealer-confirmation li{font-size:12px;line-height:1.6}.dealer-confirmation small{color:#a3b2ce;font-size:11px}
+
+/* Shared compact panel: summaries above, six dealer metrics across its width. */
+.intraday-control .dealer-combined{margin:10px 0;padding:12px;border:1px solid #332650;border-radius:12px;background:linear-gradient(140deg,#17102eb3,#100b21a8);color:#b8afe4;font-size:12px}
+.intraday-control .dealer-overview{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
+.intraday-control .dealer-combined .dealer-card{padding:0;border:0;border-radius:0;background:none;min-width:0}
+.intraday-control .dealer-combined h3{margin-bottom:8px;letter-spacing:1px}
+.intraday-control .dealer-combined .dealer-head{margin-bottom:6px;gap:8px}
+.intraday-control .dealer-combined .dealer-maghead{margin:8px 0;gap:8px}
+.intraday-control .dealer-combined .dealer-candidate{margin:7px 0;grid-template-columns:42px 1fr 34px;gap:6px}
+.intraday-control .dealer-combined .dealer-candidates-label{margin-top:8px}
+.intraday-control .dealer-combined .dealer-references{margin-top:8px;padding-top:3px}
+.intraday-control .dealer-combined .dealer-references>div{margin:6px 0;flex-wrap:wrap}
+.intraday-control .dealer-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 14px;border-top:1px solid #38264a;padding-top:8px;margin-top:8px}
+.intraday-control .dealer-metrics .dealer-bar{margin:3px 0;font-size:11px}
+.intraday-control .dealer-combined .dealer-track{height:4px}
+.intraday-control .dealer-combined-evidence .dealer-momentum{padding-top:6px;margin-top:8px;font-size:11px}
+.intraday-control .dealer-combined-evidence details{margin-top:7px;font-size:11px;line-height:1.5}
+.intraday-control .dealer-combined-evidence summary{cursor:pointer;color:#b3a2ff}
+@container(max-width:390px){.intraday-control .dealer-overview,.intraday-control .dealer-metrics{grid-template-columns:1fr}}
+.intraday-control .dealer-metrics+.dealer-momentum{margin-top:8px;padding-top:6px;font-size:11px;flex-wrap:wrap}.intraday-control .dealer-combined{margin-bottom:4px}.intraday-control .dealer-combined-evidence{margin-top:4px;padding-top:0}

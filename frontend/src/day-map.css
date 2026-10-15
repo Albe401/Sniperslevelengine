@@ -1,0 +1,215 @@
+/* Alternating price architecture. DOM order remains descending by real level. */
+.day-map.day-map-constellation{--map-line:#174b70;margin-top:8px}
+.day-map.day-map-constellation .reading-toolbar{align-items:center;padding:14px 0 22px;border-bottom:1px solid #193451;margin-bottom:20px}
+.day-map.day-map-constellation h2{font-size:30px;letter-spacing:-1px;margin:6px 0;color:#f2f8ff}
+.day-map.day-map-constellation .eyebrow{color:#42d5ff;letter-spacing:.16em;font-size:10px}
+.day-map-subtitle{color:#93aac6;font-size:13px;margin:0}
+.day-map.day-map-constellation .reading-toolbar .day-map-spot{border:1px solid #20537a;background:#081d36;border-radius:12px;padding:12px 18px;display:flex;flex-direction:column;align-items:flex-end;gap:4px;color:#a8c0da;font-size:11px}
+.day-map.day-map-constellation .reading-toolbar .day-map-spot strong{font-size:28px;color:#44ddff;font-variant-numeric:tabular-nums;letter-spacing:-.8px}
+.day-map.day-map-constellation .day-map-layout{grid-template-columns:minmax(0,1fr) minmax(240px,310px);gap:22px;align-items:start}
+.day-map.day-map-constellation .day-map-insights{grid-template-columns:1fr;gap:14px}
+.day-map.day-map-constellation .day-map-track{position:relative;isolation:isolate;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:60px;row-gap:0;padding:24px;border:1px solid #1a3556;border-radius:20px;background:radial-gradient(ellipse at 50% 0%,#0b365748,transparent 60%),linear-gradient(#102a4025 1px,transparent 1px),linear-gradient(90deg,#102a4025 1px,transparent 1px),#030e20;background-size:auto,32px 32px,32px 32px,auto;overflow:hidden;margin:0}
+.day-map.day-map-constellation .day-map-track:before{content:'';position:absolute;z-index:-1;left:calc(50% - 1px);top:30px;bottom:30px;width:2px;background:linear-gradient(transparent,#2c92b9 12%,#1b6488 85%,transparent);box-shadow:0 0 20px #00cfff35}
+.day-map.day-map-constellation .day-map-node{--node-color:#35dfff;position:relative;display:flex;flex-direction:column;gap:0;padding:0;margin:0 0 22px;min-width:0;border:1px solid color-mix(in srgb,var(--node-color) 55%,#0a2238);border-radius:14px;background:linear-gradient(135deg,color-mix(in srgb,var(--node-color) 10%,#051125),#071326 65%);box-shadow:0 12px 30px #0005,inset 0 1px 0 #ffffff0c;color:var(--node-color);transition:border-color .25s,box-shadow .25s}
+.day-map.day-map-constellation .day-map-node:nth-child(odd){grid-column:1}
+.day-map.day-map-constellation .day-map-node:nth-child(even){grid-column:2}
+.day-map.day-map-constellation .day-map-node:not(:first-child){margin-top:-90px}
+.day-map.day-map-constellation .day-map-node.call{--node-color:#2aefa1}
+.day-map.day-map-constellation .day-map-node.put{--node-color:#ff5277}
+.day-map.day-map-constellation .day-map-node.vacuum{--node-color:#ffbf5b}
+.day-map.day-map-constellation .day-map-node:before{content:'';display:block;position:absolute;left:100%;top:35px;width:30px;height:1px;border:0;border-radius:0;background:var(--node-color);box-shadow:0 0 9px color-mix(in srgb,var(--node-color) 40%,transparent)}
+.day-map.day-map-constellation .day-map-node:nth-child(even):before{left:auto;right:100%}
+.day-map.day-map-constellation .day-map-node:after{content:'';position:absolute;left:calc(100% + 26px);top:31px;width:8px;height:8px;border-radius:50%;background:var(--node-color);box-shadow:0 0 0 5px #07182a,0 0 15px var(--node-color)}
+.day-map.day-map-constellation .day-map-node:nth-child(even):after{left:auto;right:calc(100% + 26px)}
+.day-map.day-map-constellation .day-map-level{position:relative;display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:7px;min-width:0;padding:18px 20px 14px;border:0;border-radius:14px 14px 0 0;background:transparent;box-shadow:none;color:var(--node-color)}
+.day-map.day-map-constellation .day-map-level>span:not(.day-map-symbol){font-size:12px;line-height:1.4;letter-spacing:.08em;font-weight:750;padding-right:20px}
+.day-map.day-map-constellation .day-map-symbol{display:block;left:auto;right:17px;top:15px;font-size:21px;color:var(--node-color);opacity:.9}
+.day-map.day-map-constellation .day-map-node strong{font-size:34px;line-height:1.15;font-weight:650;letter-spacing:-1.2px;margin:0;color:#f4f8ff;font-variant-numeric:tabular-nums}
+.day-map.day-map-constellation .day-map-node.vacuum strong{font-size:23px;letter-spacing:-.6px;line-height:1.3}
+.day-map.day-map-constellation .day-map-node small{font-size:11px;line-height:1.5;color:#a6bbd4}
+.day-map.day-map-constellation .day-map-volume{display:flex;flex-direction:column;gap:6px;min-width:0;padding:12px 20px 14px;border:0;border-top:1px solid #203d58;border-radius:0 0 14px 14px;background:#020b1970;box-shadow:none}
+.day-map.day-map-constellation .day-map-volume>span{font-size:9px;line-height:1.5;letter-spacing:.07em;color:#809bb8}
+.day-map.day-map-constellation .day-map-volume>div{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.day-map.day-map-constellation .day-map-volume p{margin:0}
+.day-map.day-map-constellation .day-map-volume b{font-size:20px;font-weight:600;margin:2px 0 0;line-height:1.2;color:#e9f5ff;font-variant-numeric:tabular-nums}
+.day-map.day-map-constellation .day-map-volume>small{font-size:9px;color:#8299b2;line-height:1.5}
+.day-map.day-map-constellation .day-map-node:hover{border-color:var(--node-color);box-shadow:0 12px 30px #0005,0 0 24px color-mix(in srgb,var(--node-color) 12%,transparent)}
+.day-map.day-map-constellation .day-map-context{border:1px solid #23435f;background:linear-gradient(145deg,#0b203b,#061326);border-radius:16px;padding:18px}
+.day-map.day-map-constellation .day-map-context h3{font-size:22px;margin:12px 0}
+.day-map.day-map-constellation .day-map-bottom{margin-top:16px;gap:12px}
+@media(max-width:1250px){.day-map.day-map-constellation .day-map-layout{grid-template-columns:1fr}.day-map.day-map-constellation .day-map-insights{grid-column:1;grid-row:2;grid-template-columns:1fr 1fr}.day-map.day-map-constellation .day-map-left{grid-column:1;grid-row:1}}
+@media(max-width:650px){.day-map.day-map-constellation .day-map-track{column-gap:32px;padding:14px 10px}.day-map.day-map-constellation .day-map-level{padding:13px 10px}.day-map.day-map-constellation .day-map-volume{padding:10px}.day-map.day-map-constellation .day-map-node:before{width:16px}.day-map.day-map-constellation .day-map-node:after{left:calc(100% + 12px)}.day-map.day-map-constellation .day-map-node:nth-child(even):after{left:auto;right:calc(100% + 12px)}.day-map.day-map-constellation .day-map-node strong{font-size:26px}.day-map.day-map-constellation .day-map-node.vacuum strong{font-size:18px}.day-map.day-map-constellation .day-map-level>span:not(.day-map-symbol){font-size:10px;padding-right:0}.day-map.day-map-constellation .day-map-symbol{display:none}.day-map.day-map-constellation .day-map-insights{grid-template-columns:1fr}.day-map.day-map-constellation h2{font-size:24px}}
+
+.day-map.day-map-constellation .day-map-node:nth-child(1){grid-row:1}
+.day-map.day-map-constellation .day-map-node:nth-child(2){grid-row:2}
+.day-map.day-map-constellation .day-map-node:nth-child(3){grid-row:3}
+.day-map.day-map-constellation .day-map-node:nth-child(4){grid-row:4}
+.day-map.day-map-constellation .day-map-node:nth-child(5){grid-row:5}
+.day-map.day-map-constellation .day-map-node:nth-child(6){grid-row:6}
+
+/* Compact level chips: label and strike only. */
+.day-map.day-map-constellation .day-map-track{width:100%;max-width:400px;box-sizing:border-box;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:36px;padding:18px 14px;border-radius:14px}
+.day-map.day-map-constellation .day-map-node{margin-bottom:12px;border-radius:9px;min-height:64px;align-self:start}
+.day-map.day-map-constellation .day-map-node:not(:first-child){margin-top:-12px}
+.day-map.day-map-constellation .day-map-level{padding:10px 9px;min-height:64px;box-sizing:border-box;gap:5px;align-items:center;justify-content:center;text-align:center;border-radius:9px}
+.day-map.day-map-constellation .day-map-level>span:not(.day-map-symbol){padding:0;font-size:10px;line-height:1.2;letter-spacing:.04em}
+.day-map.day-map-constellation .day-map-node strong{font-size:23px;line-height:1.1;letter-spacing:-.5px}
+.day-map.day-map-constellation .day-map-node.vacuum strong{font-size:17px;line-height:1.2;letter-spacing:-.4px}
+.day-map.day-map-constellation .day-map-volume,.day-map.day-map-constellation .day-map-level>small,.day-map.day-map-constellation .day-map-symbol{display:none}
+.day-map.day-map-constellation .day-map-node:before{top:31px;width:18px}
+.day-map.day-map-constellation .day-map-node:after{top:28px;left:calc(100% + 15px);width:6px;height:6px}
+.day-map.day-map-constellation .day-map-node:nth-child(even):after{left:auto;right:calc(100% + 15px)}
+.day-map.day-map-constellation .day-map-track:before{top:42px;bottom:42px}
+
+/* Keep the five editable symbols and quote in a compact reading header. */
+[data-live-view="quick"] .live-asset-navigation{gap:5px;padding:4px 0 6px;margin-bottom:4px}
+[data-live-view="quick"] .live-asset-slots{gap:6px}
+[data-live-view="quick"] .live-asset-slot{padding:5px 6px;border-radius:8px}
+[data-live-view="quick"] .slot-select{padding:3px 6px;font-size:12px;line-height:18px}
+[data-live-view="quick"] .live-asset-slot form{margin-top:4px}
+[data-live-view="quick"] .live-asset-slot label{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+[data-live-view="quick"] .live-asset-slot input{padding:5px 6px;font-size:11px;box-sizing:border-box}
+[data-live-view="quick"] .live-asset-slot form button{padding:5px;font-size:10px}
+[data-live-view="quick"] .watchlist-open{margin-top:4px;padding:4px;font-size:10px;line-height:14px}
+[data-live-view="quick"] [data-watchlist-host]:empty{display:none}
+[data-live-view="quick"] [data-asset-status] .tag{padding:2px 6px;font-size:9px;line-height:14px}
+.day-map.day-map-constellation .reading-toolbar{padding:5px 0 8px;margin-bottom:10px;gap:10px;flex-wrap:wrap}
+.day-map.day-map-constellation h2{font-size:17px;letter-spacing:-.3px;margin:0}
+.day-map.day-map-constellation .reading-toolbar .day-map-spot{display:grid;grid-template-columns:auto auto;align-items:center;column-gap:10px;row-gap:1px;padding:5px 10px;border-radius:8px}
+.day-map.day-map-constellation .reading-toolbar .day-map-spot strong{font-size:22px;letter-spacing:-.4px;text-align:right;line-height:25px}
+.day-map-spot .spot-symbol{font-size:11px;font-weight:700;color:#e0edff}
+.day-map-spot .spot-detail{grid-column:1/-1;font-size:9px;line-height:14px;color:#a5b9d2}
+.day-map-spot .spot-detail[data-price-live="true"]{color:#2aefa1}
+
+/* Preserve the compact staggered map beside the intraday control. */
+.quick-command-layout{display:grid;grid-template-columns:minmax(300px,.85fr) minmax(420px,1.15fr);gap:14px;align-items:stretch;margin-top:10px}
+.quick-command-layout .day-map.day-map-constellation .day-map-node.call{--node-color:#49ff68}
+.quick-command-layout .day-map.day-map-constellation .day-map-node.put{--node-color:#ff4277}
+.quick-command-layout .day-map.day-map-constellation .day-map-node.vacuum{--node-color:#ffdc36}
+.quick-command-layout .day-map.day-map-constellation .day-map-node.magnet{--node-color:#22dafa}
+.intraday-control{--control-color:#ffdd35;min-width:0;padding:16px;border:1px solid #244a70;border-radius:12px;background:radial-gradient(ellipse at 100% 0,#06364c60,transparent 65%),#061326}
+.intraday-control.control-buyers{--control-color:#49ff68}.intraday-control.control-sellers{--control-color:#ff535f}.intraday-control.control-waiting{--control-color:#5ebbe8}
+.intraday-control header{display:flex;align-items:center;justify-content:space-between;gap:8px}.control-kicker{color:#ffdc36;font-size:11px;font-weight:800;letter-spacing:.09em}.control-live{color:#9bb7cf;font-size:8px;letter-spacing:.06em}
+.intraday-control h2{font-size:16px!important;color:#f1f8ff;margin:5px 0 12px!important;letter-spacing:-.2px}
+.control-hero{text-align:center;padding:4px 0 13px;display:grid;gap:6px}.control-hero>strong{font-size:26px;font-weight:850;letter-spacing:.03em;color:var(--control-color);text-shadow:0 0 22px color-mix(in srgb,var(--control-color) 30%,transparent)}.control-hero>span{font-size:10px;color:var(--control-color)}
+.control-strength{width:110px;height:3px;background:#1b3049;margin:2px auto 0;border-radius:2px;overflow:hidden}.control-strength i{display:block;height:100%;background:var(--control-color);transition:width .3s}
+.control-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}.control-cell{min-width:0;min-height:57px;box-sizing:border-box;padding:9px 8px;text-align:center;border:1px solid #203c59;background:#040e20;border-radius:5px;display:flex;flex-direction:column;justify-content:center;gap:5px;color:#f0f6ff}.control-cell>span{font-size:8px;letter-spacing:.04em;font-weight:650;color:#aabfd5}.control-cell strong{font-size:10px;line-height:1.5;color:inherit;overflow-wrap:anywhere}.control-cell.cyan{color:#2eeafa}.control-cell.yellow{color:#ffdc36}.control-cell.purple{color:#ca9aff}.control-cell.blue{color:#52baff}.control-cell.green{color:#49ff68}
+.control-reading{font-size:9px;line-height:1.6;text-align:center;color:var(--control-color);font-weight:750;margin:12px 0 8px}.control-evidence{border-top:1px solid #203c59;padding-top:8px;font-size:10px;color:#9db5cd}.control-evidence summary{cursor:pointer;color:#8ecdf5}.control-evidence p{display:flex;justify-content:space-between;gap:10px;font-size:10px}.control-evidence small{display:block;font-size:10px;line-height:1.6}
+@media(max-width:1120px){.quick-command-layout{grid-template-columns:1fr}}
+@media(max-width:600px){.intraday-control{padding:12px}.control-hero>strong{font-size:22px}}
+.quick-command-layout .day-map.day-map-constellation{min-width:0;margin-top:0}
+.asset-data-health{padding:12px 16px;margin:8px 0 12px;border-color:#285270}.asset-data-health>strong{font-size:12px;color:#45d6ff}.asset-data-health p{font-size:11px;line-height:1.6;margin-top:5px;color:#b4c9de}.asset-data-health p.negative{color:#ff7895}
+
+/* Four premium amounts between the level map and intraday control. */
+.quick-command-layout{grid-template-columns:minmax(285px,.9fr) minmax(135px,.4fr) minmax(350px,1.1fr);gap:12px}
+.flow-four{display:grid;gap:10px;align-content:center;min-width:0;padding:10px 0}.flow-four-cell{--flow-color:#50ff62;min-width:0;text-align:center;border:1px solid color-mix(in srgb,var(--flow-color) 45%,#183449);border-radius:9px;padding:16px 7px;background:linear-gradient(145deg,#092035,#051021);box-shadow:inset 0 1px #ffffff09}.flow-four-cell.flow-red{--flow-color:#ff4667}.flow-four-cell span{display:block;font-size:10px;font-weight:800;letter-spacing:.06em;color:var(--flow-color);margin-bottom:8px}.flow-four-cell strong{display:block;font-size:20px;line-height:1.25;font-variant-numeric:tabular-nums;color:var(--flow-color);overflow-wrap:anywhere;text-shadow:0 0 18px color-mix(in srgb,var(--flow-color) 20%,transparent)}
+@media(max-width:1150px){.quick-command-layout{grid-template-columns:1fr}.flow-four{grid-template-columns:repeat(4,minmax(0,1fr));padding:0}.flow-four-cell{padding:12px 6px}.flow-four-cell strong{font-size:18px}}
+@media(max-width:550px){.flow-four{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Intraday map: compact paired nodes, matching the level map visual language. */
+.intraday-control .control-hero{padding:8px 10px 10px;margin-bottom:12px;border:1px solid color-mix(in srgb,var(--control-color) 55%,transparent);border-radius:8px;background:linear-gradient(120deg,color-mix(in srgb,var(--control-color) 9%,#061326),#061326);gap:4px}
+.intraday-control .control-hero>strong{font-size:22px}
+.control-map{display:grid;gap:11px}.control-stage{min-width:0}.control-stage h3{display:flex;align-items:center;gap:7px;margin:0 0 6px;font-size:9px;letter-spacing:.09em;color:#b0d9f6;font-weight:700}.control-stage h3 b{font-size:9px;color:#25e6ff;border:1px solid #25e6ff65;border-radius:4px;padding:2px 5px;background:#07344e}
+.control-stage .control-grid{position:relative;gap:8px;isolation:isolate}.control-stage .control-grid:before{content:"";position:absolute;left:calc(50% - 1px);top:24px;bottom:24px;width:2px;background:#27bce25c;z-index:-1}.control-stage .control-cell{position:relative;min-height:52px;padding:7px 8px;border-radius:6px;border-color:color-mix(in srgb,currentColor 48%,#12304b);background:linear-gradient(135deg,color-mix(in srgb,currentColor 7%,#041020),#041020);box-shadow:inset 0 1px 0 #ffffff09;gap:4px}.control-stage .control-cell:nth-child(odd):after{content:"";position:absolute;left:100%;top:50%;width:9px;height:1px;background:#27bce299}.control-stage .control-cell>span{font-size:8px;color:#afd2ea;letter-spacing:.045em}.control-stage .control-cell strong{font-size:11px;line-height:1.35;font-variant-numeric:tabular-nums;text-wrap:pretty}.control-stage .control-cell.red{color:#ff535f}
+.control-coverage{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px;margin-top:12px;padding:8px;border:1px solid #2fe99a40;border-radius:6px;background:#042521}.control-coverage>span{font-size:8px;letter-spacing:.05em;color:#9fcecc}.control-coverage>strong{font-size:15px;font-variant-numeric:tabular-nums;color:#49ff68}.control-coverage>small{font-size:9px;color:#a8d4d1}
+.intraday-control .control-reading{line-height:1.5;font-size:10px;text-align:left;padding:9px 0;margin:8px 0 0;color:#b9dff5}
+@media(max-width:440px){.control-stage .control-cell strong{font-size:10px}.control-stage .control-cell{padding:7px 5px}.intraday-control .control-live{max-width:110px;text-align:right}}
+
+/* Let the staggered levels occupy the full column beside intraday control. */
+.level-strength{width:100%;color:var(--node-color);font-variant-numeric:tabular-nums}
+.level-strength>span{display:block;font-size:8px;line-height:1.4;letter-spacing:.02em}
+.level-strength b{font-size:9px;font-weight:750}
+.level-strength-track{height:3px;margin:5px auto 0;max-width:145px;border-radius:3px;background:#193049;overflow:hidden}
+.level-strength-track i{display:block;height:100%;background:var(--node-color);box-shadow:0 0 7px var(--node-color);transition:width .3s}
+.level-strength em{display:block;font-size:7px;font-style:normal;letter-spacing:.07em;margin-top:3px;color:#ffdc36}
+
+.quick-command-layout .day-map.day-map-constellation{display:flex;flex-direction:column;align-self:start}
+.quick-command-layout .day-map.day-map-constellation .day-map-track{max-width:none;flex:none;grid-template-rows:none;grid-auto-rows:auto;column-gap:28px;row-gap:4px;padding:10px 12px}
+.quick-command-layout .day-map.day-map-constellation .day-map-node{margin:0;align-self:start;min-height:0}
+.quick-command-layout .day-map.day-map-constellation .day-map-node:not(:first-child){margin-top:-28px}
+.quick-command-layout .day-map.day-map-constellation .day-map-level{flex:none;min-height:0;padding:7px 8px;gap:3px}
+.quick-command-layout .day-map.day-map-constellation .day-map-node strong{font-size:22px}
+.quick-command-layout .day-map.day-map-constellation .day-map-node.vacuum strong{font-size:16px}
+.quick-command-layout .day-map.day-map-constellation .day-map-node:before{top:50%;width:14px}
+.quick-command-layout .day-map.day-map-constellation .day-map-node:after{top:calc(50% - 3px);left:calc(100% + 11px)}
+.quick-command-layout .day-map.day-map-constellation .day-map-node:nth-child(even):after{left:auto;right:calc(100% + 11px)}
+
+/* Compact fixed reading slots keep updates from changing the layout height. */
+.intraday-control .control-hero{height:94px;min-height:94px;display:flex;flex-direction:column;justify-content:center;overflow:auto;scrollbar-gutter:stable}
+.intraday-control .control-hero>strong{font-size:19px}
+.control-level-intro{height:84px;overflow:auto;scrollbar-gutter:stable;font-size:11px;line-height:1.35}
+.control-level-stage .control-cell{height:88px;min-height:88px;justify-content:center;padding:8px;overflow:auto;scrollbar-gutter:stable}
+.control-level-stage .control-cell:nth-child(n+3){height:138px;min-height:138px}
+.control-level-stage .control-cell>span{flex-shrink:0}
+.control-level-stage .control-cell strong{text-wrap:wrap;font-size:11px;line-height:1.35}
+.control-important{height:46px;overflow:auto;scrollbar-gutter:stable;font-size:11px;line-height:1.35;padding-top:4px}
+.control-map>.control-stage:not(.control-level-stage) .control-cell{height:64px;min-height:64px;overflow:auto}
+.quick-command-layout>.flow-four{align-content:start;padding-top:0;grid-template-columns:1fr;gap:7px}
+.flow-four-heading{height:48px;display:flex;flex-direction:column;gap:3px;text-align:center;font-size:9px;color:#9dcde2}
+.flow-four-cell{height:120px;padding:9px 6px;overflow:auto;scrollbar-gutter:stable;box-shadow:none}
+.flow-four-cell>span{margin-bottom:5px}
+.flow-four-periods{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.flow-four-period{min-width:0;font-variant-numeric:tabular-nums}
+.flow-four-period+.flow-four-period{border-left:1px solid #26415c;padding-left:6px}
+.flow-four-period span{font-size:8px;margin:2px 0 3px}.flow-four-period strong{font-size:19px;text-shadow:none}
+.flow-four-period small{display:block;font-size:8px;line-height:1.2;color:#b4ccdd}.flow-four-period b{display:block;font-size:12px;margin-top:5px;color:var(--flow-color);overflow-wrap:anywhere}
+.flow-four-note{height:92px;overflow:auto;display:flex;flex-direction:column;gap:4px;font-size:9px;line-height:1.3;color:#a8c6d9}
+@media(max-width:1150px){.quick-command-layout>.flow-four{grid-template-columns:repeat(4,minmax(0,1fr))}.flow-four-heading,.flow-four-note{grid-column:1/-1}.flow-four-note{height:58px}}
+@media(max-width:600px){.control-level-stage .control-cell:nth-child(n+3){height:176px;min-height:176px}.control-level-intro{height:105px}.control-important{height:66px}.quick-command-layout>.flow-four{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.intraday-control{container-type:inline-size}
+@container(max-width:420px){.control-level-stage .control-cell{height:104px;min-height:104px;justify-content:safe center}.control-level-stage .control-cell:nth-child(n+3){height:176px;min-height:176px}}
+
+.control-stage .control-cell:nth-child(odd):after{display:none}
+
+.quick-command-layout>.flow-four-simple{align-content:start;padding-top:52px}.flow-four-simple .flow-four-cell{height:90px;display:flex;flex-direction:column;justify-content:center;gap:5px}.flow-four-simple .flow-four-cell>span{margin:0}.flow-four-simple .flow-four-cell>strong{font-size:22px}.flow-four-simple .flow-four-cell>small{font-size:9px;color:#b4ccdd}@media(max-width:1150px){.quick-command-layout>.flow-four-simple{padding-top:0}}
+.flow-four-simple .flow-four-cell>small{display:block;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* Structured intraday reading: compact stable cards and a separate data-quality line. */
+.control-structured .control-hero{height:108px;min-height:108px}
+.control-structured .control-hero>strong{font-size:17px;line-height:1.25}
+.control-structured .control-hero>span{font-size:11px;line-height:1.35}
+.control-structured .control-level-stage .control-cell{height:132px;min-height:132px;padding:10px;justify-content:flex-start;text-align:left;gap:7px;box-shadow:none}
+.control-structured .control-level-stage .control-cell>span{font-size:9px;line-height:1.3}
+.control-structured .control-level-stage .control-cell>strong{font-size:12px;line-height:1.35}
+.control-structured .control-cell>p{font-size:11px;line-height:1.4;color:#c1d6e7;margin:0}
+.control-structured .control-grid:before{display:none}
+.control-level-list{height:132px;overflow:auto;font-size:11px;color:#c5dfef}
+.control-level-row{height:44px;display:grid;grid-template-columns:67px 1fr 1fr;align-items:center;gap:7px;border-bottom:1px solid #294258;min-width:0}
+.control-level-row>strong{font-size:13px;font-variant-numeric:tabular-nums;color:#e3f4ff}
+.control-level-row>span{min-width:0;overflow-wrap:anywhere;line-height:1.2}
+.control-level-row small{display:block;font-size:9px;color:#a4b9ce;margin-top:3px}
+.control-data-quality{height:98px;display:flex;flex-direction:column;gap:3px;font-size:10px;line-height:1.3;overflow:auto;padding:7px 0;color:#b9d0e3;border-top:1px solid #294258}
+.control-data-quality>strong{font-size:9px;color:#76d9ed;letter-spacing:.05em}
+.control-data-quality>small{font-size:9px;color:#a4b9ce}
+@container(max-width:420px){.control-structured .control-level-stage .control-grid{grid-template-columns:1fr}.control-structured .control-level-stage .control-cell{height:128px;min-height:128px}.control-structured .control-hero{height:128px;min-height:128px}.control-level-row{grid-template-columns:60px 1fr 1fr}.control-data-quality{height:110px}}
+
+.day-map.day-map-constellation .map-level-reading{width:100%;border-top:1px solid color-mix(in srgb,var(--node-color) 25%,transparent);padding-top:5px;font-size:10px;line-height:1.4;text-align:center}
+.map-level-reading summary{cursor:pointer;list-style:none;display:grid;gap:3px;color:#bae7ff}
+.map-level-reading summary::-webkit-details-marker{display:none}
+.map-level-reading summary>b{font-size:9px;color:var(--node-color);font-weight:650}
+.map-level-reading[open] summary>b{font-size:0}
+.map-level-reading[open] summary>b:after{content:'Cerrar −';font-size:9px}
+.map-level-reading summary:focus-visible{outline:2px solid var(--node-color);outline-offset:3px}
+.map-reading-detail{text-align:left;padding-top:5px;color:#add4ed;overflow-wrap:anywhere}
+.map-reading-detail p{font-size:10px!important;line-height:1.5;margin:6px 0}
+.map-reading-detail p>b,.map-reading-detail p>span{display:block}
+.map-reading-detail p>b{color:var(--node-color)}
+.map-reading-scope{color:#ffdc36;font-size:9px!important}
+
+@media(min-width:1151px){.quick-command-layout{grid-template-rows:auto auto}.quick-command-layout>.day-map{grid-column:1;grid-row:1}.quick-command-layout>.flow-four{grid-column:2;grid-row:1}.quick-command-layout>.intraday-control{grid-column:3;grid-row:1 / span 2}.quick-command-layout>.volatility-reading{grid-column:1 / span 2;grid-row:2;align-self:start;margin:0}}
+@media(max-width:1150px){.quick-command-layout>.volatility-reading{margin:0}}
+/* Barrier percentages replace the existing summary row; preserve its line box. */
+.day-map.day-map-constellation .day-map-node.barrier .map-level-reading summary>span{font-size:7.5px;line-height:14px;white-space:nowrap;letter-spacing:-.15px;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.day-map.day-map-constellation .day-map-node.barrier .barrier-force-caption{white-space:nowrap;font-size:7.5px}
+/* OI uses existing strength/summary space, with no extra collapsed rows. */
+.day-map.day-map-constellation .level-oi-card .level-strength{position:relative}
+.day-map.day-map-constellation .level-oi-card .level-oi-track{display:flex;width:min(100%,145px)}
+.day-map.day-map-constellation .level-oi-card .provisional-oi .level-strength-track,.day-map.day-map-constellation .level-oi-card .overlay-oi{position:absolute;top:14px;left:50%;transform:translateX(-50%);width:min(100%,145px);margin:0}
+.day-map.day-map-constellation .level-oi-card .level-oi-track .oi-call{background:#00f08c;box-shadow:none}
+.day-map.day-map-constellation .level-oi-card .level-oi-track .oi-put{background:#ff3274;box-shadow:none}
+
+.day-map.day-map-constellation .level-oi-card .level-strength>span{white-space:nowrap;font-size:7px;letter-spacing:0;overflow:hidden;text-overflow:ellipsis}
+.day-map.day-map-constellation .level-oi-card .map-level-reading summary>b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.route-wall-pull .wall-oi-count{font-size:inherit;font-weight:600}
+.route-wall-pull .level-strength>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}

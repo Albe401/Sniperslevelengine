@@ -1,0 +1,37 @@
+import {scopeContractReport} from './contract-profile';
+import type {EtfReport,EtfStrike,EtfSide} from './etf-dealers';
+import {escapeHtml as esc} from './model';
+import type {BlockReport} from './block-pressure';
+export interface EtfDetail {ticker:string;expiration:string;strike:number;kind:string;oi:number|null;oiChange:number|null;volume:number|null;volumeOi:number|null;delta:number|null;gamma:number|null;dex:number|null;gex:number|null;iv:number|null;theta:number|null;vega:number|null;charm:number|null;vanna:number|null;bid:number|null;ask:number|null;spreadPct:number|null;quoteAt:number|null;realtime:boolean;fresh:boolean}
+export interface Enrichment {oiReferenceDate:string|null;previousObservedDate:string|null;oiComparable:boolean;priceFresh:boolean;oiKnown:number;gammaKnown:number;deltaKnown:number;quotesFresh:number;details:EtfDetail[];storageError:string|null;model:string}
+export interface EtfFlow {symbol:string;at:number;connected:boolean;tracked:number;subscribed:number;lastEventMs:number|null;flow:{contract_windows:{ticker:string;minutes:number;covered:boolean}[];windows:{minutes:number;event_count:number;contracts:number;premium:number;premium_complete:boolean;buckets:Record<string,{contracts:number;premium:number;trades:number}>}[]}}
+const n=(v:number|null|undefined,d=2)=>v==null||!Number.isFinite(v)?'—':new Intl.NumberFormat('es',{maximumFractionDigits:d}).format(v);
+const sum=(values:(number|null)[])=>values.length&&values.every(v=>v!=null&&Number.isFinite(v))?values.reduce<number>((a,b)=>a+b!,0):null;
+export function expiryReport(r:EtfReport|undefined,expiry:string):EtfReport|undefined {
+ if(!r||!expiry||!r.enrichment)return r;
+ return scopeContractReport(r,[expiry]);
+}
+export function rankStrikes(r:EtfReport|undefined,metric:keyof EtfSide):{strike:number;value:number}[]{
+ return (r?.rows??[]).flatMap(row=>{const v=sum([row.call[metric],row.put[metric]]);return v==null?[]:[{strike:row.strike,value:v}];}).sort((a,b)=>b.value-a.value||a.strike-b.strike).slice(0,5);
+}
+export function enrichmentPanel(r:EtfReport|undefined,strike:number|undefined,expiry:string):string {
+ const e=r?.enrichment;if(!e)return '<p class="etf-quality">Esperando detalle y calidad de cadena.</p>';
+ const ds=e.details.filter(c=>(!expiry||c.expiration===expiry)&&(strike==null||c.strike===strike));
+ const selected=strike==null?[]:ds;
+ const changes=['put','call'].map(kind=>sum(selected.filter(c=>c.kind===kind).map(c=>c.oiChange)));
+ return `<div class="etf-quality"><strong>Calidad de cadena</strong><p>OI ${e.oiKnown}/${e.details.length} · delta ${e.deltaKnown}/${e.details.length} · gamma ${e.gammaKnown}/${e.details.length} · cotizaciones recientes ${e.quotesFresh}/${e.details.length}</p><p>Precio: ${e.priceFresh?'reciente al consultar':'antiguo o sin hora verificable'} · GEX ${r!.gammaComplete?'completo':'parcial'} · DEX ${r!.deltaComplete?'completo':'parcial'}</p><p>OI: ${esc(e.oiReferenceDate??'cierre de la sesión anterior; fecha no suministrada')} · comparación ${e.oiComparable?esc(e.previousObservedDate??''):'sin base consecutiva disponible'}</p>${e.storageError?`<p role="alert">${esc(e.storageError)}</p>`:''}</div>${strike==null?'<p>Selecciona un strike para ver vencimientos y cambios de OI.</p>':`<p>ΔOI entre consultas de sesiones consecutivas · PUT ${n(changes[0])} · CALL ${n(changes[1])}</p><details class="etf-contracts"><summary>Detalle por vencimiento · ${selected.length} series</summary><div class="etf-table-scroll"><table><thead><tr><th>Vence / lado</th><th>OI</th><th>ΔOI</th><th>Vol.</th><th>Vol/OI</th><th>IV %</th><th>Spread %</th></tr></thead><tbody>${selected.map(c=>`<tr title="${esc(c.ticker)}"><th>${esc(c.expiration)} ${esc(c.kind.toUpperCase())}</th><td>${n(c.oi)}</td><td>${n(c.oiChange)}</td><td>${n(c.volume)}</td><td>${n(c.volumeOi)}</td><td>${n(c.iv==null?null:c.iv*100)}</td><td>${n(c.spreadPct)}</td></tr>`).join('')}</tbody></table></div><div class="etf-table-scroll"><table><thead><tr><th>Vence / lado</th><th>Delta</th><th>Gamma</th><th>Theta</th><th>Vega</th><th>Charm / día</th><th>Vanna / punto IV</th></tr></thead><tbody>${selected.map(c=>`<tr><th>${esc(c.expiration)} ${esc(c.kind.toUpperCase())}</th><td>${n(c.delta,4)}</td><td>${n(c.gamma,6)}</td><td>${n(c.theta,4)}</td><td>${n(c.vega,4)}</td><td>${n(c.charm,6)}</td><td>${n(c.vanna,6)}</td></tr>`).join('')}</tbody></table></div><p>${esc(e.model)} Griegas unitarias; delta conserva el signo de la opción larga. OI no identifica comprador/vendedor. ΔOI no se calcula para contratos sin coincidencia histórica.</p><p>${selected.map(c=>`${esc(c.kind.toUpperCase())} ${esc(c.expiration)}: ${c.fresh?'cotización reciente':c.realtime?'cotización antigua/sin validar':'retrasada o sin estado verificable'}`).join(' · ')}</p></details>`}`;
+}
+export function etfFlowPanel(data:EtfFlow|null|undefined,symbol:string,active:boolean,now=Date.now()):string {
+ const fresh=!!data&&active&&data.symbol===symbol&&data.connected&&data.at<=now&&now-data.at<=3000&&data.lastEventMs!=null&&data.lastEventMs<=now&&now-data.lastEventMs<=15000&&data.tracked>0&&data.tracked===data.subscribed;
+ return `<details class="etf-option-flow"><summary>Flujo de opciones · ${esc(symbol)} · muestra ${data?.subscribed??0}/${data?.tracked??0} series</summary><p>Contratos seleccionados por Snipers; muestra parcial de la cadena, sin identificación de participante ni apertura/cierre.</p><div class="etf-table-scroll"><table><thead><tr><th>Ventana</th><th>CALL compra</th><th>CALL venta</th><th>PUT compra</th><th>PUT venta</th><th>Sin clasificar</th></tr></thead><tbody>${[1,5,15,30].map(minutes=>{
+ const w=data?.flow.windows.find(w=>w.minutes===minutes),coverage=data?.flow.contract_windows.filter(c=>c.minutes===minutes)??[];
+ const usable=fresh&&w?.premium_complete&&coverage.length===data!.tracked&&coverage.every(c=>c.covered);
+ const cell=(key:string)=>usable?n(w?.buckets[key]?.contracts??0):'—';
+ return `<tr><th>${minutes}m${usable?'':' · incompleto'}</th>${['CALL BUY','CALL SELL','PUT BUY','PUT SELL'].map(k=>`<td>${cell(k)}</td>`).join('')}<td>${usable?n(Math.max(0,w!.contracts-['CALL BUY','CALL SELL','PUT BUY','PUT SELL'].reduce((s,k)=>s+(w!.buckets[k]?.contracts??0),0))):'—'}</td></tr>`;
+ }).join('')}</tbody></table></div><p>Clasificación inferida frente a bid/ask; compras/ventas en contratos. Una reconexión requiere reconstruir las ventanas.</p></details>`;
+}
+export function etfBlocksPanel(report:BlockReport|undefined,symbol:string,at:number|undefined,active:boolean,now=Date.now()):string {
+ const today=new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York'}).format(now);
+ const valid=active&&report?.symbol===symbol&&report.date===today&&at!=null&&at<=now&&now-at<=3000;
+ return `<details class="etf-option-flow"><summary>Bloques simultáneos · ${esc(symbol)} · ≥ $100.000</summary><p>Muestra en vivo desde la conexión actual; historial previo sin reconstruir. TRF no identifica institución. Se reinicia tras reconexión.</p><table><thead><tr><th>Periodo</th><th>Bloques</th><th>Compra estimada $</th><th>Venta estimada $</th><th>Sin clasificar $</th></tr></thead><tbody>${(['premarket','regular'] as const).map(period=>{const p=valid?report![period]:undefined;return `<tr><th>${period==='premarket'?'Premarket':'Sesión'}</th><td>${n(p?.count)}</td><td>${n(p?.buy)}</td><td>${n(p?.sell)}</td><td>${n(p?.unknown)}</td></tr>`;}).join('')}</tbody></table><p>Agresor estimado frente a cotizaciones anteriores válidas. Muestra parcial; no confirma dominancia ni inventario.</p></details>`;
+}

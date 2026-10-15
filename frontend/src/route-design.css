@@ -1,0 +1,284 @@
+/* Quick-reading layout; background transparency also applies to intraday control. */
+/* Larger level-card text only; preserve the surrounding map/control layout. */
+.levels-route-design .day-map.day-map-constellation .day-map-node .day-map-level{padding-block:11px;gap:5px}
+.levels-route-design .day-map.day-map-constellation .day-map-node .level-strength>span{font-size:11px;line-height:1.5;color:#e0edf7;white-space:normal;overflow:visible;text-overflow:clip;letter-spacing:0;text-shadow:none}
+.levels-route-design .day-map.day-map-constellation .day-map-node .level-strength b{font-size:12px;font-weight:750;color:#f4f8ff;text-shadow:none}
+.levels-route-design .day-map.day-map-constellation .day-map-node .level-strength em{font-size:10px;line-height:1.4;letter-spacing:.02em}
+.levels-route-design .day-map.day-map-constellation .day-map-node .map-level-reading summary>b,.levels-route-design .day-map.day-map-constellation .day-map-node .map-level-reading[open] summary>b:after{font-size:11px;line-height:1.5;text-shadow:none}
+.levels-route-design .day-map.day-map-constellation .day-map-node .map-level-reading[open] summary>b{font-size:0}
+.levels-route-design .day-map.day-map-constellation .day-map-node .route-wall-pull{font-size:11px;line-height:1.5;color:#dcecf8;text-shadow:none}
+.levels-route-design .day-map.day-map-constellation .day-map-node .direction-level-tag{font-size:11px;line-height:1.5;color:#c6e8f8;text-shadow:none}
+.levels-route-design .day-map.day-map-constellation .level-oi-card .provisional-oi .level-strength-track,.levels-route-design .day-map.day-map-constellation .level-oi-card .overlay-oi{position:static;transform:none;margin:5px auto 0}
+.quick-command-layout.route-command-layout{grid-template-columns:minmax(0,1.1fr) minmax(420px,.9fr);grid-template-rows:auto;align-items:stretch}
+.quick-command-layout.route-command-layout{margin-top:4px}
+.quick-command-layout.route-command-layout>.intraday-control{grid-column:2;grid-row:1}
+body:has([data-live-view="quick"],[data-live-view="detailed"]){background:linear-gradient(#04101b45,#04101b75),url('/assets/route-lion.png') center/cover fixed}
+.workspace:has([data-live-view="quick"],[data-live-view="detailed"]){background:transparent}
+.workspace:has([data-live-view="quick"],[data-live-view="detailed"])>.sidebar{background:#061225b8}
+.workspace:has([data-live-view="quick"],[data-live-view="detailed"]) .topbar{background:#06132bb8}
+.levels-route-design{min-width:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(240px,.8fr);gap:12px;padding:12px;border:1px solid #204261;border-radius:12px;background:#04101b40}
+.levels-route-design .day-map.day-map-constellation{margin:0;min-width:0}
+.levels-route-design .day-map.day-map-constellation .day-map-track{background:transparent;padding:12px 8px;column-gap:30px;border-color:#24527375}
+.levels-route-design .day-map.day-map-constellation .day-map-track:before{left:calc(50% - 3px);width:6px;top:20px;bottom:20px;background:linear-gradient(#25ff8b 0%,#25ff8b 40%,#5ffff5 50%,#ff386e 60%,#ff386e 100%);box-shadow:0 -16px 20px #24ff8055,0 16px 20px #ff387655}
+.levels-route-design .day-map.day-map-constellation .day-map-node{background:linear-gradient(135deg,#07162ce8,#031021d9);border-radius:8px;box-shadow:0 0 10px color-mix(in srgb,var(--node-color) 14%,transparent)}
+.levels-route-design .day-map.day-map-constellation .day-map-node.barrier{--node-color:#32d8ff}
+.levels-route-design .day-map.day-map-constellation .day-map-node:not(:first-child){margin-top:-35px}
+.levels-route-design .map-level-reading summary>span{display:none}
+.levels-route-design .day-map.day-map-constellation .day-map-level{padding:7px;gap:3px}
+.levels-route-design .day-map.day-map-constellation .day-map-node strong{font-size:20px;letter-spacing:-.3px}
+.levels-route-design .day-map.day-map-constellation .day-map-node.vacuum strong{font-size:14px}
+.levels-route-design .day-map.day-map-constellation .day-map-level>span:not(.day-map-symbol){font-size:9px;padding:0;letter-spacing:.02em}
+.levels-route-design .day-map.day-map-constellation .day-map-symbol{display:none}
+.levels-route-design .day-map.day-map-constellation .day-map-node:before{width:15px}
+.levels-route-design .day-map.day-map-constellation .day-map-node:after{left:calc(100% + 12px)}
+.levels-route-design .day-map.day-map-constellation .day-map-node:nth-child(even):after{left:auto;right:calc(100% + 12px)}
+.levels-route-design .route-wall-pull{width:100%;border-top:1px solid color-mix(in srgb,var(--node-color) 35%,transparent);padding-top:5px;font-size:10px}
+.levels-route-design .route-wall-pull>span{display:flex;justify-content:center;gap:5px}
+.levels-route-design .route-wall-pull b{color:#effaff}
+.levels-route-design .flow-column{padding-top:0;gap:10px}
+.levels-route-design .flow-column>.flow-four{grid-template-columns:1fr 1fr;padding:0;gap:6px}
+.levels-route-design .flow-four-cell{height:104px;padding:6px;overflow:visible;background:#061624da}
+.levels-route-design .flow-four-cell>strong{font-size:19px;overflow-wrap:anywhere}
+.levels-route-design .block-pressure{background:#071529d9;min-height:0}
+.route-volatility{border:1px solid #245778;border-radius:10px;background:#051326d9;padding:10px;text-align:center;min-width:0}
+.route-volatility h3{font-size:11px;color:#d2edff;margin:0 0 6px}
+.route-gauge{position:relative;width:148px;height:148px;max-width:100%;margin:0 auto}
+.route-gauge-ring{position:absolute;inset:4px;border-radius:50%;background:conic-gradient(from 235deg,#35e9b0 0deg,#edd34a 160deg,#ff496b 250deg,transparent 250deg);mask:radial-gradient(transparent 60%,#000 61%,#000 69%,transparent 70%);filter:drop-shadow(0 0 5px #28ecad)}
+.route-gauge-needle{position:absolute;left:calc(50% - 2px);top:18px;width:4px;height:56px;transform-origin:50% 100%;background:linear-gradient(#ebfaff,#39dfff);border-radius:4px;box-shadow:0 0 9px #21dfff;transition:transform .4s}
+.route-gauge-center{position:absolute;top:82px;left:0;right:0;display:grid;gap:4px}
+.route-gauge-center strong{font-size:23px;color:#e8f8ff}.route-gauge-center small{font-size:8px;color:#9ac2d9}
+.route-volatility>p{font-size:10px;line-height:1.4;margin:5px 0;color:#b7d2e2}.route-volatility details{text-align:left;font-size:10px;color:#a8c9df}.route-volatility summary{cursor:pointer}.route-volatility details p{line-height:1.4}
+@media(max-width:1150px){.quick-command-layout.route-command-layout{grid-template-columns:1fr}.quick-command-layout.route-command-layout>.intraday-control{grid-column:1;grid-row:2}.levels-route-design{grid-template-columns:minmax(0,1fr) minmax(240px,.8fr)}}
+@media(max-width:700px){.levels-route-design{grid-template-columns:1fr}.levels-route-design .flow-column{display:grid;grid-template-columns:1fr 1fr}.levels-route-design .block-pressure{grid-column:1/-1}}
+@media(max-width:420px){.levels-route-design .flow-column{display:flex}.levels-route-design{padding:6px}}
+.strike-absorption-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin:8px 0}.strike-absorption-grid article{padding:7px;border:1px solid #294360;border-radius:6px;background:#07172bc9;min-width:0}.strike-absorption-grid header{display:flex;flex-wrap:wrap;justify-content:space-between;gap:3px;font-size:10px}.strike-absorption-grid small{font-size:9px;color:#8bbce4}.strike-deltas{display:flex;gap:14px;font-size:10px;margin-top:5px}.strike-deltas span:first-child b{color:#34f8a2}.strike-deltas span:last-child b{color:#ff5277}@media(max-width:700px){.strike-absorption-grid{grid-template-columns:1fr}}
+.intraday-control .absorption-reading{margin:10px 0;padding:10px;border:1px solid #294360;border-radius:8px;background:#061326}.intraday-control .absorption-reading>span{display:block;font-size:10px;color:#9ad7ff}.intraday-control .absorption-reading>strong{display:block;margin:5px 0;font-size:12px;color:#ffdc36}.intraday-control .absorption-fall>strong{color:#32f5aa}.intraday-control .absorption-rise>strong{color:#ff5277}.intraday-control .absorption-reading p{margin:5px 0;font-size:10px;line-height:1.4;color:#b6d8ed}.intraday-control .strike-absorption-grid article p{font-size:9px}.intraday-control .absorption-reading details{font-size:9px;color:#8bbce4}
+.intraday-control .dealer-control-group{margin:8px 0;border:1px solid #332650;border-radius:12px;background:linear-gradient(140deg,#17102eb3,#100b21a8);overflow:hidden}
+.intraday-control .dealer-control-group>.dealer-combined{margin:0;border:0;border-radius:0;background:transparent}
+.intraday-control .dealer-control-group>.absorption-reading{margin:0 12px 10px;padding:7px 9px;border-color:#51406d;background:#090f25a8}
+
+.compact-structure{margin:10px 0 14px}.compact-structure-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.compact-structure-card{border:1px solid #29435d;border-radius:6px;padding:8px 5px;text-align:center;background:#091426}.compact-structure-card span{display:block;color:#b8d9ee;font-size:11px}.compact-structure-card strong{display:block;margin-top:3px;font-size:12px}.compact-structure>small{display:block;text-align:center;color:#b8d9ee;font-size:10px;margin-top:5px}
+.quick-command-layout.route-command-layout>.intraday-control,.quick-command-layout.route-command-layout>.levels-route-design{height:auto;box-sizing:border-box;min-height:0}
+/* Compact intrinsic level height; both panels end at the shared content baseline. */
+.quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation{display:flex;flex-direction:column;min-height:0}
+.quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation .day-map-track{flex:1;align-content:space-between;min-height:0;padding:12px 10px}
+.quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation .day-map-node:not(:first-child){margin-top:-48px}
+.quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation .day-map-level{padding:8px 9px;gap:4px}
+.quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation .day-map-node strong{font-size:25px}
+.quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation .day-map-node.vacuum strong{font-size:17px}
+.quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation .day-map-level>span:not(.day-map-symbol){font-size:10px}
+@media(max-width:700px){.quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation .day-map-track{min-height:0;flex:none}}
+.quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation{align-self:stretch}
+.levels-route-design .reading-toolbar{flex-wrap:wrap;gap:8px}
+.day-map-price-row{display:flex;flex-wrap:wrap;align-items:flex-start;gap:8px;min-width:0}
+.direction-badge{position:relative;min-width:164px;max-width:210px;padding:7px 9px;border:1px solid #245778;border-radius:8px;background:#06162be8;color:#b6d8ed}
+.direction-badge>span{font-size:8px;color:#46dfff;display:block;margin-bottom:4px}
+.direction-badge>div{display:flex;gap:16px;font-size:9px}
+.direction-badge strong{font-size:16px;margin-left:3px}
+.direction-badge b:first-child strong{color:#2af597}.direction-badge b:last-child strong{color:#ff5277}
+.direction-badge>small{display:block;font-size:8px;margin-top:3px}
+.direction-badge .direction-cvd{border-top:1px solid #25425e;padding-top:4px}
+.direction-cvd-confirms{color:#2af597}.direction-cvd-contradicts{color:#ffbf55}.direction-cvd-pending{color:#a9bfd1}
+.direction-level-link{padding:7px 9px;margin:6px 0;border:1px solid #245778;border-radius:7px;background:#06162bad;font-size:9px;color:#b6d8ed}
+.direction-level-link strong{color:#46dfff}.direction-level-link summary{cursor:pointer;margin-top:3px}.direction-level-link p{line-height:1.5}
+.day-map-level .direction-level-tag{display:block;color:#9ad7ef;border-top:1px solid #245778;padding-top:5px;margin-top:5px;font-size:8px;line-height:1.4}
+.direction-call{border-color:#1cbd7a}.direction-put{border-color:#d53766}
+.direction-badge details{font-size:8px;margin-top:3px}.direction-badge summary{cursor:pointer;color:#79c9ed}
+.direction-badge details[open]{position:absolute;left:0;top:100%;z-index:20;width:240px;background:#06162b;padding:10px;border:1px solid #245778;border-radius:8px}
+
+/* Minimal price below the title; expanded CALL/PUT card owns daily rates. */
+.day-map-constellation .reading-toolbar.direction-header{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);align-items:start;gap:12px}
+.direction-header .day-map-title-price{display:flex;flex-direction:column;gap:10px;min-width:0}
+.direction-header .day-map-title-price h2{margin:0}
+.direction-header .day-map-spot{width:100%;box-sizing:border-box;max-width:220px}
+.direction-header .direction-badge{width:100%;box-sizing:border-box;min-width:0;max-width:none;padding:12px}
+.direction-header .direction-badge>span{font-size:10px;margin-bottom:8px}
+.direction-header .direction-badge>div{font-size:11px;gap:20px;justify-content:space-between}
+.direction-header .direction-badge strong{font-size:25px}
+.direction-header .direction-badge>small{font-size:9px;margin-top:7px}
+.direction-header .direction-badge .direction-treasury{border-top:1px solid #25425e;padding-top:8px;font-size:11px;color:#a9d9ff}
+@media(max-width:650px){.day-map-constellation .reading-toolbar.direction-header{grid-template-columns:1fr}.direction-header .direction-badge{max-width:340px}}
+
+/* Subtle transparency: reveal the lion/candles while preserving readable cards. */
+.levels-route-design .day-map.day-map-constellation .day-map-node{background:linear-gradient(135deg,#07162c80,#03102175)}
+.levels-route-design .flow-four-cell{background:#06162475}
+.levels-route-design .block-pressure{background:#07152975}
+.levels-route-design .route-volatility{background:#05132675}
+.levels-route-design .direction-badge{background:#06162b80}
+.levels-route-design .day-map.day-map-constellation .reading-toolbar .day-map-spot{background:#081d3680}
+
+/* Intraday control shares the softly translucent background in Quick Reading. */
+[data-live-view="quick"] .intraday-control{background:radial-gradient(ellipse at 100% 0,#06364c35,transparent 65%),#06132670}
+[data-live-view="quick"] .intraday-control .dealer-card{background:linear-gradient(140deg,#17102e80,#100b2175)}
+[data-live-view="quick"] .intraday-control .absorption-reading{background:#06132680}
+[data-live-view="quick"] .intraday-control .strike-absorption-grid article{background:#07172b75}
+[data-live-view="quick"] .intraday-control .compact-structure-card{background:#09142680}
+[data-live-view="quick"] .levels-route-design{background:#04101b2b}
+[data-live-view="quick"] .live-asset-navigation{background:#09152b94;backdrop-filter:none}
+[data-live-view="quick"] .live-asset-slot{background:#0b1529a3}
+[data-live-view="quick"] .live-asset-navigation input{background:#0b1529b3}
+[data-live-view="quick"] .live-asset-navigation form button{background:#142641ad}
+[data-live-view="quick"] .watchlist-open{background:#08233ead}
+[data-live-view="quick"] .route-preview>footer{background:#061e2f80}
+
+[data-live-view="quick"] .intraday-control .structural-map-preview{background:radial-gradient(ellipse at 80% 0,#10394c35,transparent 65%),#04111e70}
+[data-live-view="quick"] .intraday-control .structural-map-preview .horizon{background:linear-gradient(150deg,var(--wash),#030e1a70)}
+
+/* Compact strike cards: provenance and pressure remain in the shared details. */
+.intraday-control .strike-absorption-compact{gap:5px;margin:6px 0}
+.intraday-control .strike-absorption-compact article{padding:6px 7px}
+.intraday-control .strike-absorption-compact .strike-deltas{gap:7px;flex-wrap:wrap;align-items:center;margin-top:4px}
+.intraday-control .strike-absorption-compact .strike-strength{font-size:9px;color:#b6d8ed}
+.intraday-control .absorption-reading:has(.strike-absorption-compact){padding:8px 10px}
+
+/* Start the asset search close to the topbar in Quick Reading. */
+.main-shell>main:has(>[data-live-view="quick"]){padding-top:8px}
+
+
+/* Further height reduction requested for Quick Reading. */
+.main-shell>main:has(>[data-live-view="quick"]){padding-top:2px}
+.main-shell>main:has(>[data-live-view="detailed"]){padding-top:2px}
+.workspace:has([data-live-view="quick"]) .topbar{height:52px}
+
+
+/* Shorter ATM volatility card to reduce the shared row and trailing blank space. */
+.levels-route-design .route-volatility{padding:8px}
+.levels-route-design .route-gauge{width:112px;height:112px}
+.levels-route-design .route-gauge-needle{top:14px;height:42px}
+.levels-route-design .route-gauge-center{top:64px;gap:2px}
+
+/* Shared bottom edge: let the map and space above targets absorb the row height. */
+.quick-command-layout.route-command-layout{align-items:stretch}
+.quick-command-layout.route-command-layout .levels-route-design{align-items:stretch;padding-bottom:0}
+.quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation{align-self:stretch}
+.quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation .day-map-track{flex:1;align-content:space-between;padding-bottom:0}
+.levels-route-design .flow-column{align-self:stretch}
+.levels-route-design .block-pressure{flex:1;padding-bottom:0}
+.levels-route-design .block-pressure .analyst-targets{margin-top:auto}
+.quick-command-layout.route-command-layout>.intraday-control{padding-bottom:0}
+.quick-command-layout.route-command-layout>.intraday-control>.structural-map-preview{margin-bottom:0}
+.quick-command-layout.route-command-layout>.intraday-control>.structural-map-preview{padding-bottom:6px}
+[data-live-view="quick"]>.route-preview{margin-top:6px}
+.options-cvd{grid-column:1/-1;min-width:0;padding:6px;border:1px solid #245778;border-radius:6px;font-size:9px;color:#a9bfd1;background:#061624da}
+.options-cvd strong{font-size:9px;display:block;line-height:1.4}.options-cvd-aligned strong{color:#2af597}.options-cvd-divergent strong{color:#ffbf55}
+.options-cvd summary{cursor:pointer;margin-top:3px}.options-cvd p{line-height:1.5;margin-top:5px}
+.intraday-atr{border-top:1px solid #245778;margin-top:6px;padding-top:6px;text-align:left;font-size:9px;color:#a9bfd1}
+.intraday-atr>span{color:#55dfff}.intraday-atr>strong{display:block;font-size:11px;margin-top:3px;color:#e9f5ff}.intraday-atr summary{margin-top:3px;cursor:pointer}.intraday-atr p{line-height:1.5;margin-top:4px}
+
+/* ATR beside IV: reuse the original meter height instead of adding a row. */
+.route-volatility-meters{display:grid;grid-template-columns:minmax(0,1fr) minmax(112px,1.1fr);gap:8px;align-items:center}
+.route-volatility-meters:not(:has(.intraday-atr)){grid-template-columns:1fr}
+.route-volatility-meters .route-iv{min-width:0}
+.route-volatility-meters .intraday-atr{border-top:0;border-right:1px solid #245778;margin:0;padding:0 8px 0 0;min-width:0;overflow-wrap:anywhere}
+.route-volatility-meters .intraday-atr>small{display:block;font-size:8px;line-height:1.3;margin-top:3px}
+.route-volatility-meters .intraday-atr>span{display:block;font-size:9px}
+.route-volatility-meters .intraday-atr>span:not(:first-child){margin-top:8px}
+.route-volatility-meters .intraday-atr>strong{font-size:11px}
+/* ATR enriches existing lines/details; no extra rows in the compact top panels. */
+.atr-inline-summary{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;min-width:0}
+.block-pressure-zones>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.atr-context-evidence{line-height:1.4;overflow-wrap:anywhere}
+.structural-map-preview .card-head>div{min-width:0}.route-preview-station small:has(+details){white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.structural-map-preview .subtitle.atr-inline-summary{display:block;width:100%;box-sizing:border-box}
+/* Move confluence into the space beneath title/price, beside daily bias. */
+.direction-header .day-map-title-price{gap:7px}
+.map-header-context{display:grid;gap:4px;min-width:0}
+.map-header-context .direction-level-link{margin:0;padding:5px 6px}
+.map-header-context .options-cvd{padding:5px 6px}
+.map-header-context strong,.map-header-context summary{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;min-width:0;display:block}
+.map-header-context{grid-template-columns:minmax(0,1fr)}
+.map-header-context>*{width:100%;min-width:0;box-sizing:border-box}
+.absorption-title-row{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0;font-size:10px;color:#9ad7ff;line-height:normal}.absorption-title-row>span{white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis}.absorption-title-row .absorption-expected-range{color:#ffdc36;flex-shrink:0;font-weight:600}
+/* Compact selected-asset strip in quick reading. Connection controls/errors remain available. */
+[data-live-view="quick"] .live-asset-navigation [data-asset-status]>.tag{display:none}
+[data-live-view="quick"] .live-asset-navigation [data-asset-status]:not(:has(button,p)){display:none}
+[data-live-view="quick"] .live-asset-navigation [data-watchlist-host]:empty{display:none}
+#live-workspace[data-live-view="quick"] .live-asset-navigation{padding-bottom:0;margin-bottom:2px;gap:3px}
+/* ATR bars share existing text lines; no extra panel rows or padding. */
+.atr-meter{display:inline-flex;align-items:center;gap:3px;vertical-align:middle;white-space:nowrap;font-size:8px;line-height:1;letter-spacing:0;margin-left:3px;max-width:92px}.atr-meter-track{display:inline-block;width:36px;height:4px;border-radius:3px;background:#27394f;overflow:hidden;flex:none}.atr-meter-track>i{display:block;height:100%;border-radius:inherit}.atr-meter-value{color:#a8c9df;font-weight:400}.intraday-atr>span .atr-meter{font-size:8px}
+.intraday-atr>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.intraday-atr>span .atr-meter{margin-left:2px}.intraday-atr>span .atr-meter-track{width:24px}
+.direction-badge>small:first-of-type{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.direction-badge .qqq-component-line{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* QQQ: taller direction card; keep the volatility/flow column at its original width. */
+@media(min-width:701px){.levels-route-design.qqq-components-layout{grid-template-columns:minmax(0,1.08fr) minmax(260px,.8fr)}.qqq-components-layout .reading-toolbar.direction-header{grid-template-columns:minmax(95px,.75fr) minmax(0,1.25fr)}}
+.direction-header .direction-badge.qqq-split-badge{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;padding:10px 8px;min-height:150px}
+.qqq-direction-main,.qqq-direction-components{min-width:0}.qqq-direction-main>span{display:block;font-size:9px;margin-bottom:4px}.qqq-direction-main>div{display:flex;flex-direction:column;gap:5px;font-size:10px}.qqq-direction-main strong{font-size:20px!important}.qqq-direction-main>small{display:block;font-size:8px;margin-top:6px;white-space:normal;overflow-wrap:anywhere;line-height:12px}
+.qqq-direction-components{border-left:1px solid #25425e;padding-left:8px}.qqq-direction-components .qqq-component-line{display:block;border:0!important;padding:0!important;font-size:9px!important;line-height:13px;white-space:normal;overflow-wrap:anywhere}
+[data-qqq-component-actors]{display:grid;gap:9px;margin-top:9px}[data-qqq-component-actors]>span{display:grid;gap:2px;font-size:9px;line-height:12px;min-width:0}[data-qqq-component-actors]>span>span{white-space:normal;overflow-wrap:anywhere;color:#bdd9ec}.qqq-quick-up>b{color:#2af597}.qqq-quick-down>b{color:#ff5277}
+
+.qqq-components-heading{display:block;font-size:9px;color:#46dfff;margin-bottom:5px}.qqq-direction-components .qqq-component-line{display:flex;gap:10px;font-size:18px!important;font-weight:700;line-height:22px}.qqq-percent-up{color:#2af597}.qqq-percent-down{color:#ff5277}
+
+/* Avoid stretching blocks and pushing CVD/targets far below their content. */
+.quick-command-layout.route-command-layout .levels-route-design .block-pressure{flex:0 0 auto;min-height:0}
+.quick-command-layout.route-command-layout .levels-route-design .block-pressure .analyst-targets{margin-top:8px}
+.quick-command-layout.route-command-layout .levels-route-design .block-pressure details{margin-top:5px}
+/* Place dealer metrics beneath the summary, using the previously empty left column. */
+.intraday-control .dealer-combined{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px 12px;align-items:start}
+.intraday-control .dealer-overview{display:contents}
+.intraday-control .dealer-combined .dealer-card:first-child{grid-column:1;grid-row:1}
+.intraday-control .dealer-combined .dealer-magnet{grid-column:2;grid-row:1/span 2}
+.intraday-control .dealer-combined .dealer-metrics{grid-column:1;grid-row:2;grid-template-columns:1fr;margin-top:0;gap:3px;padding-top:6px}
+.intraday-control .dealer-combined .dealer-metrics .dealer-bar{font-size:10px;margin:2px 0}
+.intraday-control .dealer-combined-evidence{grid-column:1/-1}
+@container(max-width:390px){.intraday-control .dealer-combined{display:block}.intraday-control .dealer-overview{display:grid;grid-template-columns:1fr}.intraday-control .dealer-combined .dealer-metrics{margin-top:8px}}
+/* Dealer summary and metrics share one column, so magnet height creates no inner gap. */
+.intraday-control .dealer-combined{display:block}
+.intraday-control .dealer-overview{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:start}
+.intraday-control .dealer-card>.dealer-metrics{margin-top:10px}
+@container(max-width:390px){.intraday-control .dealer-overview{grid-template-columns:1fr}}
+.route-preview>header>small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60%}
+
+/* Opening overview: reduce empty space while preserving every visible reading. */
+@media(min-width:1151px){
+ [data-live-view="quick"] .quick-command-layout.route-command-layout{gap:10px}
+ [data-live-view="quick"] .levels-route-design{padding:9px;gap:9px}
+ [data-live-view="quick"] .levels-route-design .reading-toolbar.direction-header{padding:0 0 8px;margin-bottom:9px;gap:8px}
+ [data-live-view="quick"] .direction-header .day-map-title-price{gap:6px}
+ [data-live-view="quick"] .direction-header .direction-badge{padding:8px}
+ [data-live-view="quick"] .levels-route-design .flow-column{gap:7px}
+ [data-live-view="quick"] .levels-route-design .flow-four-cell{height:72px}
+ [data-live-view="quick"] .levels-route-design .route-volatility{padding:6px}
+ [data-live-view="quick"] .intraday-control{padding:9px}
+ [data-live-view="quick"] .intraday-control .dealer-combined{padding:9px;margin:7px 0}
+ [data-live-view="quick"] .intraday-control .dealer-head svg{width:48px}
+ [data-live-view="quick"] .intraday-control .dealer-candidate{margin:7px 0;gap:8px}
+ [data-live-view="quick"] .intraday-control .dealer-candidates-label{margin-top:9px}
+ [data-live-view="quick"] .intraday-control .dealer-references{margin-top:9px;padding-top:5px}
+ [data-live-view="quick"] .intraday-control .dealer-references>div{margin:6px 0}
+ [data-live-view="quick"] .intraday-control .dealer-card details{margin-top:6px}
+ [data-live-view="quick"] .intraday-control .dealer-source{margin-bottom:7px}
+ [data-live-view="quick"] .intraday-control .absorption-reading{margin:7px 0;padding:7px 8px}
+ [data-live-view="quick"] .intraday-control .structural-map-preview{padding:9px;max-width:none}
+ [data-live-view="quick"] .intraday-control .structural-map-preview .section-head{margin-bottom:7px;gap:5px}
+ [data-live-view="quick"] .intraday-control .structural-map-preview .horizon{padding:7px}
+ [data-live-view="quick"] .intraday-control .structural-map-preview .card-head{min-height:30px;margin-bottom:6px;gap:5px}
+ [data-live-view="quick"] .intraday-control .structural-map-preview .main{grid-template-columns:60px minmax(0,1fr);gap:5px}
+ [data-live-view="quick"] .intraday-control .structural-map-preview .ring{width:60px;height:60px;margin:0}
+ [data-live-view="quick"] .intraday-control .structural-map-preview .ring-core{width:49px;height:49px}
+ [data-live-view="quick"] .intraday-control .structural-map-preview .ring strong{font-size:20px}
+ [data-live-view="quick"] .intraday-control .structural-map-preview .ring span{font-size:9px}
+ [data-live-view="quick"] .intraday-control .structural-map-preview .deltas>div{padding:3px;min-height:20px;gap:2px}
+ [data-live-view="quick"] .intraday-control .structural-map-preview .bar-group{margin-top:7px;gap:5px}
+ [data-live-view="quick"] .intraday-control .structural-map-preview .legend{margin-top:6px}
+}
+/* Delta by strike: one summary line; full evidence remains available on demand. */
+.absorption-reading:has(>.absorption-compact){padding:6px 9px}
+.absorption-reading>.absorption-compact{margin:0}
+.absorption-compact>summary{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:10px;min-width:0}
+.absorption-compact>summary::before{content:'▸';color:#9ad7ff;flex:none}
+.absorption-compact[open]>summary::before{content:'▾'}
+.absorption-compact>summary>span:first-of-type{color:#9ad7ff;flex:none}
+.absorption-reading .absorption-compact>summary>strong{display:inline;margin:0;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.absorption-compact>summary>.absorption-expected-range{margin-left:auto;white-space:nowrap;color:#ffdc36;font-weight:600;flex:none}
+.absorption-compact-detail{padding-top:6px}
+/* Readable ATR: dollars first, gauges identified as candle/day, no extra height. */
+.intraday-atr.atr-readable .atr-readable-item{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:2px 5px}
+.atr-readable-item+ .atr-readable-item{margin-top:7px}
+.atr-readable-item>span{grid-column:1/-1;color:#55dfff;font-size:10px;font-weight:600}
+.atr-readable-item>strong{font-size:14px;line-height:18px;color:#e9f5ff;white-space:nowrap}
+.atr-readable-gauge{display:flex;flex-direction:column;align-items:flex-end;gap:1px}
+.atr-readable-gauge>small{font-size:8px;color:#a9bfd1;line-height:9px}
+.atr-readable-gauge .atr-meter{margin:0;font-size:9px;max-width:80px}
+.atr-readable-gauge .atr-meter-track{width:26px}

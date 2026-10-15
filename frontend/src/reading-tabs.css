@@ -1,0 +1,10 @@
+.reading-view-tabs{display:inline-flex;align-items:center;gap:3px;margin-left:10px;padding:3px;border:1px solid #244359;border-radius:8px;background:#071624}
+.reading-view-tabs button{border:0;border-radius:5px;padding:6px 10px;background:transparent;color:#9ab8ce;font:inherit;font-size:12px;cursor:pointer;white-space:nowrap}
+.reading-view-tabs button[aria-current="page"]{background:#12334a;color:#e9f5ff;box-shadow:inset 0 0 0 1px #2c6682}
+.reading-view-tabs button:focus-visible{outline:2px solid #44ddff;outline-offset:2px}
+.quick-empty-panel{min-height:70vh;border:1px solid #244359;border-radius:10px;background:#04111e}
+@media(max-width:700px){.reading-view-tabs{margin-left:4px}.reading-view-tabs button{padding:5px 7px;font-size:10px}}
+
+.probability-header-title{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center;margin:0 14px;padding:7px 18px;border:1px solid #20d995;border-left:3px solid #2bf4aa;border-radius:8px;background:linear-gradient(135deg,#104f3d,#073027);color:#aaffdc;font-size:14px;font-weight:600;letter-spacing:.035em;box-shadow:inset 0 1px 0 #43eaaa1a,0 0 12px #15c8840d}
+@media(max-width:1100px){.probability-header-title{font-size:11px;padding:6px 9px;margin:0 6px}}
+@media(max-width:780px){.probability-header-title{display:none}}

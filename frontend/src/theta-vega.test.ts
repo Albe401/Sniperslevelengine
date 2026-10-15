@@ -1,0 +1,6 @@
+import {it,expect} from 'vitest';
+import {sensitivityPanel,type Sensitivity} from './theta-vega';
+const row:Sensitivity={ticker:'O:QQQ261002C00745000',kind:'call',expiration:'2026-10-02',strike:745,observedMs:1000,quoteMs:1000,recent:true,theta:-.1,vega:.2,iv:.2,multiplier:100,thetaDollarsDay:-10,vegaDollarsPoint:20,thetaPctDay:-5,vegaPctPoint:10};
+it('muestra unidades de contrato y punto porcentual, no multiplica vega por cien otra vez',()=>{const html=sensitivityPanel([row],true,1100);expect(html).toContain('-10.00');expect(html).toContain('20.00');expect(html).toContain('20% → 21%');expect(html).toContain('SNAPSHOT RECIENTE');});
+it('caduca incluso sin recibir nuevos eventos y conserva referencia identificada',()=>{for(const [on,now] of [[false,1100],[true,62000],[true,900]] as const){const html=sensitivityPanel([row],on,now);expect(html).toContain('NO VIGENTE');expect(html).not.toContain('SNAPSHOT RECIENTE');}});
+it('no inventa valores ni expone contenido HTML del proveedor',()=>{const html=sensitivityPanel([{...row,ticker:'<script>bad</script>',theta:null,thetaDollarsDay:null,multiplier:null}],true,1100);expect(html).toContain('&lt;script&gt;');expect(html).not.toContain('<script>');expect(html).toContain('multiplicador —');expect(sensitivityPanel()).toContain('Esperando Theta');});

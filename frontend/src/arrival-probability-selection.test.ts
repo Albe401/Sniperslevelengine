@@ -1,0 +1,6 @@
+import {it,expect} from 'vitest';
+import {highestArrivalProbability,type ArrivalReading} from './arrival-probability-selection';
+const readings=():ArrivalReading[]=>[{side:1,probability:.8,horizon:'session',target:102,at:1000},{side:-1,probability:.7,horizon:'session',target:98,at:1000}];
+it('shows one highest probability and switches sides when the ranking changes',()=>{const r=readings();expect(highestArrivalProbability(r,1000)?.side).toBe(1);r[0].probability=.6;r[1].probability=.9;expect(highestArrivalProbability(r,1000)?.side).toBe(-1);expect(highestArrivalProbability(r,1000)?.probability).toBe(.9);});
+it('does not force a winner with missing probabilities, ties, corruption, stale or future readings',()=>{for(const change of [{probability:null},{probability:NaN},{probability:1.1},{probability:.7},{at:1001},{at:-3000}]){const r=readings();r[0]={...r[0],...change};expect(highestArrivalProbability(r,1000)).toBeUndefined();}expect(highestArrivalProbability(readings(),NaN)).toBeUndefined();});
+it('never compares different horizons or converts PUT into one minus CALL',()=>{const r=readings();r[1].horizon='swing2';expect(highestArrivalProbability(r,1000)?.probability).toBe(.8);expect(r[1].probability).toBe(.7);});

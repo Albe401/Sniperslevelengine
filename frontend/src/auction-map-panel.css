@@ -1,0 +1,64 @@
+/* Same palette and compact card treatment as the existing structural/level maps. */
+.quick-command-layout.route-command-layout>.intraday-control.auction-map-stack{align-self:start;display:flex;flex-direction:column;gap:10px;padding:0;margin:0;border:0;background:transparent;min-height:0;height:auto}
+.quick-command-layout.route-command-layout>.auction-map-stack>.structural-map-preview{width:100%;max-width:none;margin:0;padding:12px}
+.auction-map-panel .section-head{flex-wrap:wrap}.auction-map-panel .section-head strong{font-size:12px;letter-spacing:.045em}
+.auction-map-track{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 22px;position:relative;padding:4px 0;isolation:isolate}
+.auction-map-track:before{content:'';position:absolute;left:50%;top:28px;bottom:28px;width:1px;background:#285471;z-index:-1}
+.auction-map-node{--auction-edge:#277fba;--auction-tone:#39d7ff;--auction-wash:#075ba229;border:1px solid var(--auction-edge);border-left:3px solid var(--auction-tone);border-radius:8px;background:linear-gradient(150deg,var(--auction-wash),#030e1acc);min-width:0;align-self:start;position:relative;margin:0}
+.auction-map-node:nth-of-type(odd){grid-column:1}.auction-map-node:nth-of-type(even){grid-column:2}
+.auction-map-node.acceptance{--auction-edge:#158b75;--auction-tone:#2bf4aa;--auction-wash:#045b423f}
+.auction-map-panel .auction-map-node[data-level-strength]{--auction-edge:color-mix(in srgb,var(--auction-tone) var(--level-edge),#164237);border-left-color:var(--auction-edge);background:radial-gradient(ellipse at 50% 35%,color-mix(in srgb,var(--auction-tone) var(--level-fill),#04151f),#030e1a);transition:border-color .2s,background .2s}
+@media(prefers-reduced-motion:reduce){.auction-map-panel .auction-map-node[data-level-strength]{transition:none}}
+.auction-map-node.rejection{--auction-edge:#924158;--auction-tone:#ff5a79;--auction-wash:#671e343f}
+.auction-map-node.poc{--auction-edge:#7961ad;--auction-tone:#b397ff;--auction-wash:#492c753f}
+.auction-map-node:after{content:'';position:absolute;left:100%;top:30px;width:12px;height:1px;background:var(--auction-edge)}
+.auction-map-node:nth-of-type(even):after{left:auto;right:100%}
+.auction-map-node summary{display:flex;flex-direction:column;gap:4px;padding:9px 7px;text-align:center;cursor:pointer;list-style:none;min-height:73px;justify-content:center}
+.auction-map-node summary::-webkit-details-marker{display:none}.auction-map-node summary>span{font-size:10px;color:var(--auction-tone);text-transform:uppercase;line-height:1.3}.auction-map-node summary>strong{font-size:20px;color:#edf5ff;font-weight:600;letter-spacing:-.4px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}.auction-map-node summary>small{font-size:10px;color:#a8c0d5}.auction-map-node p{padding:0 9px 9px;margin:0;color:#b6cbd9;font-size:11px;line-height:1.5}.auction-map-node[open]{border-color:var(--auction-tone)}
+.auction-map-price{grid-column:1/-1;display:flex;justify-content:center;align-items:center;gap:10px;flex-wrap:wrap;border-top:1px dashed #277fba;border-bottom:1px dashed #277fba;background:#0b2230;padding:6px 4px;color:#a8c0d5;font-size:10px;position:relative}.auction-map-price b{font-size:17px;color:#39d7ff;font-variant-numeric:tabular-nums}
+@container(max-width:390px){.auction-map-track{gap:7px 18px}.auction-map-node summary>strong{font-size:18px}.auction-map-node:after{width:10px}}
+.auction-map-node.acceptance summary{position:relative}.auction-map-node summary>.auction-acceptance-meter{position:absolute;left:14px;right:14px;bottom:4px;height:3px;border-radius:4px;background:#102e29;overflow:hidden}.auction-acceptance-meter i{display:block;height:100%;background:linear-gradient(90deg,#138b65,#2bf4aa);border-radius:4px}
+/* Visual profile occupies the previous structural-map surface; product palette unchanged. */
+.auction-map-panel{container-type:inline-size}.auction-map-visual{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,1fr);gap:12px;align-items:stretch;margin-top:12px}.auction-volume-profile{min-width:0;border:1px solid #244a62;border-radius:8px;background:#071a28;padding:12px;display:flex;flex-direction:column}.auction-volume-profile header{display:flex;justify-content:space-between;gap:6px;font-size:10px;color:#a8c5d8;margin-bottom:16px}.auction-volume-profile header strong{font-weight:550;font-size:10px;color:#9adfff}.auction-profile-plot{position:relative;display:grid;grid-template-columns:minmax(0,1fr) 49px;gap:7px;min-height:470px;flex:1}.auction-profile-bars{position:relative;background:linear-gradient(90deg,#09203144,#0b253488);border-right:1px solid #244d63}.auction-profile-bin{position:absolute;left:0;right:0;display:flex;justify-content:flex-end;min-height:1px}.auction-profile-bin i{display:block;background:#276b89;border-radius:2px;box-shadow:inset 0 -1px #071827}.auction-profile-bin.is-acceptance i{background:#20bb89}.auction-profile-bin.is-poc i{background:#ac8be7}.auction-profile-axis{position:relative;color:#b7ccdc;font-size:10px;font-variant-numeric:tabular-nums}.auction-profile-axis span{position:absolute;left:0;transform:translateY(-50%)}.auction-profile-axis span:first-child{transform:none}.auction-profile-axis span:last-child{transform:translateY(-100%)}.auction-profile-line{position:absolute;left:0;right:0;height:1px;border-top:1px dashed #429ac0;pointer-events:none}.auction-profile-line.reference{border-color:#e3f1f8}.auction-profile-line span{position:absolute;left:0;bottom:2px;font-size:9px;background:#071a28dd;color:#b8e8f8;padding:1px 3px;white-space:nowrap}.auction-profile-scale{display:flex;justify-content:space-between;gap:4px;font-size:9px;color:#90aebf;margin:12px 48px 0 0;flex-wrap:wrap}.auction-profile-legend{display:flex;gap:9px;flex-wrap:wrap;font-size:10px;color:#a8c2d3;margin-top:12px}.auction-profile-legend span:before{content:'';display:inline-block;width:6px;height:6px;border-radius:2px;margin-right:4px;background:#276b89}.auction-profile-legend .acceptance:before{background:#20bb89}.auction-profile-legend .poc:before{background:#ac8be7}.auction-volume-profile>small{font-size:9px;color:#93acbf;margin-top:8px}.auction-profile-empty{display:flex;align-items:center;justify-content:center;text-align:center;min-height:470px;color:#8eafc3;font-size:12px}.auction-map-levels{min-width:0}.auction-levels-heading{color:#9adfff;font-size:10px;margin:0 0 10px}.auction-map-levels .auction-map-track{display:flex;flex-direction:column;gap:8px;padding:0}.auction-map-levels .auction-map-track:before,.auction-map-levels .auction-map-node:after{display:none}.auction-map-levels .auction-map-node{width:100%}.auction-map-levels .auction-map-node summary{min-height:63px;padding:8px 6px;gap:3px}.auction-map-levels .auction-map-node summary>strong{font-size:18px}.auction-map-visual:has([data-horizon-details="auction-upper"][open]) .zone-upper i,.auction-map-visual:has([data-horizon-details="auction-lower"][open]) .zone-lower i{background:#65ffcb;filter:brightness(1.15)}
+@container(max-width:420px){.auction-map-visual{grid-template-columns:1fr}.auction-profile-plot,.auction-profile-empty{min-height:360px}.auction-map-levels .auction-map-node summary>strong{font-size:15px}}
+/* Match the translucent workspace cards so the existing lion remains visible. */
+.quick-command-layout.route-command-layout>.auction-map-stack>.auction-map-panel{background:radial-gradient(ellipse at 80% 0,#10394c22,transparent 65%),#04111e50}
+.auction-map-panel .auction-volume-profile{background:#071a2824}
+.auction-map-panel .structural-price{background:#0b223044}
+.auction-map-panel .auction-profile-bars{background:linear-gradient(90deg,#09203110,#0b253422)}
+.auction-map-panel .auction-map-node{background:linear-gradient(150deg,var(--auction-wash),#030e1a35)}
+.auction-map-panel .auction-map-node[data-level-strength]{background:radial-gradient(ellipse at 50% 35%,color-mix(in srgb,var(--auction-tone) var(--level-fill),transparent),#030e1a28)}
+.auction-map-panel .auction-map-price{background:#0b223040}
+.auction-map-panel .auction-profile-line span{background:#071a2880}
+/* Darkened current price interval; original bar width still represents actual volume. */
+.auction-map-panel .auction-profile-bin.is-current i{background:#061c25;box-shadow:inset 0 0 0 1px #ffd16b}
+.auction-map-panel .auction-profile-bin.is-destination i{background:#0a3442;box-shadow:inset 0 0 0 1px #48e6ff}
+.auction-profile-legend .current:before{background:#ffd16b}.auction-profile-legend .destination:before{background:#48e6ff}
+.auction-profile-path{position:absolute;min-height:2px;width:1px;border-left:1px dashed #48e6ff;pointer-events:none}.auction-profile-path:after{content:'';position:absolute;left:-4px;border-left:3px solid transparent;border-right:3px solid transparent}.auction-profile-path.up:after{top:0;border-bottom:5px solid #48e6ff}.auction-profile-path.down:after{bottom:0;border-top:5px solid #48e6ff}
+.auction-profile-destinations{display:flex;flex-direction:column;gap:5px;font-size:10px;color:#a9d6e7;margin-top:10px}.auction-profile-destinations b{color:#58e9ff;font-variant-numeric:tabular-nums;font-weight:550}
+/* Emphasis darkens each bar's existing hue instead of replacing it with near-black. */
+.auction-profile-bin{--profile-bin-color:#276b89}.auction-profile-bin.is-acceptance{--profile-bin-color:#20bb89}.auction-profile-bin.is-poc{--profile-bin-color:#ac8be7}
+.auction-map-panel .auction-profile-bin.is-current i,.auction-map-panel .auction-profile-bin.is-destination i{background:color-mix(in srgb,var(--profile-bin-color) 48%,#000)}
+/* All level meters retain the level's own green, cyan, purple or red hue. */
+.auction-map-node summary{position:relative}.auction-map-node .auction-acceptance-meter{background:color-mix(in srgb,var(--auction-tone) 12%,transparent)}.auction-map-node .auction-acceptance-meter i{background:linear-gradient(90deg,color-mix(in srgb,var(--auction-tone) 55%,#071421),var(--auction-tone))}
+
+
+/* Reference histogram palette: price markers never replace the bar's data hue. */
+.auction-map-panel .auction-profile-bin i{border-radius:2px;box-shadow:inset 0 -1px #071827}
+.auction-map-panel .auction-profile-bin.is-current i,.auction-map-panel .auction-profile-bin.is-destination i{background:var(--profile-bin-color);box-shadow:inset 0 -1px #071827}
+.auction-map-panel .auction-profile-legend .current{display:none}
+.auction-map-panel .auction-profile-legend .destination{display:none}
+
+.auction-map-panel .auction-profile-line.reference{border-color:#ff79b0}.auction-map-panel .auction-profile-line.reference span{color:#ff79b0}
+
+/* Keep the profile compact instead of stretching it to the level-card column. */
+.auction-map-panel .auction-volume-profile{align-self:stretch}.auction-map-panel .auction-profile-empty{min-height:120px}.auction-map-panel .auction-profile-quality{margin:0 0 10px}.auction-map-panel .auction-profile-scale{margin-top:8px}.auction-map-panel .auction-profile-legend{margin-top:8px}
+
+.auction-map-panel .auction-profile-line.lower span{top:2px;bottom:auto}.auction-map-panel .auction-profile-line.reference span{left:0;right:auto}
+
+.auction-profile-navigation{display:flex;align-items:center;gap:4px;margin:-8px 0 9px;flex-wrap:wrap}
+.auction-profile-navigation button{border:1px solid #244a62;background:#071a2880;border-radius:4px;padding:2px 6px;color:#b7ccdc;font-size:9px;cursor:pointer}
+.auction-profile-navigation small{font-size:9px;color:#93acbf;margin-left:3px}
+.auction-map-panel .auction-profile-plot{overflow:hidden;cursor:grab;touch-action:none;user-select:none;overscroll-behavior:contain}
+.auction-map-panel .auction-profile-plot.is-panning{cursor:grabbing}
+.auction-map-panel .auction-profile-plot:focus-visible{outline:1px solid #39d7ff;outline-offset:2px}

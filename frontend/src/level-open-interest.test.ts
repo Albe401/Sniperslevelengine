@@ -1,0 +1,23 @@
+import {expect,it} from 'vitest';
+import {levelOpenInterest} from './level-open-interest';
+import type {EtfReport} from './etf-dealers';
+const report=(details:unknown[])=>({expirations:['2026-10-09'],enrichment:{details:details.map(r=>({expiration:'2026-10-09',...(r as object)}))}} as unknown as EtfReport);
+const rows=[{ticker:'c',kind:'call',strike:279,oi:100,gamma:null},{ticker:'p',kind:'put',strike:279,oi:300,gamma:null}];
+it('shows open contracts independently of unavailable Greeks or executions',()=>{expect(levelOpenInterest(report(rows),279)).toMatchObject({call:100,put:300,callPct:25,putPct:75,total:400});expect(levelOpenInterest(report(rows),278)).toBeNull();});
+it('rejects missing sides, unknown OI, duplicates and invalid values',()=>{for(const ds of [rows.slice(0,1),[...rows,rows[0]],rows.map(r=>({...r,oi:null})),rows.map(r=>({...r,oi:-1})),rows.map(r=>({...r,oi:Infinity})),rows.map(r=>({...r,oi:0}))])expect(levelOpenInterest(report(ds),279)).toBeNull();});
+it('rounds percentages to a total of 100',()=>{const r=levelOpenInterest(report(rows.map((r,i)=>({...r,oi:i?145:55}))),279)!;expect(r.callPct+r.putPct).toBe(100);});
+it('renders a split OI bar and percentages in existing magnet summary rows',async()=>{const {dayMap}=await import('./day-map');const h={mode:'DAY',expirations:['2026-10-09'],structure:{complete:true,selected:{M1:279},magnet:279,mainMagnetScore:61,liquidityMagnetScore:62,routes:[]}} as unknown as import('./live').Horizon;const outlook={rows:[],level:'',levelDetail:'',change:'',changeDetail:'',route:'',routeDetail:'',invalidate:'',invalidateDetail:''} as unknown as import('./day-map').MapOutlook;const html=dayMap(h,true,[],false,null,'',outlook,true,'',undefined,undefined,'',{oiReport:report(rows)});expect(html).toContain('OI CALL 25% · PUT 75%');expect(html).toContain('class="oi-put" style="width:75%"');expect(html).toContain('CALL 100 · PUT 300');expect(html).toContain('<b>OI CALL 25% · PUT 75% +</b>');expect(html).toContain('61.0/100');expect(html).toContain('62.0/100');expect(html.match(/<summary><span>OI CALL 25% · PUT 75%<\/span><b>.*?<\/b><\/summary>/g)).toHaveLength(2);});
+it('cuenta WALL y PULL por su strike exacto sin sumar niveles ni inventar datos',async()=>{
+ const {dayMap}=await import('./day-map');
+ const h={mode:'DAY',expirations:['2026-10-09'],structure:{complete:true,selected:{},callWall:{strike:280,score:80},putWall:{strike:278,score:70},routes:[{direction:'CALL',pullTarget:279,score:65},{direction:'PUT',pullTarget:277,score:60}]}} as unknown as import('./live').Horizon;
+ const ds=[280,279,278,277].flatMap((strike,i)=>[{ticker:`c${strike}`,kind:'call',strike,oi:100+i*100},{ticker:`p${strike}`,kind:'put',strike,oi:300+i*100}]);
+ const render=(r:EtfReport|undefined)=>dayMap(h,true,[],false,null,'',undefined,true,'',undefined,undefined,'',{oiReport:r});
+ const html=render(report(ds));const articles=html.match(/<article\b[\s\S]*?<\/article>/g)!;
+ const call=articles.find(a=>a.includes('CALL WALL'))!,put=articles.find(a=>a.includes('PUT WALL'))!;
+ expect(call).toContain('CALL 100 (25%) · PUT 300 (75%)');expect(call).toContain('CALL 200 (33%) · PUT 400 (67%)');
+ expect(put).toContain('CALL 300 (38%) · PUT 500 (62%)');expect(put).toContain('CALL 400 (40%) · PUT 600 (60%)');
+ expect(call).not.toContain('CALL 400');expect(put).not.toContain('CALL 100');expect(html).toContain('80.0/100');expect(html).toContain('65.0/100');
+ expect(render(undefined)).toContain('OI CALL / PUT: pendiente');
+ expect(render(report(ds.filter(r=>r.ticker!=='p279')))).not.toContain('CALL 200 (33%)');
+ expect(dayMap(h,false,[],false,null,'',undefined,true,'',undefined,undefined,'',{oiReport:report(ds)})).not.toContain('CALL 100 (25%)');
+});

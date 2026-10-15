@@ -1,0 +1,17 @@
+import {it,expect,vi,afterEach} from 'vitest';
+import {auditQuick,marketOpen,continuousAudit,continuousAuditPanel} from './continuous-quick-audit';
+import type {LiveState} from './live';
+const now=Date.parse('2026-10-02T15:00:00Z');
+const calendar={chartHistory:{sessions:[{date:'2026-10-02',openMs:Date.parse('2026-10-02T13:30:00Z'),closeMs:Date.parse('2026-10-02T17:00:00Z')}]}} as LiveState;
+afterEach(()=>{vi.useRealTimers();vi.unstubAllGlobals();continuousAudit.enabled=false;continuousAudit.records=[];continuousAudit.lastCheck=0;});
+it('uses actual session bounds including early close; absent calendar stays pending',()=>{expect(marketOpen(calendar,now)).toBe(true);expect(marketOpen(calendar,Date.parse('2026-10-02T17:00:00Z'))).toBe(false);expect(marketOpen(calendar,Date.parse('2026-10-03T15:00:00Z'))).toBe(false);expect(marketOpen(undefined,now)).toBe(false);});
+it('missing evidence is pending rather than a calculation failure',()=>{const a=auditQuick(undefined,'QQQ',false,now);expect(a.status).toBe('Revisar evidencia');expect(a.issues).toContain('Publicación desconectada o caducada');expect(a.issues.some(x=>x.startsWith('ERROR:'))).toBe(false);expect(a.ms).toBeLessThan(100);});
+it('bounds analysis frequency, coalesces snapshots and stops when paused',()=>{vi.useFakeTimers();vi.setSystemTime(now);vi.stubGlobal('localStorage',{setItem:vi.fn()});const a=continuousAudit;a.enabled=true;a.marketOnly=false;a.lastCheck=0;a.records=[];const previous=a.checks;
+ for(let i=0;i<1000;i++)a.observe(undefined,'QQQ',false,now);vi.advanceTimersByTime(1);expect(a.checks).toBe(previous+1);
+ a.observe(undefined,'QQQ',false,now+1000);vi.advanceTimersByTime(1);expect(a.checks).toBe(previous+1);
+ vi.setSystemTime(now+30001);a.observe(undefined,'SPY',false,now+30001);vi.advanceTimersByTime(1);expect(a.records.at(-1)?.symbol).toBe('SPY');
+ vi.setSystemTime(now+60002);a.observe(undefined,'QQQ',false,now+60002);a.enabled=false;vi.advanceTimersByTime(1);expect(a.checks).toBe(previous+2);
+});
+it('market-only blocks out of session and preserves existing records',()=>{vi.useFakeTimers();vi.setSystemTime(now);const a=continuousAudit;a.enabled=true;a.marketOnly=true;const n=a.checks;a.observe(undefined,'QQQ',false,now);vi.advanceTimersByTime(1);expect(a.checks).toBe(n);expect(a.waiting).toContain('Esperando mercado abierto');});
+it('reports storage failure and keeps in-memory evidence',()=>{vi.stubGlobal('localStorage',{setItem:()=>{throw new Error('quota');}});continuousAudit.save();expect(continuousAudit.error).toContain('guardar');});
+it('renders accessible activation and market controls and escapes stored text',()=>{continuousAudit.records=[{at:now,symbol:'<script>',status:'Revisar evidencia',issues:['<img>'],detail:'<unsafe>',ms:1}];const h=continuousAuditPanel();expect(h).toContain('data-quick-audit-toggle');expect(h).toContain('data-quick-audit-market');expect(h).not.toContain('<script>');expect(h).toContain('&lt;script&gt;');});

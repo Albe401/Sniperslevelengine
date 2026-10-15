@@ -1,0 +1,123 @@
+/* Immersive bridge: electric blue and emerald, metallic highlights. Scoped to the functional Paper view. */
+.workspace.bot-console{background:#020b17}
+/* Match the quick-reading artwork and translucent panels without changing geometry. */
+body:has(.workspace.bot-console){background:linear-gradient(#04101b45,#04101b75),url('/assets/route-lion.png') center/cover fixed}
+.workspace.bot-console{background:transparent}
+.workspace.bot-console>.sidebar{background:#061225b8}
+.workspace.bot-console .topbar{background:#06132bb8}
+.bot-bridge{--cyan:#39dfff;--line:#174968;--muted:#9dbbd0;background:radial-gradient(ellipse at 78% 26%,#006aa025,transparent 55%);color:#edf8ff}
+.bot-bridge .bot-masthead{border-color:#16a9db66;box-shadow:none;padding-bottom:12px}
+.bot-bridge .bot-brand h1{font-size:clamp(23px,2.2vw,36px);letter-spacing:.025em}
+.bot-bridge .bot-brand h1 span{color:#47f5b0;font-weight:750}
+.bot-bridge .bot-brand p{color:#95bad7}
+.bot-bridge .bot-edition{color:#55dbff;border-color:#24516c}
+.bot-bridge .bot-paper-badge{color:#69ffbf;border-color:#20bc88;background:#04271f;box-shadow:none}
+.bot-bridge .bot-telemetry{gap:8px}
+.bot-bridge .bot-tile,.bot-bridge .bot-tile:nth-child(even){min-height:78px;border-color:#1763a0;background:linear-gradient(130deg,#08213a,#040e1c);box-shadow:inset 0 1px #3ce6ff22;padding:12px}
+.bot-bridge .bot-tile-icon{color:#40e5ff;text-shadow:none;font-size:24px}
+.bot-bridge .bot-tile strong{font-size:clamp(17px,1.5vw,24px)}
+.bot-bridge .bot-cockpit{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;margin:0 0 20px;padding:0;border:0;outline:0;border-radius:0;background:transparent;box-shadow:none;align-items:start}
+.bot-bridge .bot-cockpit:before,.bot-bridge .bot-cockpit:after{display:none}
+.bot-bridge .bot-state-card{grid-column:1;grid-row:1;display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:20px;border:1px solid #168fe5;border-radius:12px;background:linear-gradient(135deg,#08223be8,#030e1ce8);box-shadow:inset 0 1px #6be5ff44,0 0 20px #009dff15}
+.bot-bridge .bot-state-card>.bot-section-label,.bot-bridge .bot-state-card>h2,.bot-bridge .bot-state-description,.bot-bridge .bot-direction,.bot-bridge .bot-next,.bot-bridge .bot-evidence-pills,.bot-bridge .bot-bridge-actions,.bot-bridge .bot-alert{grid-column:1/-1}
+.bot-bridge .bot-state-card h2{font-size:clamp(25px,2.35vw,39px);margin:3px 0;color:#89ecff;text-shadow:0 0 20px #00aaff44}
+.bot-bridge .bot-state-description{font-size:12px;margin:0;padding-bottom:12px;min-height:0;border-color:#195375}
+.bot-bridge .bot-direction{margin:0;padding:10px 0;font-size:13px}
+.bot-bridge .bot-gauge{margin:0;border:1px solid #1c5272;border-radius:9px;padding:15px;background:#04111e}
+.bot-bridge .bot-gauge>div:first-child{gap:8px;font-size:13px}
+.bot-bridge .bot-meter{background:#10334b}
+.bot-bridge .bot-meter i{background:linear-gradient(90deg,#087bff,#23efaa);box-shadow:0 0 10px #16d9df66}
+.bot-bridge .bot-next{margin:0;padding:12px 0 0;border-color:#17475c}
+.bot-bridge .bot-next>span{color:#45ecc1}
+.bot-bridge .bot-next p{margin:7px 0 0;font-size:12px}
+.bot-bridge .bot-evidence-pills span{border-color:#23566b;color:#b0d5e7}
+.bot-bridge .bot-bridge-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px}
+.bot-bridge .bot-bridge-actions button{font-size:14px;font-weight:650;min-height:53px;border-color:#48cfff;background:linear-gradient(140deg,#085fbc,#052240);box-shadow:inset 0 0 15px #009aff55,0 0 12px #12baff33;color:#fff}
+.bot-bridge .bot-bridge-actions [data-bot-prepare]{border-color:#48edb0;background:linear-gradient(135deg,#075b45,#04271e);color:#b2ffe0;box-shadow:inset 0 0 15px #23edac33,0 0 12px #26e9ac22}
+.bot-bridge .bot-reactor{grid-column:2;grid-row:1;width:100%;max-width:none;align-self:stretch;min-height:460px;margin:0;aspect-ratio:auto;background:transparent}
+.bot-bridge .bot-reactor-art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 32%;filter:none;mask-image:linear-gradient(to right,transparent,#000 12%,#000 92%,transparent),linear-gradient(to bottom,transparent,#000 5%,#000 86%,transparent);-webkit-mask-image:linear-gradient(to right,transparent,#000 12%,#000 92%,transparent),linear-gradient(to bottom,transparent,#000 5%,#000 86%,transparent)}
+.bot-bridge .bot-reactor-label{bottom:0;color:#b4dce9;background:transparent;font-size:9px}
+.bot-bridge .bot-position-card{grid-column:1/-1;grid-row:2;padding:18px;border-color:#236889;background:linear-gradient(110deg,#071e31,#030f1b);display:grid;grid-template-columns:1.4fr 1fr;gap:12px 24px}
+.bot-bridge .bot-position-card>.bot-section-label,.bot-bridge .bot-position-foot{grid-column:1/-1}
+.bot-bridge .bot-position-card>.bot-section-label{padding-bottom:10px;border-color:#18495e}
+.bot-bridge .bot-position-stats{grid-template-columns:repeat(4,minmax(0,1fr));margin:0;gap:8px}
+.bot-bridge .bot-stat{padding:10px;border-color:#1a425b;background:#030d1a}
+.bot-bridge .bot-stat strong{font-size:19px}
+.bot-bridge .bot-thresholds{margin:0}
+.bot-bridge .bot-thresholds strong{font-size:22px}
+.bot-bridge .bot-contract-line{padding:0;border:0}
+.bot-bridge .bot-fill-line{margin:0;flex-wrap:wrap}
+.bot-bridge .bot-reason{margin:0;min-height:0}
+.bot-bridge .bot-control-bar{margin:0}
+.bot-bridge .bot-journal{margin:0 0 18px;border-color:#2687ba;background:linear-gradient(130deg,#071d32,#040e19);box-shadow:0 0 14px #159fff15}
+.bot-bridge .bot-journal:before{background:#48f5b2;box-shadow:0 0 10px #26e7ac66}
+.bot-bridge .bot-filters button{background:#082136;border-color:#225771}
+.bot-bridge .bot-filters button[aria-pressed=true]{background:#075f85;border-color:#4ee9df;color:#fff}
+.bot-bridge .bot-table-wrap{border-color:#225979}
+.bot-bridge th{background:#0b2c43;color:#92eaff}
+.bot-bridge :is(th,td){border-color:#16394e}
+.bot-bridge .bot-empty{background:#040f1c;border-color:#20516a}
+.bot-bridge .bot-config{background:#061b2d;border-color:#24698a;scroll-margin-top:100px}
+.bot-bridge .bot-config input,.bot-config select{background:#030f1d;border-color:#276384}
+.bot-bridge .bot-arm{background:linear-gradient(120deg,#0868c8,#058362);border-color:#48decc}
+@media(max-width:1100px){.bot-bridge .bot-position-card{grid-template-columns:1fr}.bot-bridge .bot-position-card>*{grid-column:1}.bot-bridge .bot-reactor{min-height:480px}.bot-bridge .bot-state-card{padding:15px}.bot-bridge .bot-bridge-actions{grid-template-columns:1fr}}
+@media(max-width:700px){.bot-bridge .bot-cockpit{grid-template-columns:1fr}.bot-bridge .bot-state-card{grid-column:1;grid-row:1}.bot-bridge .bot-reactor{grid-column:1;grid-row:2;min-height:380px}.bot-bridge .bot-reactor-art{object-fit:contain}.bot-bridge .bot-position-card{grid-column:1;grid-row:3}.bot-bridge .bot-position-stats{grid-template-columns:repeat(2,1fr)}.bot-bridge .bot-bridge-actions{grid-template-columns:1fr 1fr}.bot-bridge .bot-bridge-actions button{font-size:12px;padding:10px 6px}}
+
+/* Shared accents and risk colors retain their distinct meaning. */
+.bot-bridge{--green:#39f3ad;--violet:#39f3ad}
+.bot-bridge .bot-footer b{color:#39f3ad}
+.bot-bridge .bot-filters button[aria-pressed=true],.bot-bridge .bot-arm{box-shadow:inset 0 1px #8befff55,0 0 14px #00bded33}
+.bot-bridge .bot-thresholds>div.magenta{border-color:#ff527c75;background:linear-gradient(120deg,#ff527c10,#071526)}
+.bot-bridge .bot-close-button{border-color:#ff527c;background:linear-gradient(#68203655,#190e20);color:#ff8ca6;box-shadow:inset 0 0 16px #ff527c22}
+.bot-bridge .bot-side-tag.put{border-color:#ff527c66}
+
+.bot-management{margin:10px 0;padding:12px;border:1px solid #254970;border-radius:7px;font-size:11px;color:#b9cee9}.bot-management summary{color:#66d9ee;cursor:pointer}.bot-management p{line-height:1.5;margin:8px 0}.bot-management b{color:#7cf1c3}
+
+/* Diagnostics have their own row below the controls, independent of the art. */
+.bot-bridge .bot-diagnostics{grid-column:1/-1;grid-row:2;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-items:start}
+.bot-bridge .bot-diagnostics>.bot-state-description{grid-column:1/-1;grid-row:1;padding:0;color:#57e4cc;font-size:10px;letter-spacing:.05em}
+.bot-bridge .bot-diagnostics .bot-management{margin:0;padding:12px 14px;background:linear-gradient(120deg,#072339,#04121f);border-color:#246383;min-width:0}
+.bot-bridge .bot-diagnostics .bot-management p{margin:6px 0;font-size:11px;line-height:1.45}
+.bot-bridge .bot-diagnostics:empty{display:none}
+.bot-bridge .bot-position-card{grid-row:3}
+.bot-bridge .bot-reactor{height:460px;min-height:0;max-height:460px;align-self:start}
+.bot-bridge .bot-reactor-art{object-fit:contain;object-position:center}
+@media(max-width:700px){.bot-bridge .bot-diagnostics{grid-row:3;grid-template-columns:1fr}.bot-bridge .bot-reactor{grid-row:2;height:320px;min-height:0;max-height:320px}.bot-bridge .bot-position-card{grid-row:4}}
+
+/* Full artwork across the bot visual area, without a visible frame. */
+.bot-bridge .bot-reactor{border:0;outline:0;box-shadow:none;border-radius:0;overflow:hidden;background:transparent;align-self:stretch;height:auto;min-height:460px;max-height:none}
+.bot-bridge .bot-reactor-art{inset:0;width:100%;height:100%;object-fit:cover;object-position:center;mask-image:linear-gradient(to right,transparent,#000 4%,#000 96%,transparent),linear-gradient(to bottom,transparent,#000 4%,#000 96%,transparent);mask-composite:intersect;-webkit-mask-image:linear-gradient(to right,transparent,#000 4%,#000 96%,transparent),linear-gradient(to bottom,transparent,#000 4%,#000 96%,transparent);-webkit-mask-composite:source-in;filter:contrast(1.025) saturate(1.04)}
+.bot-bridge .bot-reactor-label{display:none}
+@media(max-width:700px){.bot-bridge .bot-reactor{height:auto;min-height:380px;max-height:none;aspect-ratio:1}.bot-bridge .bot-reactor-art{object-fit:cover}}
+/* Shared quick-reading opacity; preserve the bot's dimensions and status colors. */
+.bot-bridge{background:transparent}
+.bot-bridge .bot-tile,.bot-bridge .bot-tile:nth-child(even){background:linear-gradient(130deg,#08213a80,#040e1c75)}
+.bot-bridge .bot-state-card{background:linear-gradient(135deg,#08223b80,#030e1c75)}
+.bot-bridge .bot-gauge,.bot-bridge .bot-stat,.bot-bridge .bot-diagnostics .bot-management{background:#09142680}
+.bot-bridge .bot-position-card{background:linear-gradient(110deg,#071e3180,#030f1b75)}
+.bot-bridge .bot-thresholds>div,.bot-bridge .bot-thresholds>div.magenta{background:#07172b75}
+.bot-bridge .bot-journal,.bot-bridge .bot-config{background:linear-gradient(125deg,#04142794,#06162ca3)}
+.bot-bridge th{background:#0b1c3680}
+.bot-bridge .bot-empty{background:transparent}
+.bot-bridge .bot-config input,.bot-bridge .bot-filters button,.bot-bridge .bot-asset-mode button{background:#0b1529a3}
+
+/* One control card; the configuration lives outside the polling replacement. */
+.bot-bridge .bot-control-card{grid-column:1;grid-row:1;min-width:0;border:1px solid #168fe5;border-radius:12px;background:linear-gradient(135deg,#08223b80,#030e1c75);box-shadow:inset 0 1px #6be5ff44,0 0 20px #009dff15;overflow:hidden}
+.bot-bridge .bot-control-card .bot-state-card{border:0;border-radius:0;background:transparent;box-shadow:none;padding-bottom:12px}
+.bot-bridge .bot-control-card .bot-bridge-actions{grid-template-columns:1fr;margin:0}
+.bot-bridge .bot-control-card .bot-bridge-actions button{min-height:38px;font-size:12px;padding:9px}
+.bot-bridge .bot-control-card .bot-config{margin:0 20px 18px;border:0;border-top:1px solid #236889;border-radius:0;background:transparent}
+.bot-bridge .bot-control-card .bot-config>summary{padding:14px 0 10px;flex-wrap:wrap;gap:5px}
+.bot-bridge .bot-control-card .bot-config-content{display:block;border:0;padding:0}
+.bot-bridge .bot-control-card .bot-config form{grid-template-columns:1fr 1fr;gap:8px 12px}
+.bot-bridge .bot-control-card .bot-fixed,.bot-bridge .bot-control-card .bot-config-profile,.bot-bridge .bot-control-card .bot-arm,.bot-bridge .bot-control-card [data-bot-config-note]{grid-column:1/-1}
+.bot-bridge .bot-control-card .bot-fixed{padding:8px 0;margin:0}.bot-bridge .bot-control-card .bot-fixed>span{font-size:20px}
+.bot-bridge .bot-control-card .bot-config-profile{font-size:11px;line-height:1.55;margin:4px 0;color:#b7d4e7}
+.bot-bridge .bot-control-card label[for=bot-expiry]{grid-column:1;grid-row:3}.bot-bridge .bot-control-card label[for=bot-budget]{grid-column:2;grid-row:3}
+.bot-bridge .bot-control-card #bot-expiry{grid-column:1;grid-row:4}.bot-bridge .bot-control-card #bot-budget{grid-column:2;grid-row:4}
+.bot-bridge .bot-control-card .bot-config-guide{margin-top:12px;border-top:1px solid #174968;padding-top:12px;font-size:11px;color:#89dcf5}.bot-bridge .bot-control-card .bot-config-guide h3{font-size:15px;margin:14px 0 8px}.bot-bridge .bot-control-card .bot-config-guide p{font-size:11px;line-height:1.65}
+.bot-bridge .bot-status-details{margin-bottom:18px;display:grid;gap:12px;min-width:0}.bot-bridge .bot-status-details .bot-position-card{grid-row:auto}.bot-bridge .bot-status-details .bot-diagnostics{grid-row:auto}
+@media(max-width:700px){.bot-bridge .bot-control-card{grid-column:1;grid-row:1}.bot-bridge .bot-control-card .bot-config{margin-left:15px;margin-right:15px}}
+@media(max-width:420px){.bot-bridge .bot-control-card .bot-config form{grid-template-columns:1fr}.bot-bridge .bot-control-card label[for=bot-budget]{grid-column:1;grid-row:5}.bot-bridge .bot-control-card #bot-budget{grid-column:1;grid-row:6}}
+
+.bot-bridge .bot-control-card label[for=bot-profit],.bot-bridge .bot-control-card #bot-profit{grid-column:1/-1}.bot-bridge .bot-position-stats{grid-template-columns:repeat(auto-fit,minmax(125px,1fr))}
