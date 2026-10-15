@@ -51,6 +51,8 @@ def local_db():
     db = sqlite3.connect(DATA / 'outbox.sqlite', timeout=10)
     db.execute('PRAGMA journal_mode=WAL')
     db.execute('CREATE TABLE IF NOT EXISTS outbox(id TEXT PRIMARY KEY, slot INTEGER UNIQUE, captured INTEGER, payload TEXT, sha TEXT, sent INTEGER DEFAULT 0)')
+    db.execute('CREATE INDEX IF NOT EXISTS outbox_captured_desc ON outbox(captured DESC)')
+    db.execute('CREATE INDEX IF NOT EXISTS outbox_pending_captured ON outbox(sent,captured DESC)')
     db.execute('CREATE TABLE IF NOT EXISTS metadata(key TEXT PRIMARY KEY, value TEXT)')
     db.execute('CREATE TABLE IF NOT EXISTS photo_jobs(id TEXT PRIMARY KEY, state TEXT DEFAULT \'pending\')')
     db.execute('INSERT OR IGNORE INTO metadata VALUES (?,?)', ('writer', str(uuid.uuid4())))
@@ -183,7 +185,7 @@ def migrate():
                 if statement.strip(): conn.execute(statement)
 
 def flush(db):
-    rows=db.execute('SELECT id,slot,captured,payload,sha FROM outbox WHERE sent=0 ORDER BY captured LIMIT 4').fetchall()
+    rows=db.execute('SELECT id,slot,captured,payload,sha FROM outbox WHERE sent=0 ORDER BY captured DESC LIMIT 4').fetchall()
     if not rows: return 0
     from psycopg.types.json import Jsonb
     writer=db.execute("SELECT value FROM metadata WHERE key='writer'").fetchone()[0]
@@ -203,7 +205,7 @@ def flush(db):
             db.execute('UPDATE outbox SET sent=1 WHERE id=?',(identity,));db.commit()
             if value['coverage'].get('independentLanes')==10 and not (ROOT/'data/web-runtime/connection.secret').exists():
                 db.execute('INSERT OR IGNORE INTO photo_jobs(id) VALUES(?)',(identity,));db.commit()
-            with LOCK: STATE['lastStoredMs']=captured
+            with LOCK: STATE['lastStoredMs']=max(STATE.get('lastStoredMs') or 0,captured)
     return len(rows)
 
 def latest(at=None):
@@ -238,7 +240,8 @@ def write_cache(name,value):
     temporary=DATA/(name+'.tmp');temporary.write_text(encode(value),encoding='utf-8');os.replace(temporary,DATA/name)
 
 def drain_observations():
-    for path in sorted((DATA/'observations').glob('*.json'))[:128]:
+    # Bound startup catch-up so capture/flush health is not starved by old observations.
+    for path in sorted((DATA/'observations').glob('*.json'),reverse=True)[:8]:
         try:
             if path.stat().st_size>64*1024*1024:
                 path.unlink();continue
@@ -247,6 +250,8 @@ def drain_observations():
                 key=digest({'command':command,'args':value.get('args',{})})
                 observed=int(path.name.split('-')[0])
                 with LOCK:
+                    if EXTRAS.get(key,{}).get('observedMs',-1)>=observed:
+                        path.unlink();continue
                     EXTRAS[key]={'command':command,'args':secret_free(value.get('args',{})),'observedMs':observed,'value':secret_free(value.get('value'))}
                     while len(EXTRAS)>32 or len(encode(EXTRAS).encode())>256*1024*1024:EXTRAS.pop(next(iter(EXTRAS)))
                     archive=DATA/'sections';archive.mkdir(exist_ok=True)
@@ -262,6 +267,8 @@ def restore_observations():
             record=json.loads(path.read_text(encoding='utf-8'))
             if safe_command(record.get('command','')) and record.get('observedMs',now_ms()+1)<=now_ms():EXTRAS[path.stem]=record
         except (OSError,ValueError):pass
+    restored_symbols={r.get('args',{}).get('symbol') for r in EXTRAS.values() if r.get('command')=='get_contract_inventory'}
+    if set(SYMBOLS)<=restored_symbols and any(r.get('command')=='get_fmp_targets' for r in EXTRAS.values()):return
     db=local_db()
     try:
         for row in db.execute('SELECT payload FROM outbox ORDER BY captured DESC LIMIT 5'):
@@ -349,8 +356,10 @@ class Handler(BaseHTTPRequestHandler):
 
 def capture_loop():
     db=local_db(); migrated=False; last_slot=None
-    row=db.execute('SELECT max(slot) FROM outbox').fetchone()
-    if row and row[0] is not None: last_slot=row[0]
+    row=db.execute('SELECT max(slot),max(captured),max(CASE WHEN sent=1 THEN captured END) FROM outbox').fetchone()
+    if row and row[0] is not None:
+        last_slot=row[0]
+        with LOCK:STATE.update(lastCapturedMs=row[1],lastStoredMs=row[2])
     while not STOP.is_set():
         drain_observations()
         clock=now_ms(); slot=clock//INTERVAL*INTERVAL

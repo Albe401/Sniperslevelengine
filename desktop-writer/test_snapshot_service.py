@@ -4,6 +4,26 @@ import snapshot_service as service
 from snapshot_neon_http import Connection
 
 class SnapshotTests(unittest.TestCase):
+    def test_recovery_sends_newest_first_and_preserves_monotonic_saved_time(self):
+        sent=[]
+        class Fake:
+            def __enter__(self):return self
+            def __exit__(self,*args):pass
+            def transaction(self):return contextlib.nullcontext()
+            def execute(self,sql,args=()):
+                if 'INSERT INTO snipers_snapshots.batches' in sql:sent.append(args[3])
+        with tempfile.TemporaryDirectory(dir=service.DATA) as folder,patch.object(service,'DATA',pathlib.Path(folder)),patch.object(service,'connect_db',return_value=Fake()),patch.dict(service.STATE,{'lastStoredMs':None}):
+            db=service.local_db();new=self.bundle();old=json.loads(json.dumps(new));old['capturedMs']-=service.INTERVAL
+            for f in old['frames'].values():f['publishedMs']=old['capturedMs']
+            service.stage(db,old,'old');service.stage(db,new,'new');self.assertEqual(service.flush(db),2)
+            self.assertEqual(sent,[new['capturedMs'],old['capturedMs']]);self.assertEqual(service.STATE['lastStoredMs'],new['capturedMs'])
+            self.assertEqual(db.execute('SELECT count(*) FROM outbox WHERE sent=0').fetchone()[0],0);db.close()
+    def test_old_observation_does_not_overwrite_newer_section(self):
+        with tempfile.TemporaryDirectory(dir=service.DATA) as folder,patch.object(service,'DATA',pathlib.Path(folder)),patch.dict(service.EXTRAS,{},clear=True):
+            inbox=pathlib.Path(folder)/'observations';inbox.mkdir();key=service.digest({'command':'get_fmp_targets','args':{}})
+            service.EXTRAS[key]={'command':'get_fmp_targets','args':{},'observedMs':200,'value':{'latest':True}}
+            (inbox/'100-1-1.json').write_text(json.dumps({'command':'get_fmp_targets','args':{},'value':{'old':True}}),encoding='utf-8')
+            service.drain_observations();self.assertEqual(service.EXTRAS[key]['observedMs'],200);self.assertEqual(service.EXTRAS[key]['value'],{'latest':True})
     def test_quota_backoff_keeps_local_capture_and_does_not_slide_retry_forever(self):
         with patch.dict(service.STATE,{},clear=True),patch.object(service,'now_ms',return_value=1_000_000):
             self.assertTrue(service.record_database_error(RuntimeError('Server error HTTP status 402: project exceeded quota')))
