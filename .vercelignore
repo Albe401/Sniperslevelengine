@@ -1,0 +1,10 @@
+engine/
+desktop-writer/
+verification/
+data/
+**/*.test.*
+Dockerfile
+.env
+.env.*
+*.secret
+*.sqlite*

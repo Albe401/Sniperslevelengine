@@ -1,0 +1,14 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import {createServer} from 'node:http';import {readFile} from 'node:fs/promises';
+import {makeHandler,newSession,validSession,symbols,validAssetBundle} from './server.mjs';import {adaptVercelHandler} from '../api/index.mjs';
+const password='synthetic-test-password';
+const source=symbol=>({available:true,id:'test',capturedMs:Date.now()-1000,frames:Object.fromEntries(symbols.map(s=>[s,{symbol:s,publishedMs:Date.now()-1001,contractChain:{observation:{value:{data:'saved'.repeat(300000)}}}}]))});
+test('signed sessions survive instance changes and reject expiry or tampering',()=>{const token=newSession(password,1000);assert(validSession(token,password,2000));assert(!validSession(token,'another-password',2000));assert(!validSession(token+'bad',password,2000));assert(!validSession(token,password,1000+8*3600000))});
+test('partial asset delivery needs database confirmation of complete ten-asset batch',()=>{const b={available:true,capturedMs:Date.now()-1000,completeBatchVerified:true,frames:{AAPL:{symbol:'AAPL'}}};assert(validAssetBundle(b,'AAPL'));assert(!validAssetBundle({...b,completeBatchVerified:false},'AAPL'));assert(!validAssetBundle(b,'QQQ'))});
+test('Vercel configuration builds only web and routes API separately',async()=>{const v=JSON.parse(await readFile(new URL('../vercel.json',import.meta.url)));assert.equal(v.framework,'vite');assert.equal(v.outputDirectory,'frontend/dist');assert(!v.buildCommand.includes('cargo'));assert(v.rewrites[0].destination.includes('__snipersRoute'));assert(v.functions['api/index.mjs'].excludeFiles.includes('desktop-writer'));assert(!('services' in v))});
+test('Vercel rewritten routes, parsed login body, compressed chains and cross-instance cookies',async()=>{
+ const first=createServer((req,res)=>{req.body={password};return adaptVercelHandler(makeHandler({provider:async s=>source(s),password,requireAuth:true}))(req,res)});
+ const second=createServer(adaptVercelHandler(makeHandler({provider:async s=>source(s),password,requireAuth:true})));
+ await new Promise(r=>first.listen(0,'127.0.0.1',r));await new Promise(r=>second.listen(0,'127.0.0.1',r));
+ const a=`http://127.0.0.1:${first.address().port}`,b=`http://127.0.0.1:${second.address().port}`;
+ try{const login=await fetch(a+'/api/index?__snipersRoute=login',{method:'POST'});assert.equal(login.status,200);const cookie=login.headers.get('set-cookie').split(';')[0];const r=await fetch(b+'/api/index?__snipersRoute=frame&symbol=NVDA',{headers:{cookie,'Accept-Encoding':'gzip'}});assert.equal(r.status,200);assert.equal(r.headers.get('content-encoding'),'gzip');assert.equal((await r.json()).frame.symbol,'NVDA');assert.equal((await fetch(b+'/api/index?__snipersRoute=orders',{headers:{cookie}})).status,404)}finally{await Promise.all([new Promise(r=>first.close(r)),new Promise(r=>second.close(r))])}
+});

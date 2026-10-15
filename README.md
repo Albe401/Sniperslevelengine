@@ -27,6 +27,9 @@ calibradas. El código de los demás motores se conserva como referencia en
 
 ## Ejecutar y desplegar
 
+Para Vercel, seguir `VERCEL.md`. La configuración del repositorio despliega
+solo la interfaz y la API web; no la aplicación de escritorio.
+
 Node 22 o superior:
 
 ```sh
