@@ -139,6 +139,20 @@ def stage(db,value,source):
     allowed.update({'rangeContext','localVolume','greekSupport','thetaVega','optionLiquidity','swingReport','neuroContext','qqqReport','optionTiming','etfBlocks','etfCvd','etfFlow','dataService'})
     value={**value,'frames':{symbol:{k:v for k,v in frame.items() if k in allowed} for symbol,frame in value['frames'].items()},'webSections':['quick','detailed','contract-chain'],'coverage':{**value.get('coverage',{}),'webSections':['quick','detailed','contract-chain'],'format':'json','photosEnabled':False}}
     with LOCK: extras=json.loads(encode({k:v for k,v in EXTRAS.items() if v['observedMs']<=captured and v['command'] in {'get_contract_inventory','get_iv_history','get_fmp_targets','preview_route_4h'}}))
+    # Capture existing IV evidence without starting reconstruction jobs or market calls.
+    for symbol in value['frames']:
+        for directory in [pathlib.Path(os.environ.get('LOCALAPPDATA',''))/'com.snipers.workspace/iv-history',ROOT/'data/iv-history']:
+            path=directory/f'{symbol}.json'
+            try:
+                before=path.stat(); observed=before.st_mtime_ns//1_000_000
+                if observed>captured:continue
+                history=json.loads(path.read_text(encoding='utf-8-sig'))
+                if path.stat().st_mtime_ns!=before.st_mtime_ns or history.get('symbol')!=symbol:continue
+                observations=history.get('observations')
+                if not isinstance(observations,list) or any(not isinstance(row.get('at'),(int,float)) or row['at']>captured for row in observations):continue
+                extras[f'local-iv-{symbol}']={'command':'get_iv_history','args':{'symbol':symbol},'observedMs':observed,'value':history}
+                break
+            except (OSError,ValueError,TypeError,AttributeError):continue
     payload={'bundle':secret_free(value),'source':source,'extras':extras}
     text=encode(payload); identity=str(uuid.uuid4())
     db.execute('INSERT OR IGNORE INTO outbox(id,slot,captured,payload,sha) VALUES(?,?,?,?,?)', (identity,slot,captured,text,digest(payload)))

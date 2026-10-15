@@ -72,3 +72,5 @@ ni la precisión predictiva. Las secciones sin datos se mantienen pendientes.
 - [Construcción Vite](https://vite.dev/guide/build)
 - [Servidor HTTP Node](https://nodejs.org/api/http.html)
 - [Lightweight Charts](https://tradingview.github.io/lightweight-charts/)
+
+El buscador incluye los 187 tickers del catálogo del escritorio. La selección no activa consultas de mercado. Los diez activos capturados tienen datos disponibles; los restantes muestran pendiente hasta ampliar su captura. La IV histórica se incluye solo donde existe evidencia local y conserva sus fechas originales.

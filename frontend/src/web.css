@@ -4,3 +4,4 @@ body{margin:0;background:#061426;color:#cde9fa}.web-shell{display:grid;grid-temp
 .web-shell>.web-main{display:block;position:relative;width:100%;max-width:none;margin:0;align-self:start;min-height:100vh}
 .web-main #web-content{width:100%;min-width:0}
 
+.web-ticker-search{display:flex;align-items:center;flex-wrap:wrap;gap:10px;padding:12px 0}.web-ticker-search label,.web-ticker-search small{font-size:12px;color:#98cbe7}.web-ticker-search input{width:180px}.web-ticker-search select{max-width:440px;width:100%;padding:10px;background:#081629;color:#cde9fa;border:1px solid #2c637f;border-radius:7px}

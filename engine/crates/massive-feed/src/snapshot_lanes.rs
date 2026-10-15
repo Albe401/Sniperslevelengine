@@ -50,12 +50,31 @@ pub async fn workers(key: &Credentials,parent: SharedState) {
         tokio::time::sleep(std::time::Duration::from_secs(index as u64*3)).await;
         let (tx,rx)=tokio::sync::mpsc::channel(10000);
         lane.lock().unwrap().off_exchange_tx=Some(tx.clone());
-        tokio::join!(crate::history::worker(key,lane.clone()),crate::auction_session::worker(key,lane.clone()),
+        tokio::join!(reference_bootstrap(lane.clone()),crate::history::worker(key,lane.clone()),crate::auction_session::worker(key,lane.clone()),
             crate::daily_atr::worker(key,lane.clone()),crate::gap_engine::worker(key,lane.clone()),
             crate::option_snapshot::worker(key,lane.clone()),crate::off_exchange::worker(key,lane,tx,rx));
     });
     futures_util::future::join_all(futures).await;
     std::future::pending::<()>().await;
+}
+/// A verified historical close can bootstrap REST options outside streaming hours.
+/// It is a reference only: never create a tick or change the feed phase.
+async fn reference_bootstrap(lane:SharedState) {
+    let mut interval=tokio::time::interval(std::time::Duration::from_secs(5));
+    loop {
+        interval.tick().await;
+        bootstrap_reference(&lane,live::now_ms());
+    }
+}
+fn bootstrap_reference(lane:&SharedState,now:u64) {
+        let mut s=lane.lock().unwrap();
+        if s.selection.spot.is_some(){return}
+        let reference=s.minutes.values().rev().find(|b|b.timestamp_ms.saturating_add(60_000)<=now&&b.close.is_finite()&&b.close>0.).map(|b|(b.close,b.timestamp_ms));
+        if let Some((price,at))=reference {
+            s.selection.spot=Some(price);
+            s.selection.source=format!("Referencia histórica REST · vela {at}; no cotización en vivo");
+            s.snapshot_notify.notify_one();
+        }
 }
 /// Immutable local handoff also works when the OS blocks loopback between processes.
 pub async fn file_capture(parent: SharedState) {
@@ -97,6 +116,13 @@ pub fn bundle(parent: &SharedState, now: u64) -> Value {
 }
 #[cfg(test)] mod tests {
     use super::*;
+    #[test] fn historical_reference_bootstraps_without_inventing_live_tick() {
+        let lane=live::new_state_for("QQQ").unwrap();
+        lane.lock().unwrap().minutes.insert(60_000,live::Bar{timestamp_ms:60_000,open:100.,high:102.,low:99.,close:101.,volume:10.,vwap:None});
+        bootstrap_reference(&lane,119_999);assert!(lane.lock().unwrap().selection.spot.is_none());
+        bootstrap_reference(&lane,120_000);
+        let s=lane.lock().unwrap();assert_eq!(s.selection.spot,Some(101.));assert!(s.selection.source.contains("histórica"));assert!(s.ticks.get("QQQ").is_none_or(|t|t.price.is_none()));
+    }
     #[test] fn bundle_never_borrows_selected_price_for_another_asset(){
         let s=live::new_state_for("QQQ").unwrap();
         let b=bundle(&s,live::now_ms());

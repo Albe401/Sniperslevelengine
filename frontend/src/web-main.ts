@@ -13,6 +13,7 @@ import type {EtfReport} from './etf-dealers';
 import type {LiveState} from './live';
 import {escapeHtml as esc} from './model';
 import './day-map.css';
+import watchlist from './web-watchlist.json';
 import './styles.css';import './restrained.css';import './visual-readings.css';import './brand.css';import './route-design.css';import './reading-tabs.css';import './compact-reading-height.css';import '@fontsource-variable/inter';import './web.css';
 const symbols=['AAPL','MSFT','AMZN','GOOGL','META','NVDA','TSLA','QQQ','SPY','IWM'];
 type Extra={command:string;args?:{symbol?:string};observedMs:number;value:unknown};
@@ -21,6 +22,11 @@ let selected='QQQ',view:'quick'|'detailed'|'chain'='quick',generation=0,saved:Sa
 const app=document.querySelector<HTMLDivElement>('#app')!;
 app.innerHTML=`<div class="web-shell"><aside class="web-sidebar"><img src="/assets/route-lion.png" alt="Snipers"><h2>SNIPERS</h2><button data-view="quick">Lectura rápida</button><button data-view="detailed">Lectura detallada</button><button data-view="chain">Radar de inversión<br><small>Cadena de opciones</small></button><small>Datos guardados por el escritorio<br>Actualización cada cinco minutos</small></aside><main class="web-main"><header class="web-topbar"><strong>Algoritmo de probabilidad</strong><span id="web-status">Leyendo la base de datos…</span></header><nav class="web-assets">${symbols.map(s=>`<button data-symbol="${s}">${s}</button>`).join('')}</nav><section id="web-content"></section></main></div>`;
 const content=document.querySelector<HTMLElement>('#web-content')!;
+const search=document.createElement('div');search.className='web-ticker-search';search.innerHTML=`<label for="ticker-search">Buscar ticker del watchlist (${watchlist.length})</label><input id="ticker-search" type="search" placeholder="Escribe un ticker…" autocomplete="off"><select id="ticker-select" aria-label="Seleccionar ticker">${watchlist.map(a=>`<option value="${esc(a.symbol)}" ${a.symbol===selected?'selected':''}>${esc(a.symbol)} · ${esc(a.name)}</option>`).join('')}</select><small id="ticker-results">${watchlist.length} tickers</small>`;document.querySelector('.web-assets')!.before(search);
+const searchInput=document.querySelector<HTMLInputElement>('#ticker-search')!,tickerSelect=document.querySelector<HTMLSelectElement>('#ticker-select')!;
+searchInput.oninput=()=>{const q=searchInput.value.trim().toUpperCase(),rows=watchlist.filter(a=>a.symbol.includes(q));tickerSelect.innerHTML=rows.map(a=>`<option value="${esc(a.symbol)}">${esc(a.symbol)} · ${esc(a.name)}</option>`).join('');document.querySelector('#ticker-results')!.textContent=`${rows.length} tickers`;};
+const selectTicker=(symbol:string)=>{selected=symbol;saved=undefined;expiry='';content.innerHTML='<section class="panel">Cargando datos guardados…</section>';void pull();};
+tickerSelect.onchange=()=>selectTicker(tickerSelect.value);searchInput.onkeydown=e=>{if(e.key==='Enter'&&tickerSelect.value)selectTicker(tickerSelect.value)};
 function paint(){
  if(!saved?.available)return;
  const data=saved,frame=data.frame,now=data.capturedMs;
@@ -55,7 +61,7 @@ async function pull(){
   const response=await fetch(`/api/frame?symbol=${encodeURIComponent(selected)}`,{cache:'no-store',signal:AbortSignal.timeout(60000)});
   if(!response.ok)throw Error('Base de datos no disponible');
   const value=await response.json() as Saved;if(token!==generation)return;
-  if(!value.available){document.querySelector<HTMLElement>('#web-status')!.textContent='Esperando datos guardados · reintento automático';if(!saved)content.innerHTML='<section class="panel">Todavía no hay datos guardados. Reintentando automáticamente.</section>';setTimeout(()=>{if(token===generation)void pull()},15000);return;}
+  if(!value.available){document.querySelector<HTMLElement>('#web-status')!.textContent=`${selected} · pendiente de datos guardados`;if(!saved)content.innerHTML=`<section class="panel">${esc(selected)} todavía no tiene un snapshot disponible en Neon. Se comprobará automáticamente; no se consultará Massive desde la web.</section>`;setTimeout(()=>{if(token===generation)void pull()},15000);return;}
   if(value.frame.symbol!==selected||value.capturedMs>Date.now())throw Error('Lote inválido');
   saved=value;paint();
  }catch(e){if(token!==generation)return;document.querySelector<HTMLElement>('#web-status')!.textContent='Conexión pendiente · reintento automático';if(!saved)content.innerHTML=`<section class="panel">${esc(String(e))}</section>`;setTimeout(()=>{if(token===generation)void pull()},15000);}
