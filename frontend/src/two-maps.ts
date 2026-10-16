@@ -32,7 +32,7 @@ export interface Group {strike:number;kind:string;startMs:number;contracts:numbe
 export function mapGroups(r:FlowMapReport,s:MapSelection):{groups:Group[];rejected:number;expiries:string[]} {
  const valid=r.cells.filter(c=>validCell(c,r.asofMs));
  const expiries=[...new Set(valid.map(c=>c.expiration))].sort();
- const expiry=expiries.includes(s.expiry)?s.expiry:expiries[0];
+ const expiry=s.expiry||expiries[0];
  const start=Math.floor(r.asofMs/60000)*60000-29*60000;
  const chosen=valid.filter(c=>c.expiration===expiry&&c.startMs>=start&&(s.category==='all'||s.category===c.category));
  const grouped=new Map<string,Group>();let rejected=r.cells.length-valid.length;
@@ -63,7 +63,10 @@ export function twoMapsPanel(state:LiveState|undefined,symbol:string,active:bool
  if(!input&&selection.symbol!==symbol)selection=newSelection(symbol);
  const s=input??selection,r=state?.symbol===symbol?state.flow?.heatmap:undefined;
  const usable=usableReport(r,symbol,now),asof=usable?r.asofMs:state?.symbol===symbol&&finite(state.publishedMs)&&state.publishedMs>0&&state.publishedMs<=now?state.publishedMs:now;
- const data=usable?mapGroups(r,s):{groups:[],rejected:0,expiries:[]};
+ const chain=(state as (LiveState&{contractChain?:{observation?:{value?:{symbol:string;expirations:string[]}}}})|undefined)?.contractChain?.observation?.value;
+ const dates=[...new Set([...(usable?r.cells.filter(c=>validCell(c,r.asofMs)).map(c=>c.expiration):[]),...(state?.symbol===symbol?state.optionSnapshotStatus?.horizons?.flatMap(h=>h.expirations)??[]:[]),...(chain?.symbol===symbol?chain.expirations:[])])].filter(d=>/^\d{4}-\d{2}-\d{2}$/.test(d)).sort();
+ const scoped={...s,expiry:dates.includes(s.expiry)?s.expiry:dates[0]??''};
+ const data=usable?{...mapGroups(r,scoped),expiries:dates}:{groups:[],rejected:0,expiries:dates};
  const expiry=data.expiries.includes(s.expiry)?s.expiry:data.expiries[0]??'';
  const selected={...s,expiry};
  const allStrikes=[...new Set(data.groups.map(g=>g.strike))].sort((a,b)=>b-a);
