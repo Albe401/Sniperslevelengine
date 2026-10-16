@@ -1,6 +1,7 @@
 import {describe,it,expect} from 'vitest';
 import {mapGroups,newSelection,twoMapsPanel,usableReport,validCell,type FlowCell,type FlowMapReport} from './two-maps';
 import type {LiveState} from './live';
+import {tradingMapBars,heatmapMinuteRect} from './two-maps-chart';
 const t=Date.parse('2026-10-16T14:00:00Z');
 const cell=(patch:Partial<FlowCell>={}):FlowCell=>({ticker:'O:SPY261016C00608000',expiration:'2026-10-16',kind:'call',strike:608,startMs:t,endMs:t+60000,category:'single',contracts:1250,executions:18,verifiedPremium:187500,premium:187500,missingPremiumExecutions:0,...patch});
 const report=(cells=[cell()]):FlowMapReport=>({method:'option-execution-heatmap-v1',symbol:'SPY',date:'2026-10-16',asofMs:t+1000,connected:true,firstReceivedMs:t,lastReceivedMs:t,population:'Muestra observada',status:'partial_observed',receptionCoveragePct:null,cells,diagnostics:{}});
@@ -41,14 +42,25 @@ describe('two maps quantitative boundaries',()=>{
   const html=twoMapsPanel(state(),'SPY',true,t+1000,newSelection('SPY'));expect(html).toContain('Massive no ofrece Level 2');expect(html).toContain('NO EVALUABLES');
  });
  it('does not fabricate zero PUT volume when only CALL executions were observed',()=>{
-  const html=twoMapsPanel(state(),'SPY',true,t+1000,newSelection('SPY'));expect(html).toContain('<span>PUT —</span>');expect(html).toContain('último puede estar en curso');
+  const html=twoMapsPanel(state(),'SPY',true,t+1000,{...newSelection('SPY'),view:'levels'});expect(html).toContain('<span>PUT —</span>');expect(html).toContain('último puede estar en curso');
  });
  it('preserves historical snapshot clocks and never labels delayed data live',()=>{
   const html=twoMapsPanel(state(),'SPY',true,t+3600000,{...newSelection('SPY'),view:'flow'});expect(html).toContain('CAPTURA HISTÓRICA');expect(html).toContain('10:00');
  });
  it('escapes user-facing identity text',()=>expect(twoMapsPanel(undefined,'<script>',false,t)).toContain('&lt;script&gt;'));
- it('breaks price paths at missing minutes and ignores future bars',()=>{
-  const s={...state(),chartHistory:{minutes:[{timestampMs:t-180000,close:607},{timestampMs:t-60000,close:608},{timestampMs:t+60000,close:999}],sessions:[]}} as unknown as LiveState;
-  const html=twoMapsPanel(s,'SPY',true,t+1000);const path=html.match(/<path d="([^"]*)" class="tm-price"/);expect(path).not.toBeNull();expect(path![1].split('M')).toHaveLength(3);expect(path![1]).not.toContain('L');
+ it('preserves missing minutes and excludes invalid or future OHLC rather than fabricating candles',()=>{
+  const bar={open:607,high:609,low:606,close:608,volume:20};
+  const s={...state(),chartHistory:{minutes:[{...bar,timestampMs:t-180000},{...bar,timestampMs:t-60000},{...bar,timestampMs:t+60000},{...bar,timestampMs:t-120000,high:605}],sessions:[]}} as unknown as LiveState;
+  const bars=tradingMapBars(s,t+1000);expect(bars.map(b=>b.timestampMs)).toEqual([t-180000,t-60000]);
+  expect(tradingMapBars({...s,chartHistory:{minutes:[{timestampMs:t,close:608}]}} as unknown as LiveState,t)).toEqual([]);
+ });
+ it('positions each original minute separately when candle interval is five minutes',()=>{
+  const rects=Array.from({length:5},(_,i)=>heatmapMinuteRect(t+i*60000,5,100,50));
+  expect(rects.map(r=>r.left)).toEqual([75,85,95,105,115]);expect(rects.every(r=>r.width===10)).toBe(true);
+ });
+ it('aggregates only actual OHLC and preserves unknown volume',()=>{
+  const bars=[{timestampMs:t,open:10,high:13,low:9,close:12,volume:20},{timestampMs:t+60000,open:12,high:15,low:11,close:14,volume:NaN}];
+  const result=tradingMapBars({chartHistory:{minutes:bars}} as unknown as LiveState,t+60000,2);
+  expect(result).toEqual([{timestampMs:t,open:10,high:15,low:9,close:14,volume:NaN}]);
  });
 });

@@ -1,10 +1,12 @@
 import type {LiveState} from './live';
 import {escapeHtml as esc} from './model';
+import {tradingMapBars,setTradingMapModel,bindTradingMap,tradingMapAction} from './two-maps-chart';
+import './two-maps-professional.css';
 
 export interface FlowCell {ticker:string;expiration:string;kind:string;strike:number;startMs:number;endMs:number;category:string;contracts:number;executions:number;verifiedPremium:number;premium:number|null;missingPremiumExecutions:number}
 export interface FlowMapReport {storageError?:string|null;method:string;symbol:string;date:string|null;asofMs:number;connected:boolean;firstReceivedMs:number|null;lastReceivedMs:number|null;population:string;status:string;receptionCoveragePct:number|null;cells:FlowCell[];diagnostics:Record<string,number>}
-export interface MapSelection {symbol:string;view:'levels'|'flow';metric:'contracts'|'premium';expiry:string;category:string;strike:number|null;minute:number|null;side?:'call'|'put'}
-export const newSelection=(symbol:string):MapSelection=>({symbol,view:'levels',metric:'contracts',expiry:'',category:'all',strike:null,minute:null});
+export interface MapSelection {symbol:string;view:'levels'|'flow';metric:'contracts'|'premium';expiry:string;category:string;strike:number|null;minute:number|null;side?:'call'|'put';barMinutes?:number;heatSide?:'both'|'call'|'put';expanded?:boolean}
+export const newSelection=(symbol:string):MapSelection=>({symbol,view:'flow',metric:'contracts',expiry:'',category:'all',strike:null,minute:null});
 let selection=newSelection('');
 const categories=['single','auction_cross_floor','late','complex','extended'];
 const categoryNames:Record<string,string>={all:'Todas · separadas en detalle',single:'Simples',auction_cross_floor:'Subastas / cruces / piso',late:'Tardías',complex:'Multileg',extended:'Fuera de horario'};
@@ -44,35 +46,15 @@ export function mapGroups(r:FlowMapReport,s:MapSelection):{groups:Group[];reject
  });
  return {groups,rejected,expiries};
 }
-const color=(value:number,max:number)=>{const f=max>0?Math.min(1,value/max):0;return f>.66?`rgb(${Math.round(208+47*f)},${Math.round(156+80*f)},${Math.round(60+88*f)})`:`rgb(${Math.round(12+35*f)},${Math.round(30+160*f)},${Math.round(48+210*f)})`;};
-function heatChart(groups:Group[],side:string,metric:MapSelection['metric'],strikes:number[],asof:number,max:number,s:MapSelection):string {
- const width=550,left=58,right=15,top=20,rowH=30,height=top+Math.max(1,strikes.length)*rowH+52,plotW=width-left-right,cw=plotW/30;
- const start=Math.floor(asof/60000)*60000-29*60000;
- const lookup=new Map(groups.filter(g=>g.kind===side).map(g=>[[g.strike,g.startMs].join('|'),g]));
- const rows=strikes.map((strike,i)=>`<text x="48" y="${top+i*rowH+20}" text-anchor="end">${price(strike)}</text>`+Array.from({length:30},(_,j)=>{
-  const t=start+j*60000,g=lookup.get([strike,t].join('|')),v=g?.[metric];
-  const selected=s.strike===strike&&(s.minute==null||s.minute===t)&&(!s.side||s.side===side);
-  return `<g tabindex="0" role="button" aria-label="${side.toUpperCase()} ${price(strike)} ${clock(t)}: ${v==null?'sin dato':number(v)}" data-map-strike="${strike}" data-map-minute="${t}" data-map-side="${side}"><title>${side.toUpperCase()} ${price(strike)} · ${clock(t)} · ${v==null?'Sin dato verificable':metric==='premium'?money(v):number(v)+' contratos'}</title><rect x="${left+j*cw}" y="${top+i*rowH}" width="${cw-1}" height="${rowH-1}" fill="${v==null?'url(#snipers-map-missing-'+side+')':color(v,max)}" stroke="${selected?'#f8fafc':'none'}"/><text x="${left+(j+.5)*cw}" y="${top+i*rowH+20}" text-anchor="middle" fill="#708898">${v==null?'·':''}</text></g>`;
- }).join('')).join('');
- const labels=[0,5,10,15,20,25,29].map(j=>`<text x="${left+(j+.5)*cw}" y="${height-20}" text-anchor="middle">${clock(start+j*60000)}</text>`).join('');
- return `<div class="tm-heat"><h3>${side==='call'?'CALLS':'PUTS'}</h3><svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Heatmap ${side.toUpperCase()} por strike y minuto"><defs><pattern id="snipers-map-missing-${side}" width="6" height="6" patternUnits="userSpaceOnUse"><rect width="6" height="6" fill="#0d1922"/><path d="M0 6L6 0" stroke="#1a2b37"/></pattern></defs>${rows}${labels}</svg></div>`;
-}
 function inspector(groups:Group[],s:MapSelection):string {
  const matches=groups.filter(g=>g.strike===s.strike&&(s.minute==null||g.startMs===s.minute)&&(!s.side||g.kind===s.side));
  const chosen=s.minute==null?['call','put'].flatMap(side=>matches.filter(g=>g.kind===side).sort((a,b)=>a.startMs-b.startMs).slice(-1)):matches;
- if(!chosen.length)return '<aside class="tm-inspector"><h3>DETALLE DEL STRIKE</h3><p>Selecciona una celda para inspeccionar sus operaciones.</p></aside>';
+ if(!chosen.length){
+  const rows=new Map<number,{call:number|null;put:number|null}>();
+  for(const g of groups){const row=rows.get(g.strike)??{call:null,put:null};const k=g.kind as 'call'|'put';row[k]=(row[k]??0)+g.contracts;rows.set(g.strike,row);}
+  return `<aside class="tm-inspector"><h3>ACTIVIDAD POR STRIKE</h3><small>Contratos observados · últimos 30 min</small><div class="tm-strike-head"><span>STRIKE</span><span>CALL</span><span>PUT</span></div>${[...rows].sort((a,b)=>(b[1].call??0)+(b[1].put??0)-(a[1].call??0)-(a[1].put??0)).slice(0,12).map(([strike,r])=>`<button class="tm-strike-row" data-map-strike="${strike}"><b>${price(strike)}</b><span>${r.call==null?'—':number(r.call)}</span><span>${r.put==null?'—':number(r.put)}</span></button>`).join('')}<p>Selecciona una celda del calor para ver minuto, prima y ejecuciones.</p><small>CALL: franja superior al strike.<br>PUT: franja inferior. Sin dato: transparente.</small></aside>`;
+ }
  return `<aside class="tm-inspector"><h3>STRIKE ${price(s.strike!)}</h3>${chosen.slice(-4).map(g=>`<section><h4>${g.kind.toUpperCase()} · ${clock(g.startMs)} ET</h4><dl><dt>Contratos observados</dt><dd>${number(g.contracts)}</dd><dt>Prima bruta</dt><dd>${money(g.premium)}</dd><dt>Ejecuciones</dt><dd>${number(g.executions)}</dd></dl><small>${g.categories.map(c=>esc(categoryNames[c])).join(' · ')}</small></section>`).join('')}<p>Lado agresor sin clasificar en este mapa.</p><button data-map-view="levels">Ver nivel ${price(s.strike!)} →</button></aside>`;
-}
-function levelChart(state:LiveState|undefined,asof:number,levels:{price:number;name:string}[]):string {
- const source=new Map((state?.chartHistory?.minutes??[]).map(b=>[b.timestampMs,b]));
- for(const b of Object.values(state?.minutes??{}))source.set(b.timestampMs,b);
- const rows=[...source.values()].filter(b=>finite(b.timestampMs)&&b.timestampMs<=asof&&b.timestampMs>=asof-3600000&&dateET(b.timestampMs)===dateET(asof)&&finite(b.close)&&b.close>0).sort((a,b)=>a.timestampMs-b.timestampMs);
- const values=[...rows.map(b=>b.close),...levels.map(l=>l.price)];
- if(!values.length)return '<div class="tm-chart-empty">Esperando historial real de precios y niveles.</div>';
- const low=Math.min(...values),high=Math.max(...values),pad=Math.max((high-low)*.12,.01),min=low-pad,max=high+pad;
- const y=(p:number)=>430-(p-min)/(max-min)*390,x=(t:number)=>65+(t-(asof-3600000))/3600000*760;
- const path=rows.map((b,i)=>`${i===0||b.timestampMs-rows[i-1].timestampMs>60000?'M':'L'}${x(b.timestampMs).toFixed(2)},${y(b.close).toFixed(2)}`).join(' ');
- return `<svg viewBox="0 0 950 480" class="tm-level-chart" role="img" aria-label="Cierres de un minuto y niveles modelados">${Array.from({length:5},(_,i)=>{const p=min+(max-min)*i/4;return `<path d="M65 ${y(p)}H825" class="tm-grid"/><text x="56" y="${y(p)+4}" text-anchor="end">${price(p)}</text>`;}).join('')}${levels.map(l=>`<path d="M65 ${y(l.price)}H825" class="tm-level"/><text x="830" y="${y(l.price)+4}" class="tm-model">${esc(l.name)}</text>`).join('')}<path d="${path}" class="tm-price"/>${[0,15,30,45,60].map(m=>`<text x="${65+m/60*760}" y="465" text-anchor="middle">${clock(asof-3600000+m*60000)}</text>`).join('')}</svg><p class="tm-note">Cierres de 1 minuto · los huecos se conservan · líneas de opciones: modelo, no órdenes.</p>`;
 }
 export function twoMapsPanel(state:LiveState|undefined,symbol:string,active:boolean,now=Date.now(),input?:MapSelection):string {
  if(!input&&selection.symbol!==symbol)selection=newSelection(symbol);
@@ -83,8 +65,7 @@ export function twoMapsPanel(state:LiveState|undefined,symbol:string,active:bool
  const selected={...s,expiry};
  const allStrikes=[...new Set(data.groups.map(g=>g.strike))].sort((a,b)=>b-a);
  const spot=state?.symbol===symbol?state.ticks?.[symbol]?.price:null;
- const center=s.strike??(finite(spot)?spot:allStrikes[Math.floor(allStrikes.length/2)]??0);
- const strikes=[...allStrikes].sort((a,b)=>Math.abs(a-center)-Math.abs(b-center)).slice(0,25).sort((a,b)=>b-a);
+ const strikes=allStrikes;
  const max=Math.max(0,...data.groups.filter(g=>strikes.includes(g.strike)).map(g=>g[s.metric]??0));
  const horizon=state?.symbol===symbol?state.optionSnapshotStatus?.horizons?.find(h=>h.mode==='DAY'):undefined;
  const structure=horizon?.structure;
@@ -94,12 +75,16 @@ export function twoMapsPanel(state:LiveState|undefined,symbol:string,active:bool
  const historical=now-asof>15000;
  const heading=s.view==='levels'?'MAPA DE NIVELES':'FLUJO POR STRIKE';
  const diagnostics=usable?Object.entries(r.diagnostics??{}).filter(([,n])=>finite(n)&&n>0).map(([k,v])=>`${esc(k)}: ${number(v)}`).join(' · '):'';
- const header=`<header class="tm-header"><div><small>SNIPERS / LEVEL ENGINE</small><h2>${heading}</h2><strong>${esc(symbol)} · ${finite(spot)?price(spot):'Precio pendiente'}</strong></div><div><nav aria-label="Mapas Snipers"><button data-map-view="levels" aria-pressed="${s.view==='levels'}">Mapa de niveles</button><button data-map-view="flow" aria-pressed="${s.view==='flow'}">Flujo por strike</button></nav><small>${clock(asof)} ET · ${historical?'CAPTURA HISTÓRICA':disconnected?'DESCONECTADO / HISTÓRICO':'MUESTRA OBSERVADA'} · cobertura de mercado no certificada</small></div></header>`;
+ const header=`<header class="tm-header"><div class="tm-instrument"><b>${esc(symbol)}</b><strong>${finite(spot)?price(spot):'—'}</strong><span class="tm-session ${disconnected||historical?'is-delayed':''}">${historical?'CAPTURA HISTÓRICA':disconnected?'DESCONECTADO / HISTÓRICO':'MUESTRA OBSERVADA'} · ${clock(asof)} ET</span></div><nav aria-label="Mapas Snipers"><button data-map-view="levels" aria-pressed="${s.view==='levels'}">Mapa de niveles</button><button data-map-view="flow" aria-pressed="${s.view==='flow'}">Flujo por strike</button></nav></header>`;
  const controls=`<div class="tm-controls"><label>Vencimiento <select data-map-expiry><option value="">${expiry?'Seleccionar':'Sin operaciones disponibles'}</option>${data.expiries.map(e=>`<option value="${e}" ${e===expiry?'selected':''}>${e}</option>`).join('')}</select></label><label>Población <select data-map-category>${['all',...categories].map(c=>`<option value="${c}" ${s.category===c?'selected':''}>${categoryNames[c]}</option>`).join('')}</select></label><button data-map-metric="contracts" aria-pressed="${s.metric==='contracts'}">Contratos</button><button data-map-metric="premium" aria-pressed="${s.metric==='premium'}">Prima USD</button></div>`;
+ const bars=tradingMapBars(state?.symbol===symbol?state:undefined,asof,s.barMinutes??1);
+ setTradingMapModel({symbol,asof,bars,groups:data.groups,levels,selection:selected});
+ const tools=`<div class="tm-chart-tools"><div>${[1,2,5].map(n=>`<button data-map-interval="${n}" aria-pressed="${(s.barMinutes??1)===n}">${n}m</button>`).join('')}<span class="tm-tool-separator"></span><button data-map-chart-action="fit" title="Ajustar toda la sesión">Ajustar</button><button data-map-chart-action="follow" title="Volver al último precio">Seguir precio</button></div><div>${s.view==='flow'?(['both','call','put'] as const).map(k=>`<button data-map-layer="${k}" aria-pressed="${(s.heatSide??'both')===k}">${k==='both'?'CALL + PUT':k.toUpperCase()}</button>`).join(''):''}<button data-map-chart-action="expand">${s.expanded?'Reducir':'Ampliar'} ⤢</button></div></div>`;
+ const chart=`<div class="tm-chart-surface"><div class="tm-chart-caption"><span>${esc(symbol)} · ${s.barMinutes??1}m · ${s.view==='flow'?'Ejecuciones por strike':'Estructura de opciones'}</span><span data-map-ohlc>Arrastra para desplazar · rueda para zoom</span></div><div id="snipers-trading-map" data-chart-preserve role="img" aria-label="Gráfica interactiva de velas, niveles y flujo por strike"></div>${!bars.length?'<div class="tm-chart-wait">Esperando velas OHLC verificadas del activo</div>':''}<div class="tm-chart-legend"><span><i class="call"></i> CALLS</span><span><i class="put"></i> PUTS</span><span>Color: actividad ejecutada · ${s.metric==='contracts'?'contratos':'prima USD'} · escala lineal común ${max?`0–${s.metric==='premium'?money(max):number(max)}`:'pendiente'}</span></div></div>`;
  let body='';
- if(s.view==='flow')body=`${controls}<div class="tm-flow-layout"><div><div class="tm-heats">${heatChart(data.groups,'call',s.metric,strikes,asof,max,selected)}${heatChart(data.groups,'put',s.metric,strikes,asof,max,selected)}</div><p class="tm-note">${s.metric==='contracts'?'Contratos':'Prima USD'} ejecutados por minuto · escala lineal común 0–${s.metric==='premium'?money(max):number(max)} · ${strikes.length}/${allStrikes.length} strikes · trama: sin dato verificable, no cero.</p>${!data.groups.length?'<p class="tm-empty">Esperando el ledger de ejecuciones. No se reconstruye desde listas recientes truncadas.</p>':''}</div>${inspector(data.groups,selected)}</div>`;
- else body=`<div class="tm-level-layout"><div><h3>PRECIO Y REACCIÓN</h3>${levelChart(state?.symbol===symbol?state:undefined,asof,levels)}${!levels.length?'<p class="tm-note">Walls y Main Magnet pendientes de estructura verificable de esta sesión.</p>':''}</div><aside class="tm-inspector"><h3>QUÉ PASA EN CADA NIVEL</h3>${levels.length?levels.map(l=>`<section><h4>${price(l.price)} <small class="tm-model">${l.name} · modelo</small></h4><dl><dt>Liquidez esperando</dt><dd>—</dd><dt>Órdenes retiradas</dt><dd>—</dd></dl><button data-map-strike="${l.price}" data-map-view="flow">Ver opciones en este strike →</button></section>`).join(''):'<p>Selecciona un strike en Flujo por strike para inspeccionarlo.</p>'}<p class="tm-depth">Profundidad pendiente de fuente. Massive no ofrece Level 2. NBBO y GEX no sustituyen el libro.</p></aside></div>${controls}<h3>OPCIONES EJECUTADAS · 5 INTERVALOS DE 1 MIN</h3>${activity(data.groups,asof)}<p class="tm-note">Absorción y escenario: NO EVALUABLES con este mapa. GEX conserva su modelo de signo; no es inventario observado de dealers.</p>`;
- return `<section class="panel two-maps" data-two-maps>${header}${body}<footer>${usable?esc(r.population):'Ledger todavía no disponible en esta versión de la fuente.'} · vencimiento ${esc(expiry||'pendiente')}<br>Prima bruta; no identifica apertura/cierre. Color = actividad, no dirección futura.${data.rejected?`<br>Filas rechazadas o ambiguas: ${data.rejected}`:''}${diagnostics?`<br>Diagnóstico: ${diagnostics}`:''}${usable&&r.storageError?`<br>Persistencia pendiente: ${esc(r.storageError)}`:''}</footer></section>`;
+ const side=s.view==='flow'?inspector(data.groups,selected):`<aside class="tm-inspector"><h3>NIVELES DE OPCIONES</h3>${levels.length?levels.map(l=>`<section><small>${esc(l.name)} · modelo</small><h4>${price(l.price)}</h4><button data-map-strike="${l.price}" data-map-view="flow">Inspeccionar flujo →</button></section>`).join(''):'<p>Walls y Main Magnet pendientes de estructura verificable de esta sesión.</p>'}<div class="tm-data-state"><span>Profundidad de mercado</span><b>Sin fuente L2</b><small>Massive no ofrece Level 2. Órdenes pendientes y retiradas: —</small></div></aside>`;
+ body=`${tools}${controls}<div class="tm-terminal">${chart}${side}</div><div class="tm-statusbar"><span>${s.view==='flow'?'Celdas por minuto y strike':'Niveles modelados'} · ${strikes.length} strikes observados</span><span>${esc(expiry||'Vencimiento pendiente')} · USD · ET</span></div>`;
+ return `<section class="panel two-maps tm-professional ${s.expanded?'tm-expanded':''}" data-two-maps aria-label="${heading}">${header}${body}<details class="tm-method"><summary>Cobertura y metodología${usable&&r.storageError?' · error de persistencia':''}</summary><p>${usable?esc(r.population):'Ledger todavía no disponible en esta versión de la fuente. Esperando el ledger de ejecuciones.'} · sin dato verificable, no cero.</p><p>Prima bruta; no identifica apertura/cierre. Color = actividad, no dirección futura. Absorción y escenario: NO EVALUABLES con este mapa. GEX es un modelo, no inventario observado de dealers. Profundidad pendiente: Massive no ofrece Level 2.</p>${s.view==='levels'?activity(data.groups,asof):''}${data.rejected?`<p>Filas rechazadas o ambiguas: ${data.rejected}</p>`:''}${diagnostics?`<p>Diagnóstico: ${diagnostics}</p>`:''}${usable&&r.storageError?`<p>Persistencia pendiente: ${esc(r.storageError)}</p>`:''}</details></section>`;
 }
 function activity(groups:Group[],asof:number):string {
  const sums=new Map<number,{call:number|null;put:number|null}>();
@@ -111,8 +96,12 @@ function activity(groups:Group[],asof:number):string {
 }
 export function bindTwoMaps(refresh:()=>void):void {
  const root=document.querySelector<HTMLElement>('[data-two-maps]');if(!root)return;
+ bindTradingMap((strike,minute,side)=>{selection.strike=strike;selection.minute=minute;selection.side=side;refresh();});
  const handle=(target:Element)=>{
-  const b=target.closest<HTMLElement>('[data-map-view],[data-map-metric],[data-map-strike]');if(!b)return;
+  const b=target.closest<HTMLElement>('[data-map-view],[data-map-metric],[data-map-strike],[data-map-interval],[data-map-layer],[data-map-chart-action]');if(!b)return;
+  if(b.dataset.mapChartAction){if(b.dataset.mapChartAction==='expand'){selection.expanded=!selection.expanded;refresh();}else tradingMapAction(b.dataset.mapChartAction);return;}
+  if(b.dataset.mapInterval)selection.barMinutes=Number(b.dataset.mapInterval);
+  if(['both','call','put'].includes(b.dataset.mapLayer??''))selection.heatSide=b.dataset.mapLayer as 'both'|'call'|'put';
   if(b.dataset.mapView==='levels'||b.dataset.mapView==='flow')selection.view=b.dataset.mapView;
   if(b.dataset.mapMetric==='contracts'||b.dataset.mapMetric==='premium')selection.metric=b.dataset.mapMetric;
   if(b.dataset.mapStrike!=null){const n=Number(b.dataset.mapStrike);if(finite(n)&&n>0)selection.strike=n;selection.minute=b.dataset.mapMinute==null?null:Number(b.dataset.mapMinute);selection.side=b.dataset.mapSide==='call'||b.dataset.mapSide==='put'?b.dataset.mapSide:undefined;}
