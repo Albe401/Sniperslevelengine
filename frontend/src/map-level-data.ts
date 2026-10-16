@@ -1,5 +1,5 @@
 import type {LiveState} from './live';
-export interface MapLevelRead {levels:{price:number;name:string}[];partial:boolean;historical:boolean;observedMs:number|null;covered:number|null;total:number|null;detail:string}
+export interface MapLevelRead {levels:import('./level-band-style').ColoredMapLevel[];partial:boolean;historical:boolean;observedMs:number|null;covered:number|null;total:number|null;detail:string}
 const positive=(n:unknown):n is number=>typeof n==='number'&&Number.isFinite(n)&&n>0;
 export function mapLevelData(state:LiveState|undefined,symbol:string,now:number):MapLevelRead {
  const empty:MapLevelRead={levels:[],partial:false,historical:true,observedMs:null,covered:null,total:null,detail:'Esperando una observación estructural identificada del activo.'};
@@ -12,7 +12,12 @@ export function mapLevelData(state:LiveState|undefined,symbol:string,now:number)
  const validSubset=p&&Number.isInteger(p.coveredContracts)&&Number.isInteger(p.totalContracts)&&p.coveredContracts>0&&p.coveredContracts<p.totalContracts;
  const candidates=hasPrimary?primary:validSubset?[{price:p.callWall?.strike,name:'Call Wall · parcial'},{price:p.putWall?.strike,name:'Put Wall · parcial'},{price:p.magnet,name:'Main Magnet · parcial'}]:Object.entries(s.selected??{}).map(([name,price])=>({price,name:`${name} · estructural parcial`}));
  const historical=now-h.observedMs>300000||new Date(h.observedMs).toLocaleDateString('en-CA',{timeZone:'America/New_York'})!==new Date(now).toLocaleDateString('en-CA',{timeZone:'America/New_York'});
- const levels=candidates.filter((l):l is {price:number;name:string}=>positive(l.price)).map(l=>({...l,name:l.name+(historical?' · histórico':'')}));
+ const source=hasPrimary?s:validSubset?p:undefined;
+ const levels=candidates.filter((l):l is {price:number;name:string}=>positive(l.price)).map(l=>{
+  const value=/Call Wall/.test(l.name)?source?.callWall?.score:/Put Wall/.test(l.name)?source?.putWall?.score:/Main Magnet/.test(l.name)&&source?.selected?.M1===l.price?source.mainMagnetScore:undefined;
+  const importance=typeof value==='number'&&Number.isFinite(value)&&value>=0&&value<=100?value:null;
+  return {...l,name:l.name+(historical?' · histórico':''),importance};
+ });
  const partial=!hasPrimary,coverage=validSubset?`${p.coveredContracts}/${p.totalContracts} contratos incluidos; ${p.totalContracts-p.coveredContracts} excluidos por datos requeridos faltantes.`:'';
  const age=historical?'Referencia histórica; no nivel vigente.':partial?'Referencia parcial; no representa la cadena completa.':'Niveles del modelo; no órdenes pendientes.';
  const phase=status.refreshStage??status.phase;
