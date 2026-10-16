@@ -50,7 +50,7 @@ function paint(){
   content.innerHTML=`<section id="live-workspace" class="visual-reading" data-live-view="detailed">${quickReadingPanels(frame,selected,true,buildIntradayControl(frame,selected,true,now),now)}</section><p class="web-note">Lectura detallada del lote guardado en Neon. Actualización lunes a viernes · cada cinco minutos ET; sin consultas al mercado desde la web.</p>`;
   bindLevelCardSpacing();bindGammaLive(frame,selected,true,paint,now);
  }else if(view==='maps'){
-  content.innerHTML=twoMapsPanel(frame,selected,false,Date.now());bindTwoMaps(paint);
+  content.innerHTML=twoMapsPanel(frame,selected,false,Date.now(),undefined,{assets:watchlist});bindTwoMaps(paint,{assets:watchlist},selectTicker);
  }else if(view==='blocks'){
   const captured=Object.values(data.extras??{}).filter(r=>r.command==='get_block_alerts'&&r.observedMs<=now).sort((a,b)=>b.observedMs-a.observedMs)[0];
   const scanner=captured?.value as CapturedBlockScanner|undefined;
@@ -92,3 +92,4 @@ document.querySelectorAll<HTMLButtonElement>('[data-symbol]').forEach(b=>b.oncli
 document.querySelectorAll<HTMLButtonElement>('[data-view]').forEach(b=>b.onclick=()=>{view=b.dataset.view as 'detailed'|'chain'|'blocks'|'maps';if(saved&&saved.frame.symbol===(view==='blocks'?'QQQ':selected))paint();else void pull()});
 setInterval(()=>{if(!document.hidden&&webAutoRefreshAllowed())void pull()},300000);void pull();
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&webAutoRefreshAllowed())void pull()});
+

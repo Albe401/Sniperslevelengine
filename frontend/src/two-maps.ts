@@ -1,3 +1,4 @@
+import {mapAssetSearch,bindMapAssetSearch,type MapAssetSearch} from './map-asset-search';
 import type {LiveState} from './live';
 import {escapeHtml as esc} from './model';
 import {tradingMapBars,setTradingMapModel,bindTradingMap,tradingMapAction} from './two-maps-chart';
@@ -59,7 +60,7 @@ function inspector(groups:Group[],s:MapSelection):string {
  }
  return `<aside class="tm-inspector"><h3>STRIKE ${price(s.strike!)}</h3>${chosen.slice(-4).map(g=>`<section><h4>${g.kind.toUpperCase()} · ${clock(g.startMs)} ET</h4><dl><dt>Contratos observados</dt><dd>${number(g.contracts)}</dd><dt>Prima bruta</dt><dd>${money(g.premium)}</dd><dt>Ejecuciones</dt><dd>${number(g.executions)}</dd></dl><small>${g.categories.map(c=>esc(categoryNames[c])).join(' · ')}</small></section>`).join('')}<p>Lado agresor sin clasificar en este mapa.</p><button data-map-view="levels">Ver nivel ${price(s.strike!)} →</button></aside>`;
 }
-export function twoMapsPanel(state:LiveState|undefined,symbol:string,active:boolean,now=Date.now(),input?:MapSelection):string {
+export function twoMapsPanel(state:LiveState|undefined,symbol:string,active:boolean,now=Date.now(),input?:MapSelection,assetSearch?:MapAssetSearch):string {
  if(!input&&selection.symbol!==symbol)selection=newSelection(symbol);
  const s=input??selection,r=state?.symbol===symbol?state.flow?.heatmap:undefined;
  const usable=usableReport(r,symbol,now),asof=usable?r.asofMs:state?.symbol===symbol&&finite(state.publishedMs)&&state.publishedMs>0&&state.publishedMs<=now?state.publishedMs:now;
@@ -87,7 +88,7 @@ export function twoMapsPanel(state:LiveState|undefined,symbol:string,active:bool
  let body='';
  const side=s.view==='flow'?inspector(data.groups,selected):routeInspector(state,symbol,selected,data.groups,asof,levels,finite(spot)?spot:null,usable?r:undefined);
  body=`${tools}${controls}${s.view==='levels'?routeBanner(levels,finite(spot)?spot:null,routeActivity(data.groups,asof),asof,usable?r:undefined):''}<div class="tm-terminal">${chart}${side}</div><div class="tm-statusbar"><span>${s.view==='flow'?'Celdas por minuto y strike':`Ventana cerrada ${routeClock(Math.floor(asof/60000)*60000-300000)}–${routeClock(Math.floor(asof/60000)*60000)} ET · muestra recibida`} · ${strikes.length} strikes observados</span><span>${esc(expiry||'Vencimiento pendiente')} · USD · ET</span></div>`;
- return `<section class="panel two-maps tm-professional ${s.view==='levels'?'tm-route-map':''} ${s.expanded?'tm-expanded':''}" data-two-maps aria-label="${heading}">${header}${body}<details class="tm-method"><summary>Cobertura y metodología${usable&&r.storageError?' · error de persistencia':''}</summary><p>${usable?esc(r.population):'Ledger todavía no disponible en esta versión de la fuente. Esperando el ledger de ejecuciones.'} · sin dato verificable, no cero.</p><p>Prima bruta; no identifica apertura/cierre. Color = actividad, no dirección futura. Absorción y escenario: NO EVALUABLES con este mapa. GEX es un modelo, no inventario observado de dealers. Profundidad pendiente: Massive no ofrece Level 2.</p>${s.view==='levels'?activity(data.groups,asof):''}${data.rejected?`<p>Filas rechazadas o ambiguas: ${data.rejected}</p>`:''}${diagnostics?`<p>Diagnóstico: ${diagnostics}</p>`:''}${usable&&r.storageError?`<p>Persistencia pendiente: ${esc(r.storageError)}</p>`:''}</details></section>`;
+ return `<section class="panel two-maps tm-professional ${s.view==='levels'?'tm-route-map':''} ${s.expanded?'tm-expanded':''}" data-two-maps aria-label="${heading}">${header}${assetSearch?mapAssetSearch(assetSearch):''}${body}<details class="tm-method"><summary>Cobertura y metodología${usable&&r.storageError?' · error de persistencia':''}</summary><p>${usable?esc(r.population):'Ledger todavía no disponible en esta versión de la fuente. Esperando el ledger de ejecuciones.'} · sin dato verificable, no cero.</p><p>Prima bruta; no identifica apertura/cierre. Color = actividad, no dirección futura. Absorción y escenario: NO EVALUABLES con este mapa. GEX es un modelo, no inventario observado de dealers. Profundidad pendiente: Massive no ofrece Level 2.</p>${s.view==='levels'?activity(data.groups,asof):''}${data.rejected?`<p>Filas rechazadas o ambiguas: ${data.rejected}</p>`:''}${diagnostics?`<p>Diagnóstico: ${diagnostics}</p>`:''}${usable&&r.storageError?`<p>Persistencia pendiente: ${esc(r.storageError)}</p>`:''}</details></section>`;
 }
 function activity(groups:Group[],asof:number):string {
  const sums=new Map<number,{call:number|null;put:number|null}>();
@@ -97,8 +98,9 @@ function activity(groups:Group[],asof:number):string {
  const bar=(n:number|null)=>n==null?'—':`<i style="width:${n/max*100}%"></i>${number(n)}`;
  return rows.length?`<div class="tm-activity">${rows.map(([strike,r])=>`<button data-map-strike="${strike}" data-map-view="flow"><b>${price(strike)}</b><span>CALL ${bar(r.call)}</span><span>PUT ${bar(r.put)}</span></button>`).join('')}</div><p class="tm-note">Cinco intervalos de un minuto; el último puede estar en curso. — = sin dato observado.</p>`:'<p class="tm-empty">Sin cantidades verificables para esta ventana y vencimiento.</p>';
 }
-export function bindTwoMaps(refresh:()=>void):void {
+export function bindTwoMaps(refresh:()=>void,assetSearch?:MapAssetSearch,onSelect?:(symbol:string)=>void):void {
  const root=document.querySelector<HTMLElement>('[data-two-maps]');if(!root)return;
+ if(assetSearch&&onSelect)bindMapAssetSearch(root,assetSearch,onSelect);
  bindTradingMap((strike,minute,side)=>{selection.strike=strike;selection.minute=minute;selection.side=side;refresh();});
  const handle=(target:Element)=>{
   const b=target.closest<HTMLElement>('[data-map-view],[data-map-metric],[data-map-strike],[data-map-interval],[data-map-layer],[data-map-chart-action],[data-map-side]');if(!b)return;
@@ -115,3 +117,4 @@ export function bindTwoMaps(refresh:()=>void):void {
  root.onkeydown=e=>{if((e.key==='Enter'||e.key===' ')&&e.target instanceof SVGElement){e.preventDefault();handle(e.target);}};
  root.onchange=e=>{const t=e.target;if(!(t instanceof HTMLSelectElement))return;if(t.hasAttribute('data-map-expiry')){selection.expiry=t.value;selection.strike=null;selection.minute=null;}if(t.hasAttribute('data-map-category'))selection.category=t.value;refresh();};
 }
+
