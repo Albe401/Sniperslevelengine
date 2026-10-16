@@ -35,3 +35,10 @@ export function readOiMap(map:Heatmap){
   leader:comparable?(call.oi!>put.oi!?'call':put.oi!>call.oi!?'put':'equal'):null,
   difference:comparable?Math.abs(call.oi!-put.oi!):null};
 }
+
+/** Expiry comparison uses the very same cells and completeness rules, without mixing dates. */
+export function readOiExpirations(map:Heatmap){
+ const groups=new Map(map.expirations.map(date=>[date,[] as Heatmap['cells']]));
+ for(const cell of map.cells)groups.get(cell.expiration)?.push(cell);
+ return [...groups].map(([expiration,cells])=>({expiration,...readOiMap({...map,expirations:[expiration],cells})}));
+}
