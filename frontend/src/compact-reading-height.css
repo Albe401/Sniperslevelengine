@@ -1,4 +1,4 @@
-/* Original staggered layout, dimensions and colors; only reduce vertical gaps. */
+/* Preserve the map exterior and palette; compact only its internal cards. */
 [data-live-view="detailed"] .quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation .day-map-track{flex:none;align-content:start;row-gap:2px}
 [data-live-view="detailed"] .quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation .day-map-node:not(:first-child){margin-top:-64px}
 /* Short placeholder cards need less staggering to stay separate. */
@@ -27,7 +27,7 @@
 /* Keep the adjacent readings from increasing the enclosing map panel. */
 [data-live-view="detailed"] .quick-command-layout.route-command-layout>.levels-route-design{height:824px;min-height:824px;max-height:824px;overflow:hidden}
 [data-live-view="detailed"] .levels-route-design .flow-column{height:800px;min-height:0;max-height:800px;overflow-y:auto;overscroll-behavior:contain}
-/* Both sides share the original right-hand stack height, frozen before packing. */
+/* All maps share the targets column's measured height, without a blank lower row. */
 [data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed{height:var(--level-overview-height);min-height:var(--level-overview-height);max-height:var(--level-overview-height);grid-template-rows:minmax(0,1fr);align-items:stretch}
 [data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed>.levels-route-design{height:100%;min-height:0;max-height:100%;grid-template-rows:minmax(0,1fr);align-self:stretch}
 [data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed .levels-route-design .day-map.day-map-constellation{height:100%;min-height:0;max-height:100%;align-self:stretch}
@@ -36,4 +36,12 @@
 [data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed>.auction-map-stack>.auction-map-panel{flex:1;min-height:0;overflow-y:auto}
 [data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed>.auction-map-stack>.structural-map-preview:not(.auction-map-panel){flex:none}
 @media(max-width:1150px){[data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed{height:auto;min-height:0;max-height:none;grid-template-rows:var(--level-overview-height) var(--level-overview-height)}}
+
+/* Content-sized cards: no blank padding below their readings. */
+[data-live-view="detailed"] .quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation .day-map-node .day-map-level{padding:4px 7px;gap:2px;justify-content:flex-start}
+[data-live-view="detailed"] .levels-route-design .day-map.day-map-constellation .day-map-node .level-strength>span,
+[data-live-view="detailed"] .levels-route-design .day-map.day-map-constellation .day-map-node .route-wall-pull,
+[data-live-view="detailed"] .levels-route-design .day-map.day-map-constellation .day-map-node .map-level-reading summary>b{line-height:1.2}
+[data-live-view="detailed"] .levels-route-design .day-map.day-map-constellation .day-map-node .level-strength-track{margin-top:3px;margin-bottom:0}
+[data-live-view="detailed"] .levels-route-design .day-map.day-map-constellation .day-map-node .route-wall-pull{padding-top:3px}
 
