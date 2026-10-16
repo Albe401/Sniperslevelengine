@@ -1,9 +1,11 @@
 import {createChart,CandlestickSeries,HistogramSeries,ColorType,CrosshairMode,LineStyle,type IChartApi,type ISeriesApi,type AutoscaleInfo,type Time,type UTCTimestamp} from 'lightweight-charts';
 import type {LiveState} from './live';
 import type {Candle} from './model';
+import type {AuctionReading} from './auction-map-panel';
+import {routeReferences,routeHeatCells} from './level-route-reading';
 import type {Group,MapSelection} from './two-maps';
 
-export interface TradingMapModel {symbol:string;asof:number;bars:Candle[];groups:Group[];levels:{price:number;name:string}[];selection:MapSelection}
+export interface TradingMapModel {symbol:string;asof:number;bars:Candle[];groups:Group[];levels:{price:number;name:string}[];selection:MapSelection;auction?:AuctionReading}
 const day=(t:number)=>new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York'}).format(t);
 /** Canonical OHLC only: never synthesize a candle from its close. */
 export function tradingMapBars(state:LiveState|undefined,asof:number,minutes=1):Candle[]{
@@ -53,7 +55,7 @@ class TradingMapChart {
   for(let t=first;t<=asof;t+=step){const b=rows.get(t),time=t/1000 as UTCTimestamp;data.push(b?{time,open:b.open,high:b.high,low:b.low,close:b.close}:{time});}
   const heat=m.selection.view==='flow';
   this.candles.applyOptions({autoscaleInfoProvider:(base:()=>AutoscaleInfo|null)=>{
-   const info=base();if(!heat||!m.groups.length)return info;
+   const info=base();if(!heat){if(!info?.priceRange)return info;const span=Math.max(info.priceRange.maxValue-info.priceRange.minValue,.2),prices=m.levels.map(l=>l.price).filter(p=>p>=info.priceRange!.minValue-span&&p<=info.priceRange!.maxValue+span);const low=Math.min(...prices,info.priceRange.minValue),high=Math.max(...prices,info.priceRange.maxValue),pad=Math.max((high-low)*.06,.1);return {priceRange:{minValue:low-pad,maxValue:high+pad}};}if(!m.groups.length)return info;
    const center=m.selection.strike??m.bars.at(-1)?.close??m.groups[0].strike;
    const strikes=[...new Set(m.groups.map(g=>g.strike))].sort((a,b)=>Math.abs(a-center)-Math.abs(b-center)).slice(0,25);
    const low=Math.min(...strikes,info?.priceRange?.minValue??Infinity),high=Math.max(...strikes,info?.priceRange?.maxValue??-Infinity),pad=Math.max((high-low)*.04,.01);
@@ -62,15 +64,15 @@ class TradingMapChart {
   this.candles.applyOptions(heat?{upColor:'#6e849288',downColor:'#6e849244',wickUpColor:'#8ca1b5',wickDownColor:'#708497',borderVisible:true,borderUpColor:'#a4b5c5',borderDownColor:'#718595'}:{upColor:'#26bda6',downColor:'#ed6574',wickUpColor:'#26bda6',wickDownColor:'#ed6574',borderVisible:false});
   this.candles.setData(data);this.volume.setData(m.bars.filter(b=>Number.isFinite(b.volume)).map(b=>({time:b.timestampMs/1000 as UTCTimestamp,value:b.volume,color:b.close>=b.open?'#1b756b80':'#99465680'})));
   for(const line of this.lines)this.candles.removePriceLine(line);this.lines=[];
-  for(const l of m.levels)this.lines.push(this.candles.createPriceLine({price:l.price,color:l.name==='Call Wall'?'#e6b960':l.name==='Put Wall'?'#6ba4ef':'#b89ae8',lineWidth:1,lineStyle:LineStyle.Dashed,axisLabelVisible:true,title:l.name}));
-  if(changed){const remembered=viewports.get(key);this.follow=remembered?.follow??true;const shift=remembered?(remembered.first-first)/step:0;this.chart.timeScale().setVisibleLogicalRange(remembered?{from:remembered.from+shift,to:remembered.to+shift}:{from:Math.max(0,data.length-(heat?36:75)/(m.selection.barMinutes??1)),to:data.length+3});}
+  for(const l of m.levels)this.lines.push(this.candles.createPriceLine({price:l.price,color:/Main Magnet/.test(l.name)?'#f4ca4a':/Wall/.test(l.name)?'#a687d8':'#c87864',lineWidth:1,lineStyle:LineStyle.Solid,axisLabelVisible:true,title:l.name.replace('Main Magnet','IMÁN PRINCIPAL').replace('Call Wall','CALL WALL').replace('Put Wall','PUT WALL')}));
+  if(changed){const remembered=viewports.get(key);this.follow=remembered?.follow??true;const shift=remembered?(remembered.first-first)/step:0;this.chart.timeScale().setVisibleLogicalRange(remembered?{from:remembered.from+shift,to:remembered.to+shift}:{from:Math.max(0,data.length-(heat?36:75)/(m.selection.barMinutes??1)),to:data.length+(heat?3:20)});}
   else if(this.follow&&asof!==this.lastBar)this.chart.timeScale().scrollToRealTime();
   this.first=first;this.lastBar=asof;this.draw();
  }
  draw(){
   const m=this.model;if(!m)return;const w=this.node.clientWidth,h=this.chart.panes()[0].getHeight(),ratio=window.devicePixelRatio||1;
   this.canvas.width=Math.round(w*ratio);this.canvas.height=Math.round(h*ratio);this.canvas.style.width=`${w}px`;this.canvas.style.height=`${h}px`;const ctx=this.canvas.getContext('2d');if(!ctx)return;ctx.scale(ratio,ratio);this.hits=[];
-  if(m.selection.view!=='flow')return;
+  if(m.selection.view==='levels'){this.drawRoute(ctx,m,w,h);return;}
   const strikes=[...new Set(m.groups.map(g=>g.strike))].sort((a,b)=>a-b),step=strikes.length>1?Math.min(...strikes.slice(1).map((p,i)=>p-strikes[i])):1;
   const max=Math.max(0,...m.groups.map(g=>g[m.selection.metric]??0));
   const plotW=w-this.chart.priceScale('right').width();ctx.save();ctx.beginPath();ctx.rect(0,0,plotW,h);ctx.clip();
@@ -85,6 +87,30 @@ class TradingMapChart {
    if(g.strike===m.selection.strike&&g.startMs===m.selection.minute&&g.kind===m.selection.side){ctx.strokeStyle='#eef2f8';ctx.strokeRect(left,top,cw-.6,bh);}
    this.hits.push({x:left,y:top,w:cw,h:bh,g});
   }ctx.restore();
+ }
+ drawRoute(ctx:CanvasRenderingContext2D,m:TradingMapModel,w:number,h:number){
+  const plotW=w-this.chart.priceScale('right').width();ctx.save();ctx.beginPath();ctx.rect(0,0,plotW,h);ctx.clip();
+  // Actual underlying profile only; option strike volume never substitutes for it.
+  const bins=m.auction?.bins??[],peak=Math.max(0,...bins.map(b=>b.volume));
+  if(peak>0){for(const b of bins){const top=this.candles.priceToCoordinate(b.high),bottom=this.candles.priceToCoordinate(b.low);if(top==null||bottom==null)continue;ctx.fillStyle='#6e8ca144';ctx.fillRect(0,top,Math.max(1,b.volume/peak*plotW*.105),Math.max(1,bottom-top));}ctx.font='10px Inter, sans-serif';ctx.fillStyle='#9ab4cf';ctx.fillText('AMT · SUBYACENTE'+(m.auction?.provisional?' · PARCIAL':''),12,19);}
+  // Neutral amber measures received executed volume; never buy/sell intent.
+  const heatCells=routeHeatCells(m.groups,m.asof,m.selection.metric);
+  const maximum=Math.max(0,...heatCells.map(x=>x.value));
+  const minutes=m.selection.barMinutes??1;
+  for(const {g,value} of heatCells){
+   if(value<=0||!maximum)continue;const bucket=Math.floor(g.startMs/(minutes*60000))*minutes*60000;
+   const x=this.chart.timeScale().timeToCoordinate(bucket/1000 as UTCTimestamp),nx=this.chart.timeScale().timeToCoordinate((bucket+minutes*60000)/1000 as UTCTimestamp),y=this.candles.priceToCoordinate(g.strike);if(x==null||y==null)continue;
+   const rect=heatmapMinuteRect(g.startMs,minutes,x,(nx??(x+this.chart.timeScale().options().barSpacing))-x),alpha=value/maximum;
+   const gradient=ctx.createLinearGradient(0,y-11,0,y+11);gradient.addColorStop(0,'rgba(255,147,33,0)');gradient.addColorStop(.5,'rgba(255,166,47,'+(.12+.43*alpha)+')');gradient.addColorStop(1,'rgba(255,147,33,0)');ctx.fillStyle=gradient;ctx.fillRect(rect.left,y-11,Math.max(1,rect.width+.2),22);ctx.fillStyle='rgba(255,190,68,'+(.12+.45*alpha)+')';ctx.fillRect(rect.left,y-1,Math.max(1,rect.width+.2),2);
+   this.hits.push({x:rect.left,y:y-11,w:Math.max(1,rect.width),h:22,g});
+  }
+  const last=m.bars.at(-1),x=last?this.chart.timeScale().timeToCoordinate(last.timestampMs/1000 as UTCTimestamp):null;
+  const refs=routeReferences(m.levels,last?.close??null);
+  if(last&&x!=null&&x<plotW-70){const startX=Math.max(x+12,plotW*.74),targetX=plotW-30;ctx.fillStyle='#94b5d509';ctx.fillRect(startX,0,plotW-startX,h);ctx.fillStyle='#8ea8c3';ctx.font='10px Inter, sans-serif';ctx.fillText('REFERENCIAS · RUTA PENDIENTE',Math.max(startX+8,plotW-235),20);
+   const y=this.candles.priceToCoordinate(last.close);
+   if(y!=null)for(const [target,label] of [[refs.upper,'Superior'],[refs.lower,'Inferior']] as const){if(target==null)continue;const ty=this.candles.priceToCoordinate(target);if(ty==null)continue;ctx.strokeStyle='#8bacc6a0';ctx.lineWidth=1.5;ctx.setLineDash([3,6]);ctx.beginPath();ctx.moveTo(x+6,y);ctx.lineTo(targetX,ty);ctx.stroke();ctx.setLineDash([]);const angle=Math.atan2(ty-y,targetX-x-6);ctx.beginPath();ctx.moveTo(targetX-7*Math.cos(angle-.5),ty-7*Math.sin(angle-.5));ctx.lineTo(targetX,ty);ctx.lineTo(targetX-7*Math.cos(angle+.5),ty-7*Math.sin(angle+.5));ctx.stroke();ctx.font='10px Inter, sans-serif';ctx.fillStyle='#a8bfd2';ctx.fillText(label,Math.max(startX+8,targetX-65),ty+(ty<y?18:-10));}
+  }
+  ctx.restore();
  }
  action(action:string){if(action==='fit'){this.chart.timeScale().fitContent();this.candles.priceScale().applyOptions({autoScale:true});this.follow=false;}if(action==='follow'){this.follow=true;this.chart.timeScale().scrollToRealTime();this.candles.priceScale().applyOptions({autoScale:true});}this.draw();}
  dispose(){const range=this.chart.timeScale().getVisibleLogicalRange();if(range&&this.key){if(viewports.size>20)viewports.clear();viewports.set(this.key,{...range,first:this.first,follow:this.follow});}cancelAnimationFrame(this.frame);this.chart.remove();}
