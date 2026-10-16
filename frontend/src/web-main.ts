@@ -1,3 +1,4 @@
+import {webAutoRefreshAllowed,webRefreshLabel} from './web-refresh-policy';
 import {blockScannerPanel,type CapturedBlockScanner} from './block-scanner-panel';
 import {quickChartLevels} from './quick-chart-levels';
 import {quickReadingPanels} from './quick-reading-panels';
@@ -22,7 +23,7 @@ type Extra={command:string;args?:{symbol?:string};observedMs:number;value:unknow
 type Saved={available:boolean;id:string;capturedMs:number;frame:LiveState;extras:Record<string,Extra>;coverage:Record<string,unknown>};
 let selected='QQQ',view:'quick'|'detailed'|'chain'|'blocks'='quick',generation=0,saved:Saved|undefined,expiry='',blockQuery='',blockSide='all';
 const app=document.querySelector<HTMLDivElement>('#app')!;
-app.innerHTML=`<div class="web-shell"><aside class="web-sidebar"><img src="/assets/route-lion.png" alt="Snipers"><h2>SNIPERS</h2><button data-view="quick">Lectura rápida</button><button data-view="detailed">Lectura detallada</button><button data-view="blocks">Bloques de compra y venta</button><button data-view="chain">Radar de inversión<br><small>Cadena de opciones</small></button><small>Datos guardados por el escritorio<br>Actualización cada cinco minutos</small></aside><main class="web-main"><header class="web-topbar"><strong>Algoritmo de probabilidad</strong><span id="web-status">Leyendo la base de datos…</span></header><nav class="web-assets">${symbols.map(s=>`<button data-symbol="${s}">${s}</button>`).join('')}</nav><section id="web-content"></section></main></div>`;
+app.innerHTML=`<div class="web-shell"><aside class="web-sidebar"><img src="/assets/route-lion.png" alt="Snipers"><h2>SNIPERS</h2><button data-view="quick">Lectura rápida</button><button data-view="detailed">Lectura detallada</button><button data-view="blocks">Bloques de compra y venta</button><button data-view="chain">Radar de inversión<br><small>Cadena de opciones</small></button><small>Datos guardados por el escritorio<br>Actualización lunes a viernes · cada cinco minutos ET</small></aside><main class="web-main"><header class="web-topbar"><strong>Algoritmo de probabilidad</strong><span id="web-status">Leyendo la base de datos…</span></header><nav class="web-assets">${symbols.map(s=>`<button data-symbol="${s}">${s}</button>`).join('')}</nav><section id="web-content"></section></main></div>`;
 const content=document.querySelector<HTMLElement>('#web-content')!;
 const search=document.createElement('div');search.className='web-ticker-search';search.innerHTML=`<label for="ticker-search">Buscar ticker del watchlist (${watchlist.length})</label><input id="ticker-search" type="search" placeholder="Escribe un ticker…" autocomplete="off"><select id="ticker-select" aria-label="Seleccionar ticker">${watchlist.map(a=>`<option value="${esc(a.symbol)}" ${a.symbol===selected?'selected':''}>${esc(a.symbol)} · ${esc(a.name)}</option>`).join('')}</select><small id="ticker-results">${watchlist.length} tickers</small>`;document.querySelector('.web-assets')!.before(search);
 const searchInput=document.querySelector<HTMLInputElement>('#ticker-search')!,tickerSelect=document.querySelector<HTMLSelectElement>('#ticker-select')!;
@@ -41,12 +42,12 @@ function paint(){
  seedCapturedComponentRead(frame.qqq_report??fields.qqqReport,now);
  const targets=Object.values(data.extras??{}).filter(r=>r.command==='get_fmp_targets'&&r.observedMs<=now).sort((a,b)=>b.observedMs-a.observedMs)[0];
  if(targets&&(targets.value as {rows?:unknown})?.rows)seedCapturedAnalystTargets((targets.value as {rows:Record<string,TargetRow>}).rows,now);
- document.querySelector<HTMLElement>('#web-status')!.textContent=`Captura ${new Date(now).toLocaleString('es',{timeZone:'America/New_York'})} ET · actualización automática cada 5 min`;
+ document.querySelector<HTMLElement>('#web-status')!.textContent=`Captura ${new Date(now).toLocaleString('es',{timeZone:'America/New_York'})} ET · ${webRefreshLabel()}`;
  if(view==='quick'){
   content.innerHTML=`<section id="live-workspace" class="visual-reading" data-live-view="quick">${quickChartLevels(frame,selected,true,now,buildIntradayControl(frame,selected,true,now))}</section><p class="web-note">Solo datos del lote guardado. Sin conexión a Massive desde la web. Fechas y cobertura originales conservadas.</p>`;
   bindGammaLive(frame,selected,true,paint,now);
  }else if(view==='detailed'){
-  content.innerHTML=`<section id="live-workspace" class="visual-reading" data-live-view="detailed">${quickReadingPanels(frame,selected,true,buildIntradayControl(frame,selected,true,now),now)}</section><p class="web-note">Lectura detallada del lote guardado en Neon. Actualización cada cinco minutos; sin consultas al mercado desde la web.</p>`;
+  content.innerHTML=`<section id="live-workspace" class="visual-reading" data-live-view="detailed">${quickReadingPanels(frame,selected,true,buildIntradayControl(frame,selected,true,now),now)}</section><p class="web-note">Lectura detallada del lote guardado en Neon. Actualización lunes a viernes · cada cinco minutos ET; sin consultas al mercado desde la web.</p>`;
   bindLevelCardSpacing();bindGammaLive(frame,selected,true,paint,now);
  }else if(view==='blocks'){
   const captured=Object.values(data.extras??{}).filter(r=>r.command==='get_block_alerts'&&r.observedMs<=now).sort((a,b)=>b.observedMs-a.observedMs)[0];
@@ -73,19 +74,19 @@ async function pull(){
   if(!response.ok){
    const failure=await response.json().catch(()=>({}));if(token!==generation)return;
    if(failure.error==='database_quota_exceeded'){
-    document.querySelector<HTMLElement>('#web-status')!.textContent='Neon: cuota excedida · comprobación automática cada 5 min';
+    document.querySelector<HTMLElement>('#web-status')!.textContent='Neon: cuota excedida · comprobación automática cada 5 min de lunes a viernes ET';
     if(!saved)content.innerHTML='<section class="panel">Neon ha bloqueado la base de datos porque se superó una cuota. Hay que revisar los límites o el plan del proyecto en Neon. La web volverá a comprobar la conexión automáticamente.</section>';
     return;
    }
    throw Error('Base de datos no disponible');
   }
   const value=await response.json() as Saved;if(token!==generation)return;
-  if(!value.available){document.querySelector<HTMLElement>('#web-status')!.textContent=`${selected} · pendiente de datos guardados`;if(!saved)content.innerHTML=`<section class="panel">${esc(selected)} todavía no tiene un snapshot disponible en Neon. Se comprobará automáticamente; no se consultará Massive desde la web.</section>`;setTimeout(()=>{if(token===generation)void pull()},15000);return;}
+  if(!value.available){document.querySelector<HTMLElement>('#web-status')!.textContent=`${selected} · pendiente de datos guardados`;if(!saved)content.innerHTML=`<section class="panel">${esc(selected)} todavía no tiene un snapshot disponible en Neon. Se comprobará automáticamente; no se consultará Massive desde la web.</section>`;setTimeout(()=>{if(token===generation&&webAutoRefreshAllowed())void pull()},15000);return;}
   if(value.frame.symbol!==requested||value.capturedMs>Date.now())throw Error('Lote inválido');
   saved=value;paint();
- }catch(e){if(token!==generation)return;document.querySelector<HTMLElement>('#web-status')!.textContent='Conexión pendiente · reintento automático';if(!saved)content.innerHTML=`<section class="panel">${esc(String(e))}</section>`;setTimeout(()=>{if(token===generation)void pull()},15000);}
+ }catch(e){if(token!==generation)return;document.querySelector<HTMLElement>('#web-status')!.textContent='Conexión pendiente · reintento automático';if(!saved)content.innerHTML=`<section class="panel">${esc(String(e))}</section>`;setTimeout(()=>{if(token===generation&&webAutoRefreshAllowed())void pull()},15000);}
 }
 document.querySelectorAll<HTMLButtonElement>('[data-symbol]').forEach(b=>b.onclick=()=>{selected=b.dataset.symbol!;saved=undefined;expiry='',blockQuery='',blockSide='all';void pull()});
 document.querySelectorAll<HTMLButtonElement>('[data-view]').forEach(b=>b.onclick=()=>{view=b.dataset.view as 'quick'|'detailed'|'chain'|'blocks';if(saved&&saved.frame.symbol===(view==='blocks'?'QQQ':selected))paint();else void pull()});
-setInterval(()=>{if(!document.hidden)void pull()},300000);void pull();
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)void pull()});
+setInterval(()=>{if(!document.hidden&&webAutoRefreshAllowed())void pull()},300000);void pull();
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&webAutoRefreshAllowed())void pull()});
