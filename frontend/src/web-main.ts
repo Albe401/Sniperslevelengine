@@ -1,3 +1,4 @@
+import {blockScannerPanel,type CapturedBlockScanner} from './block-scanner-panel';
 import {quickChartLevels} from './quick-chart-levels';
 import {quickReadingPanels} from './quick-reading-panels';
 import {bindLevelCardSpacing} from './level-card-spacing';
@@ -19,14 +20,14 @@ import './styles.css';import './restrained.css';import './visual-readings.css';i
 const symbols=['AAPL','MSFT','AMZN','GOOGL','META','NVDA','TSLA','QQQ','SPY','IWM'];
 type Extra={command:string;args?:{symbol?:string};observedMs:number;value:unknown};
 type Saved={available:boolean;id:string;capturedMs:number;frame:LiveState;extras:Record<string,Extra>;coverage:Record<string,unknown>};
-let selected='QQQ',view:'quick'|'detailed'|'chain'='quick',generation=0,saved:Saved|undefined,expiry='';
+let selected='QQQ',view:'quick'|'detailed'|'chain'|'blocks'='quick',generation=0,saved:Saved|undefined,expiry='',blockQuery='',blockSide='all';
 const app=document.querySelector<HTMLDivElement>('#app')!;
-app.innerHTML=`<div class="web-shell"><aside class="web-sidebar"><img src="/assets/route-lion.png" alt="Snipers"><h2>SNIPERS</h2><button data-view="quick">Lectura rápida</button><button data-view="detailed">Lectura detallada</button><button data-view="chain">Radar de inversión<br><small>Cadena de opciones</small></button><small>Datos guardados por el escritorio<br>Actualización cada cinco minutos</small></aside><main class="web-main"><header class="web-topbar"><strong>Algoritmo de probabilidad</strong><span id="web-status">Leyendo la base de datos…</span></header><nav class="web-assets">${symbols.map(s=>`<button data-symbol="${s}">${s}</button>`).join('')}</nav><section id="web-content"></section></main></div>`;
+app.innerHTML=`<div class="web-shell"><aside class="web-sidebar"><img src="/assets/route-lion.png" alt="Snipers"><h2>SNIPERS</h2><button data-view="quick">Lectura rápida</button><button data-view="detailed">Lectura detallada</button><button data-view="blocks">Bloques de compra y venta</button><button data-view="chain">Radar de inversión<br><small>Cadena de opciones</small></button><small>Datos guardados por el escritorio<br>Actualización cada cinco minutos</small></aside><main class="web-main"><header class="web-topbar"><strong>Algoritmo de probabilidad</strong><span id="web-status">Leyendo la base de datos…</span></header><nav class="web-assets">${symbols.map(s=>`<button data-symbol="${s}">${s}</button>`).join('')}</nav><section id="web-content"></section></main></div>`;
 const content=document.querySelector<HTMLElement>('#web-content')!;
 const search=document.createElement('div');search.className='web-ticker-search';search.innerHTML=`<label for="ticker-search">Buscar ticker del watchlist (${watchlist.length})</label><input id="ticker-search" type="search" placeholder="Escribe un ticker…" autocomplete="off"><select id="ticker-select" aria-label="Seleccionar ticker">${watchlist.map(a=>`<option value="${esc(a.symbol)}" ${a.symbol===selected?'selected':''}>${esc(a.symbol)} · ${esc(a.name)}</option>`).join('')}</select><small id="ticker-results">${watchlist.length} tickers</small>`;document.querySelector('.web-assets')!.before(search);
 const searchInput=document.querySelector<HTMLInputElement>('#ticker-search')!,tickerSelect=document.querySelector<HTMLSelectElement>('#ticker-select')!;
 searchInput.oninput=()=>{const q=searchInput.value.trim().toUpperCase(),rows=watchlist.filter(a=>a.symbol.includes(q));tickerSelect.innerHTML=rows.map(a=>`<option value="${esc(a.symbol)}">${esc(a.symbol)} · ${esc(a.name)}</option>`).join('');document.querySelector('#ticker-results')!.textContent=`${rows.length} tickers`;};
-const selectTicker=(symbol:string)=>{selected=symbol;saved=undefined;expiry='';content.innerHTML='<section class="panel">Cargando datos guardados…</section>';void pull();};
+const selectTicker=(symbol:string)=>{selected=symbol;saved=undefined;expiry='',blockQuery='',blockSide='all';content.innerHTML='<section class="panel">Cargando datos guardados…</section>';void pull();};
 tickerSelect.onchange=()=>selectTicker(tickerSelect.value);searchInput.onkeydown=e=>{if(e.key==='Enter'&&tickerSelect.value)selectTicker(tickerSelect.value)};
 function paint(){
  if(!saved?.available)return;
@@ -47,6 +48,12 @@ function paint(){
  }else if(view==='detailed'){
   content.innerHTML=`<section id="live-workspace" class="visual-reading" data-live-view="detailed">${quickReadingPanels(frame,selected,true,buildIntradayControl(frame,selected,true,now),now)}</section><p class="web-note">Lectura detallada del lote guardado en Neon. Actualización cada cinco minutos; sin consultas al mercado desde la web.</p>`;
   bindLevelCardSpacing();bindGammaLive(frame,selected,true,paint,now);
+ }else if(view==='blocks'){
+  const captured=Object.values(data.extras??{}).filter(r=>r.command==='get_block_alerts'&&r.observedMs<=now).sort((a,b)=>b.observedMs-a.observedMs)[0];
+  const scanner=captured?.value as CapturedBlockScanner|undefined;
+  content.innerHTML=blockScannerPanel(scanner,now,Date.now(),blockQuery,blockSide);
+  const filter=content.querySelector<HTMLFormElement>('[data-block-search]');
+  if(filter)filter.onsubmit=e=>{e.preventDefault();const data=new FormData(filter);blockQuery=String(data.get('symbol')??'').trim();blockSide=String(data.get('side')??'all');paint();};
  }else{
   const records=Object.values(data.extras??{}).filter(r=>r.command==='get_contract_inventory'&&r.args?.symbol===selected&&r.observedMs<=now).sort((a,b)=>b.observedMs-a.observedMs);
   const archived=(frame as LiveState&{contractChain?:{observation:Extra}}).contractChain?.observation;
@@ -60,9 +67,9 @@ function paint(){
  document.querySelectorAll<HTMLButtonElement>('[data-symbol]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.symbol===selected)));
 }
 async function pull(){
- const token=++generation;
+ const token=++generation,requested=view==='blocks'?'QQQ':selected;
  try{
-  const response=await fetch(`/api/frame?symbol=${encodeURIComponent(selected)}`,{cache:'no-store',signal:AbortSignal.timeout(60000)});
+  const response=await fetch(`/api/frame?symbol=${encodeURIComponent(requested)}`,{cache:'no-store',signal:AbortSignal.timeout(60000)});
   if(!response.ok){
    const failure=await response.json().catch(()=>({}));if(token!==generation)return;
    if(failure.error==='database_quota_exceeded'){
@@ -74,11 +81,11 @@ async function pull(){
   }
   const value=await response.json() as Saved;if(token!==generation)return;
   if(!value.available){document.querySelector<HTMLElement>('#web-status')!.textContent=`${selected} · pendiente de datos guardados`;if(!saved)content.innerHTML=`<section class="panel">${esc(selected)} todavía no tiene un snapshot disponible en Neon. Se comprobará automáticamente; no se consultará Massive desde la web.</section>`;setTimeout(()=>{if(token===generation)void pull()},15000);return;}
-  if(value.frame.symbol!==selected||value.capturedMs>Date.now())throw Error('Lote inválido');
+  if(value.frame.symbol!==requested||value.capturedMs>Date.now())throw Error('Lote inválido');
   saved=value;paint();
  }catch(e){if(token!==generation)return;document.querySelector<HTMLElement>('#web-status')!.textContent='Conexión pendiente · reintento automático';if(!saved)content.innerHTML=`<section class="panel">${esc(String(e))}</section>`;setTimeout(()=>{if(token===generation)void pull()},15000);}
 }
-document.querySelectorAll<HTMLButtonElement>('[data-symbol]').forEach(b=>b.onclick=()=>{selected=b.dataset.symbol!;saved=undefined;expiry='';void pull()});
-document.querySelectorAll<HTMLButtonElement>('[data-view]').forEach(b=>b.onclick=()=>{view=b.dataset.view as 'quick'|'detailed'|'chain';if(saved)paint();else void pull()});
+document.querySelectorAll<HTMLButtonElement>('[data-symbol]').forEach(b=>b.onclick=()=>{selected=b.dataset.symbol!;saved=undefined;expiry='',blockQuery='',blockSide='all';void pull()});
+document.querySelectorAll<HTMLButtonElement>('[data-view]').forEach(b=>b.onclick=()=>{view=b.dataset.view as 'quick'|'detailed'|'chain'|'blocks';if(saved&&saved.frame.symbol===(view==='blocks'?'QQQ':selected))paint();else void pull()});
 setInterval(()=>{if(!document.hidden)void pull()},300000);void pull();
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)void pull()});

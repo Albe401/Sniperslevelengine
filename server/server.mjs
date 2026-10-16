@@ -58,7 +58,7 @@ export function makeHandler({provider=latest}={}){
     const symbol=url.searchParams.get('symbol')??'QQQ';if(!allowedSymbols.has(symbol))return json(400,{error:'symbol'});
     const bundle=await provider(symbol);if(!bundle.available)return json(200,{available:false});
     if(!validAssetBundle(bundle,symbol))throw Error('Invalid capture');
-    const extras=Object.fromEntries(Object.entries(bundle.extras??{}).filter(([,r])=>['get_contract_inventory','get_fmp_targets','preview_route_4h'].includes(r.command)&&(r.command!=='get_contract_inventory'||r.args?.symbol===symbol)));
+    const extras=Object.fromEntries(Object.entries(bundle.extras??{}).filter(([,r])=>['get_contract_inventory','get_fmp_targets','preview_route_4h','get_block_alerts'].includes(r.command)&&(r.command!=='get_contract_inventory'||r.args?.symbol===symbol)));
     const frame=Object.fromEntries(Object.entries(bundle.frames[symbol]).filter(([key])=>quickFields.has(key)));
     return json(200,{available:true,id:bundle.id,capturedMs:bundle.capturedMs,coverage:bundle.coverage,frame,extras});
    }

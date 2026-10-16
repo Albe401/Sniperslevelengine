@@ -23,3 +23,8 @@ test('web response excludes photos and unrelated sections',async()=>{
  try{const r=await fetch(`http://127.0.0.1:${server.address().port}/api/frame?symbol=QQQ`);const v=await r.json();assert(!('photograph' in v));assert(!('learningReport' in v.frame));assert.deepEqual(v.extras,{});assert.equal(r.headers.get('content-security-policy').includes("connect-src 'self'"),true)}finally{await new Promise(r=>server.close(r))}
 });
 test('public API returns own asset, and blocks execution',async()=>{const server=makeServer({password:'test-password',provider:async()=>bundle()});await new Promise(r=>server.listen(0,'127.0.0.1',r));const base=`http://127.0.0.1:${server.address().port}`;try{assert.equal((await fetch(base+'/api/frame')).status,200);const cookie='';const r=await fetch(base+'/api/frame?symbol=NVDA',{headers:{cookie}});assert.equal((await r.json()).frame.symbol,'NVDA');assert.equal((await fetch(base+'/api/frame?symbol=INVALID',{headers:{cookie}})).status,400);assert.equal((await fetch(base+'/api/orders',{method:'POST',headers:{cookie}})).status,405)}finally{await new Promise(r=>server.close(r))}});
+test('saved block scanner status is delivered through the read-only API',async()=>{
+ const b=bundle();b.extras={blocks:{command:'get_block_alerts',observedMs:b.capturedMs-1,value:{enabled:true,total:186,history:[]}},secret:{command:'get_api_credentials',value:'must-not-leak'}};
+ const server=makeServer({provider:async()=>b});await new Promise(r=>server.listen(0,'127.0.0.1',r));
+ try{const response=await fetch(`http://127.0.0.1:${server.address().port}/api/frame?symbol=QQQ`);const data=await response.json();assert.equal(data.extras.blocks.value.total,186);assert(!data.extras.secret);}finally{await new Promise(r=>server.close(r))}
+});

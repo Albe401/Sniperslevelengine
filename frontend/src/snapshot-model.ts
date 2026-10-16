@@ -13,5 +13,5 @@ export function savedAsset(value:SavedBundle|undefined,symbol:string,now:number)
 export function snapshotCommandAllowed(command:string):boolean {
  // Native frames already archive live engine data. Do not copy the high-frequency
  // live stream through the UI again; only collect supplemental sections here.
- return ['get_contract_inventory','get_fmp_targets','preview_route_4h'].includes(command);
+ return ['get_contract_inventory','get_fmp_targets','preview_route_4h','get_block_alerts'].includes(command);
 }
