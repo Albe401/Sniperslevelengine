@@ -1,4 +1,4 @@
-import {createChart,CandlestickSeries,HistogramSeries,ColorType,CrosshairMode,LineStyle,type IChartApi,type ISeriesApi,type Time,type UTCTimestamp} from 'lightweight-charts';
+import {createChart,CandlestickSeries,HistogramSeries,ColorType,CrosshairMode,LineStyle,type IChartApi,type ISeriesApi,type AutoscaleInfo,type Time,type UTCTimestamp} from 'lightweight-charts';
 import type {LiveState} from './live';
 import type {Candle} from './model';
 import type {Group,MapSelection} from './two-maps';
@@ -52,6 +52,13 @@ class TradingMapChart {
   const rows=new Map(m.bars.map(b=>[b.timestampMs,b]));const data=[];
   for(let t=first;t<=asof;t+=step){const b=rows.get(t),time=t/1000 as UTCTimestamp;data.push(b?{time,open:b.open,high:b.high,low:b.low,close:b.close}:{time});}
   const heat=m.selection.view==='flow';
+  this.candles.applyOptions({autoscaleInfoProvider:(base:()=>AutoscaleInfo|null)=>{
+   const info=base();if(!heat||!m.groups.length)return info;
+   const center=m.selection.strike??m.bars.at(-1)?.close??m.groups[0].strike;
+   const strikes=[...new Set(m.groups.map(g=>g.strike))].sort((a,b)=>Math.abs(a-center)-Math.abs(b-center)).slice(0,25);
+   const low=Math.min(...strikes,info?.priceRange?.minValue??Infinity),high=Math.max(...strikes,info?.priceRange?.maxValue??-Infinity),pad=Math.max((high-low)*.04,.01);
+   return {priceRange:{minValue:low-pad,maxValue:high+pad}};
+  }});
   this.candles.applyOptions(heat?{upColor:'#6e849288',downColor:'#6e849244',wickUpColor:'#8ca1b5',wickDownColor:'#708497',borderVisible:true,borderUpColor:'#a4b5c5',borderDownColor:'#718595'}:{upColor:'#26bda6',downColor:'#ed6574',wickUpColor:'#26bda6',wickDownColor:'#ed6574',borderVisible:false});
   this.candles.setData(data);this.volume.setData(m.bars.filter(b=>Number.isFinite(b.volume)).map(b=>({time:b.timestampMs/1000 as UTCTimestamp,value:b.volume,color:b.close>=b.open?'#1b756b80':'#99465680'})));
   for(const line of this.lines)this.candles.removePriceLine(line);this.lines=[];
