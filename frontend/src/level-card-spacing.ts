@@ -22,11 +22,10 @@ export function levelCardPositions(heights:number[],availableHeight=0):{column:n
   const top=bottoms[column];counts[column]++;bottoms[column]+=height+gap;
   return {column,top,height};
  });
- // Keep a compact 6–12 px gap; spare height must not create holes between cards. Their content
- // stays compact; only positions change. Overflow remains readable if expanded.
- const spacing=counts.map((count,c)=>count>1?Math.min(12,Math.max(gap,(availableHeight-(bottoms[c]-count*gap))/(count-1))):gap);
+ // Fill spare height inside cards; keep a fixed small gap between their borders.
+ const extra=counts.map((count,c)=>count?Math.max(0,availableHeight-(bottoms[c]-gap))/count:0);
  const cursor=[0,0];
- return positions.map(p=>{const top=cursor[p.column];cursor[p.column]+=p.height+spacing[p.column];return {...p,top};});
+ return positions.map(p=>{const top=cursor[p.column],height=p.height+extra[p.column];cursor[p.column]+=height+gap;return {...p,top,height};});
 }
 /** Shared panel height follows the targets column; cards move within it. */
 export function bindLevelCardSpacing():void {
@@ -53,6 +52,7 @@ export function bindLevelCardSpacing():void {
   cards.forEach(card=>card.style.removeProperty('min-height'));
   levelCardPositions(cards.map(card=>card.offsetHeight),track.clientHeight).forEach((position,i)=>{
    cards[i].style.top=`${position.top}px`;
+   cards[i].style.minHeight=`${position.height}px`;
    cards[i].dataset.levelColumn=String(position.column);
   });
  };
