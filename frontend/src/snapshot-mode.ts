@@ -2,6 +2,9 @@ import {invoke,isTauri} from '@tauri-apps/api/core';
 import {escapeHtml as esc} from './model';
 import {snapshotSymbols,validSavedBundle,savedAsset,type SavedBundle} from './snapshot-model';
 import './snapshot-mode.css';
+import {twoMapsPanel,bindTwoMaps} from './two-maps';
+import type {LiveState} from './live';
+import './two-maps.css';
 let enabled=false,selected='QQQ',saved:SavedBundle|undefined,busy=false,error='',changed=()=>{};
 export function snapshotEnabled(){return enabled;}
 export function snapshotButton(){return `<button class="snapshot-toggle" data-snapshot-toggle aria-pressed="${enabled}">${enabled?'SNAPSHOT · ≥5 MIN':'En vivo'}</button>`;}
@@ -38,7 +41,7 @@ export function renderSavedSnapshot(saved:SavedBundle|undefined,selected:string,
  const photograph=saved?.images?.[selected];
  return `<section class="snapshot-page"><header class="panel"><span class="eyebrow">CAPTURA GUARDADA · ${esc(selected)}</span><h2>Modo snapshot</h2><p>${saved?.capturedMs?`Última captura visible: ${date(saved.capturedMs)} ET · hace ${age} min.`:'Esperando una captura guardada con al menos cinco minutos de edad.'}</p><p>Esta vista muestra únicamente datos de la base de datos. El receptor interno continúa trabajando.</p>${error?`<p role="alert">${esc(error)}</p>`:''}<div class="snapshot-assets">${snapshotSymbols.map(s=>`<button data-snapshot-symbol="${s}" aria-pressed="${s===selected}">${s}</button>`).join('')}</div></header>
  ${!frame?'<section class="panel">No hay una captura válida disponible. No se sustituye por datos en vivo.</section>':`
- ${photograph?.mimeType==='image/jpeg'?`<section class="panel snapshot-photograph"><img alt="Lectura detallada de ${esc(selected)} en la captura guardada" src="data:image/jpeg;base64,${esc(photograph.base64.replace(/\s/g,''))}" /></section>`:'<section class="panel">Imagen de Lectura detallada pendiente para esta captura.</section>'}
+ ${view==='maps'?twoMapsPanel(frame as unknown as LiveState,selected,false,now):photograph?.mimeType==='image/jpeg'?`<section class="panel snapshot-photograph"><img alt="Lectura detallada de ${esc(selected)} en la captura guardada" src="data:image/jpeg;base64,${esc(photograph.base64.replace(/\s/g,''))}" /></section>`:'<section class="panel">Imagen de Lectura detallada pendiente para esta captura.</section>'}
  <details class="snapshot-data-details"><summary>Datos y cobertura de la misma captura</summary>
  ${frame.snapshotUnavailable?'<p class="snapshot-missing">Este activo estaba pendiente en el receptor al capturar.</p>':''}
  ${profile(frame)}<div class="snapshot-sections">${entries.map(([key,value])=>`<details class="panel" ${['ticks','metrics'].includes(key)?'open':''}><summary>${esc(labels[key]??key)}</summary>${content(value)}</details>`).join('')}</div>
@@ -46,6 +49,7 @@ export function renderSavedSnapshot(saved:SavedBundle|undefined,selected:string,
  <details class="panel"><summary>Cobertura de la captura · ${esc(view)}</summary>${content(saved?.coverage)}<p>Un dato guardado puede ser parcial o antiguo. Las fechas y estados originales se conservan. Esta captura no certifica todos los ticks del mercado.</p></details></details>`}</section>`;
 }
 export function bindSnapshotMode(render:()=>void){
+ bindTwoMaps(render);
  changed=render;
  document.querySelector<HTMLButtonElement>('[data-snapshot-toggle]')?.addEventListener('click',()=>{enabled=!enabled;changed();if(enabled)void poll();});
  document.querySelectorAll<HTMLButtonElement>('[data-snapshot-symbol]').forEach(b=>b.onclick=()=>{selected=b.dataset.snapshotSymbol!;changed();});

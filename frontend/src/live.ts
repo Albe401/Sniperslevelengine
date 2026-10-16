@@ -1,4 +1,6 @@
 import {setWatchedNewsSymbols} from './news-watchlist';
+import {twoMapsPanel,bindTwoMaps} from './two-maps';
+import './two-maps.css';
 import {bindLevelCardSpacing} from './level-card-spacing';
 import {receiverHealth,transferConnection,type DataConnectionMode} from './data-connection';
 import {startResearchWatchlistSync} from './research-watchlist';
@@ -84,7 +86,7 @@ interface HistoryState {phase:string;detail:string;fromMs:number|null;throughMs:
 interface SessionMetrics {session:string;phase:string;vwap:number|null;rvol:number|null;volume:number|null;baselineSessions:number;asofMs:number|null}
 interface SelectionState {structuralRequested:number;structuralResolved:number;spot:number|null;source:string;expiry:string;updatedMs:number|null;error:string|null}
 interface FlowEvent {timestamp_ms:number;ticker:string;kind:string;price:number;size:number;premium:number|null;side:string;confidence:string;quote_state:string}
-interface FlowSnapshot {bid_ask?:import("./strike-bid-ask").BidAskWindow[];asof_ms?:number;intraday_windows?:FlowWindow[];contract_windows:ContractWindow[];windows:FlowWindow[];recent:FlowEvent[];capacity_drops:number;rejected_trades:number;quote_max_age_ms:number}
+interface FlowSnapshot {heatmap?:import('./two-maps').FlowMapReport;bid_ask?:import("./strike-bid-ask").BidAskWindow[];asof_ms?:number;intraday_windows?:FlowWindow[];contract_windows:ContractWindow[];windows:FlowWindow[];recent:FlowEvent[];capacity_drops:number;rejected_trades:number;quote_max_age_ms:number}
 interface OiChange {ticker:string;current:number|null;previous:number|null;change:number|null;changePct:number|null;previousObservedDate:string|null}
 interface Exposure {callShareBounds?:[number,number]|null;deltaCapacityCoveragePct?:number|null;missingCallDexMax?:number|null;missingPutDexMax?:number|null;callDex?:number;putDex?:number;callDexPct?:number|null;putDexPct?:number|null;spot:number;eligible:number;unknownOi:number;gammaUsed:number;deltaUsed:number;scanUsed:number;gexComplete:boolean;dexComplete:boolean;scanComplete:boolean;netGex:number;netDex:number;zeroGamma:number|null;gammaRegime:string;dexSide:string;strikes:{strike:number;netGex:number;netDex:number}[]}
 interface Structure {levelQuality?:import('./level-quality').LevelQuality[];strikeRows?:import('./gamma-live-model').GammaRow[];topContracts?:import('./top-strikes').ContractRanking;provisional?:{strikeRows?:import('./gamma-live-model').GammaRow[];coveredContracts:number;totalContracts:number;selected:Structure["selected"];callWall:Structure["callWall"];putWall:Structure["putWall"];magnet:number|null;mainMagnetScore?:number|null;liquidityMagnetScore?:number|null;routes:Structure["routes"]}|null;quickPressure?:number|null;reading:StructuralReading;complete:boolean;liquidityComplete:boolean;missingContracts:number;historyAvailable:boolean;gexAvailable:boolean;rows:number;selected:Record<string,number|null>;top:{strike:number;score:number;kind:string}[];callWall:{strike:number;score:number;ready:boolean;oi?:number;volume?:number;zoneOi?:number|null;zoneVolume?:number|null}|null;putWall:{strike:number;score:number;ready:boolean;oi?:number;volume?:number;zoneOi?:number|null;zoneVolume?:number|null}|null;magnet:number|null;mainMagnetScore?:number|null;liquidityMagnetScore?:number|null;routes:{pathLiquidity?:number|null;pathOpenness?:number|null;vacuumScore?:number|null;pullTarget?:number|null;vacuumLow?:number|null;vacuumHigh?:number|null;vacuumStatus?:string;direction:string;barrier:number|null;barrierScore?:number|null;pathState:string;target:number|null;extended:number|null;score:number|null;structuralReady:boolean}[]}
@@ -200,7 +202,7 @@ const chartMarks=()=>[...paperChartMarks(state?.decisionReview,selectedSymbol),.
 let gexPanOffset=0;
 let gexDate='',gexVisible=48,gexBefore:number|undefined,gexExpanded=false,gexDragging=false;
 let gexCandles:ReturnType<typeof sessionCandles>=[];
-export type LiveView='gamma-live'|'top-five'|'gex'|'monitor'|'flow'|'levels'|'quick'|'detailed'|'asset'|'spx';
+export type LiveView='gamma-live'|'top-five'|'gex'|'monitor'|'flow'|'maps'|'levels'|'quick'|'detailed'|'asset'|'spx';
 const liveGroup=(group:LiveView,html:string)=>`<div data-live-group="${group}">${html}</div>`;
 function watchlistMarkup():string {
  return watchlistSlot==null?'':`<section class="asset-watchlist" aria-label="Watchlist completa"><header><strong data-watchlist-heading>Cambiar activo ${watchlistSlot+1}</strong><button type="button" data-watchlist-close>Cerrar</button></header><label for="watchlist-query">Símbolo, nombre o sector</label><input id="watchlist-query" type="search" value="${esc(watchlistQuery)}" placeholder="Ej. AMD, Microsoft" autocomplete="off"/><div data-watchlist-results>${assetResults(universe,watchlistQuery)}</div></section>`;
@@ -269,6 +271,7 @@ export function sharedNeuroDirection(symbol:string,now=Date.now()) {
  return {at:now,symbol,...readDirectionScore(linked?state:undefined,buildIntradayControl(linked?state:undefined,symbol,!!linked,now),!!linked,now)};
 }
 export function livePage(view:LiveView='monitor'): string {
+  if(view==='maps')return `<section id="live-workspace" data-live-view="maps">${assetNavigation()}${twoMapsPanel(state,selectedSymbol,active)}</section>`;
   if(view==='gamma-live')return `<section id="live-workspace" data-live-view="gamma-live">${assetNavigation(false,true)}${gammaLivePage(state,selectedSymbol,active)}</section>`;
   if(view==='spx') return `<section id="live-workspace" data-live-view="spx"><div class="panel-head"><div><span class="eyebrow">ÍNDICE · OPCIONES PROPIAS</span><h2>Lectura SPX</h2><p>Comparte la conexión Options del monitor. Las cinco acciones conservan su selección.</p></div></div>${error?`<p role="alert">${esc(error)}</p>`:''}${!isTauri()?'<p class="migration-notice">Abre la aplicación Windows para conectar.</p>':''}${spxSyntheticPanel(state?.spxSynthetic,active&&state?.options.phase==='streaming',state?.publishedMs)}${spxReadingPanel(state?.spxReading,state?.spxSynthetic,active&&state?.options.phase==='streaming',state?.publishedMs)}</section>`;
   if(view==='top-five') return `<section id="live-workspace" data-live-view="top-five">${topFivePanel(state?.scanner,active,state?.publishedMs)}</section>`;
@@ -397,13 +400,14 @@ function refreshNow() {
   const focusSelector=element?.hasAttribute('data-live-action')?'[data-live-action]':element?.hasAttribute('data-live-interval')?`[data-live-interval="${element.getAttribute('data-live-interval')}"]`:null;
   const expanded = new Set([...root.querySelectorAll<HTMLDetailsElement>("[data-horizon-details][open]")].map(e=>e.dataset.horizonDetails));
   const selectedView=root.getAttribute('data-live-view');
-  updateLiveWorkspace(root,livePage(selectedView==='gamma-live'||selectedView==='spx'||selectedView==='top-five'||selectedView==='gex'||selectedView==='flow'||selectedView==='levels'||selectedView==='quick'||selectedView==='detailed'||selectedView==='asset'?selectedView:'monitor'));
+  updateLiveWorkspace(root,livePage(selectedView==='gamma-live'||selectedView==='spx'||selectedView==='top-five'||selectedView==='gex'||selectedView==='flow'||selectedView==='maps'||selectedView==='levels'||selectedView==='quick'||selectedView==='detailed'||selectedView==='asset'?selectedView:'monitor'));
   document.querySelectorAll<HTMLDetailsElement>("[data-horizon-details]").forEach(e=>{e.open=expanded.has(e.dataset.horizonDetails);});
   bindLive();
   if (focusSelector) document.querySelector<HTMLElement>(focusSelector)?.focus({preventScroll:true});
 }
 
 export function bindLive() {
+  bindTwoMaps(()=>{renderedSignature='';refreshNow();});
   bindLevelCardSpacing();
   bindAuctionProfileNavigation(()=>{renderedSignature='';refreshNow();},value=>{auctionProfileDragging=value;});
   bindParallelRoute(()=>{renderedSignature='';refreshNow();});
