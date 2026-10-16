@@ -2,16 +2,29 @@ let observer:ResizeObserver|undefined;
 let frame=0;
 export function levelCardPositions(heights:number[],availableHeight=0):{column:number;top:number;height:number}[]{
  const bottoms=[0,0],counts=[0,0],gap=6;
+ const sizes=heights.map(v=>Number.isFinite(v)?Math.max(0,v):0);
+ // Small maps can use the best height partition, avoiding greedy overflow
+ // when a tall CALL/PUT card arrives after several short cards.
+ let assignment:number[]|undefined;
+ if(sizes.length>1&&sizes.length<=12){
+  let best=Infinity;
+  for(let mask=1;mask<2**(sizes.length-1);mask++){
+   const totals=[0,0],candidate=sizes.map((_,i)=>i===0?0:(mask>>(i-1))&1);
+   sizes.forEach((height,i)=>{totals[candidate[i]]+=height+gap;});
+   const score=Math.max(...totals);
+   if(score<best){best=score;assignment=candidate;}
+  }
+ }
  // Assign by occupied height, never by a fixed count of cards per side.
- const positions=heights.map(value=>{
+ const positions=heights.map((value,index)=>{
   const height=Number.isFinite(value)?Math.max(0,value):0;
-  const column=bottoms[0]<=bottoms[1]?0:1;
+  const column=assignment?.[index]??(bottoms[0]<=bottoms[1]?0:1);
   const top=bottoms[column];counts[column]++;bottoms[column]+=height+gap;
   return {column,top,height};
  });
- // Move cards along the rail to use the available vertical space. Their content
+ // Keep a compact 6–12 px gap; spare height must not create holes between cards. Their content
  // stays compact; only positions change. Overflow remains readable if expanded.
- const spacing=counts.map((count,c)=>count>1?Math.max(gap,(availableHeight-(bottoms[c]-count*gap))/(count-1)):gap);
+ const spacing=counts.map((count,c)=>count>1?Math.min(12,Math.max(gap,(availableHeight-(bottoms[c]-count*gap))/(count-1))):gap);
  const cursor=[0,0];
  return positions.map(p=>{const top=cursor[p.column];cursor[p.column]+=p.height+spacing[p.column];return {...p,top};});
 }
