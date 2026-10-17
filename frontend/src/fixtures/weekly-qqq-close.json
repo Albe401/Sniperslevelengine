@@ -1,0 +1,95 @@
+{
+  "capturedMs": 1792253400492,
+  "frame": {
+    "chartHistory": {
+      "sessions": [
+        {
+          "closeMs": 1792180800000,
+          "date": "2026-10-16",
+          "earlyClose": false,
+          "openMs": 1792157400000
+        }
+      ],
+      "minutes": [
+        {
+          "close": 709.86,
+          "high": 710.645,
+          "low": 709.79,
+          "open": 710.37,
+          "timestampMs": 1792180740000,
+          "volume": 1186563.180057,
+          "vwap": 713.4038
+        }
+      ]
+    },
+    "symbol": "QQQ"
+  },
+  "archived": {
+    "contractChain": {
+      "observation": {
+        "value": {
+          "enrichment": {
+            "details": [
+              {
+                "ask": 8.95,
+                "bid": 8.92,
+                "charm": -0.0025182237740962,
+                "delta": 0.4949807911279147,
+                "dex": 45785.72317933211,
+                "expiration": "2026-10-23",
+                "fresh": true,
+                "gamma": 0.017473596604694462,
+                "gex": 8120517.566050715,
+                "iv": 0.23381042834680552,
+                "kind": "call",
+                "oi": 925,
+                "oiChange": 72,
+                "quoteAt": 1792180168375,
+                "realtime": true,
+                "spreadPct": 0.33575825405707177,
+                "strike": 710,
+                "theta": -0.6888325438951208,
+                "ticker": "O:QQQ261023C00710000",
+                "vanna": 0.0008058193608789223,
+                "vega": 0.393574997098244,
+                "volume": 3045,
+                "volumeOi": 3.291891891891892
+              },
+              {
+                "ask": 9.61,
+                "bid": 9.48,
+                "charm": -0.0025494577900603676,
+                "delta": -0.5074018502171722,
+                "dex": 1760532.1996985225,
+                "expiration": "2026-10-23",
+                "fresh": true,
+                "gamma": 0.017775073396767545,
+                "gex": 309858205.0892889,
+                "iv": 0.2312855574772405,
+                "kind": "put",
+                "oi": 34697,
+                "oiChange": -5,
+                "quoteAt": 1792180166116,
+                "realtime": true,
+                "spreadPct": 1.3619696176008278,
+                "strike": 710,
+                "theta": -0.6204115634368175,
+                "ticker": "O:QQQ261023P00710000",
+                "vanna": 0.0008174367978994404,
+                "vega": 0.39346166041772057,
+                "volume": 14166,
+                "volumeOi": 0.4082773726835173
+              }
+            ]
+          },
+          "days": 183,
+          "at": 1792180173837,
+          "spot": 708.81,
+          "priceAt": 1792180165360,
+          "symbol": "QQQ"
+        },
+        "observedMs": 1792180174220
+      }
+    }
+  }
+}
