@@ -1,4 +1,4 @@
-import catalogue from '../../fixtures/legacy-universe.json';
+import catalogue from './web-watchlist.json';
 import {weeklyCompanies,weeklyUniverseDate} from './weekly-company-universe';
 import {invoke,isTauri} from './snapshot-observation';
 import type {EtfReport} from './etf-dealers';
@@ -17,7 +17,7 @@ const unavailableCard=(symbol:string)=>`<article class="weekly-range-card weekly
 const money=(n:number)=>'$'+n.toFixed(2);
 function entryCards(values=entries){return values.length?values.map(e=>{const r=weeklyRange(e.price,e.iv,e.days)!;return `<article class="weekly-range-card"><header><h2>${esc(e.symbol)}</h2><span>Vencimiento ${esc(e.expiry.replace('T',' · '))} ET</span></header><p class="weekly-company-name">${esc(weeklyCompanies.find(c=>c.symbol===e.symbol)?.name??weeklyWatchlist.find(c=>c.symbol===e.symbol)?.name??e.symbol)}</p><div class="weekly-range-meta"><span>IV anualizada: ${e.iv.toFixed(2)}%</span><strong>Movimiento: ±${money(r.move)} <small>(${r.percent.toFixed(2)}%)</small></strong></div><div class="weekly-range-levels"><div class="weekly-lower"><span>Límite inferior</span><b>${money(r.lower)}</b><i></i><small>Extremo inferior estimado</small></div><div class="weekly-base"><span>Referencia</span><b>${money(e.price)}</b><i></i><small>Precio base</small></div><div class="weekly-upper"><span>Límite superior</span><b>${money(r.upper)}</b><i></i><small>Extremo superior estimado</small></div></div><footer>Referencia ${esc(e.reference.replace('T',' · '))} ET · ${e.days.toFixed(2)} días calendario · ${esc(e.source??'Datos introducidos manualmente')}</footer></article>`;}).join(''):`<article class="weekly-range-card weekly-range-empty"><header><h2>Rango semanal</h2><span>Pendiente de datos</span></header><div class="weekly-range-meta"><span>IV: —</span><strong>Movimiento: —</strong></div><div class="weekly-range-levels">${[['weekly-lower','Límite inferior'],['weekly-base','Referencia'],['weekly-upper','Límite superior']].map(([c,l])=>`<div class="${c}"><span>${l}</span><b>—</b><i></i></div>`).join('')}</div><p>Selecciona los activos y pulsa Escanear para obtener precio e IV de Massive y calcular los rangos disponibles.</p></article>`;}
 const sectorLabel=(s:string)=>({TECNOLOGIA:'Tecnología',CONSUMO_DISCRECIONAL:'Consumo discrecional',COMUNICACION:'Comunicación',FINANCIERO:'Finanzas',SALUD:'Salud',ENERGIA:'Energía',CONSUMO_BASICO:'Consumo básico',INDUSTRIAL:'Industriales',MATERIALES:'Materiales',SERVICIOS_PUBLICOS:'Servicios públicos',INMOBILIARIO:'Inmobiliario'}[s]??s);
-export const weeklyWatchlist=Object.entries(catalogue.assets).map(([symbol,a])=>({symbol,name:a.name,kind:a.kind}));
+export const weeklyWatchlist=catalogue.map(a=>({symbol:a.symbol,name:a.name,kind:a.kind}));
 let scanMode='symbols',scanSector='all',resultGrouped=false;
 export function weeklyScanSymbols(mode:string,sector:string,input:string){return mode==='watchlist'?weeklyWatchlist.map(a=>a.symbol):mode==='sectors'?weeklyCompanies.filter(c=>sector==='all'||c.sector===sector).map(c=>c.symbol):[...new Set(input.toUpperCase().split(/[\s,;]+/).filter(Boolean))];}
 function cards(){
@@ -98,3 +98,4 @@ async function refreshWeeklyScan(symbols:string[]){
  scanMessage=`${entries.length} / ${symbols.length} rangos calculados · ${errors.length} pendientes. Revisa el motivo en cada tarjeta.`;
  }finally{scanBusy=false;paintWeeklyScan();scheduleWeeklyRefresh();}
 }
+

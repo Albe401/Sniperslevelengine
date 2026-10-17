@@ -1,3 +1,4 @@
+import {savedWeeklyRanges} from './saved-weekly-ranges';
 import {webAutoRefreshAllowed,webRefreshLabel} from './web-refresh-policy';
 import {twoMapsPanel,bindTwoMaps} from './two-maps';
 import './two-maps.css';
@@ -23,9 +24,9 @@ import './styles.css';import './restrained.css';import './visual-readings.css';i
 const symbols=['AAPL','MSFT','AMZN','GOOGL','META','NVDA','TSLA','QQQ','SPY','IWM'];
 type Extra={command:string;args?:{symbol?:string};observedMs:number;value:unknown};
 type Saved={available:boolean;id:string;capturedMs:number;frame:LiveState;extras:Record<string,Extra>;coverage:Record<string,unknown>};
-let selected='QQQ',view:'detailed'|'chain'|'blocks'|'maps'='detailed',generation=0,saved:Saved|undefined,expiry='',blockQuery='',blockSide='all';
+let selected='QQQ',view:'detailed'|'chain'|'blocks'|'maps'|'weekly'='detailed',generation=0,saved:Saved|undefined,expiry='',blockQuery='',blockSide='all';
 const app=document.querySelector<HTMLDivElement>('#app')!;
-app.innerHTML=`<div class="web-shell"><aside class="web-sidebar"><img src="/assets/route-lion.png" alt="Snipers"><h2>SNIPERS</h2><button data-view="detailed">Lectura detallada</button><button data-view="blocks">Bloques de compra y venta</button><button data-view="chain">Radar de inversión<br><small>Cadena de opciones</small></button><small>Datos guardados por el escritorio<br>Actualización lunes a viernes · cada cinco minutos ET</small></aside><main class="web-main"><header class="web-topbar"><strong>Algoritmo de probabilidad</strong><span id="web-status">Leyendo la base de datos…</span></header><nav class="web-assets">${symbols.map(s=>`<button data-symbol="${s}">${s}</button>`).join('')}</nav><section id="web-content"></section></main></div>`;
+app.innerHTML=`<div class="web-shell"><aside class="web-sidebar"><img src="/assets/route-lion.png" alt="Snipers"><h2>SNIPERS</h2><button data-view="detailed">Lectura detallada</button><button data-view="blocks">Bloques de compra y venta</button><button data-view="chain">Radar de inversión<br><small>Cadena de opciones</small></button><button data-view="weekly">Radar de inversión<br><small>Rangos semanales</small></button><small>Datos guardados por el escritorio<br>Actualización lunes a viernes · cada cinco minutos ET</small></aside><main class="web-main"><header class="web-topbar"><strong>Algoritmo de probabilidad</strong><span id="web-status">Leyendo la base de datos…</span></header><nav class="web-assets">${symbols.map(s=>`<button data-symbol="${s}">${s}</button>`).join('')}</nav><section id="web-content"></section></main></div>`;
 const content=document.querySelector<HTMLElement>('#web-content')!;
 const mapsButton=document.createElement('button');mapsButton.dataset.view='maps';mapsButton.textContent='Mapas · niveles y flujo';document.querySelector('.web-sidebar')!.insertBefore(mapsButton,document.querySelector('[data-view="blocks"]'));
 const search=document.createElement('div');search.className='web-ticker-search';search.innerHTML=`<label for="ticker-search">Buscar ticker del watchlist (${watchlist.length})</label><input id="ticker-search" type="search" placeholder="Escribe un ticker…" autocomplete="off"><select id="ticker-select" aria-label="Seleccionar ticker">${watchlist.map(a=>`<option value="${esc(a.symbol)}" ${a.symbol===selected?'selected':''}>${esc(a.symbol)} · ${esc(a.name)}</option>`).join('')}</select><small id="ticker-results">${watchlist.length} tickers</small>`;document.querySelector('.web-assets')!.before(search);
@@ -61,6 +62,7 @@ function paint(){
   const records=Object.values(data.extras??{}).filter(r=>r.command==='get_contract_inventory'&&r.args?.symbol===selected&&r.observedMs<=now).sort((a,b)=>b.observedMs-a.observedMs);
   const archived=(frame as LiveState&{contractChain?:{observation:Extra}}).contractChain?.observation;
   const report=(archived?.value??records[0]?.value) as EtfReport|undefined;
+  if(view==='weekly'){content.innerHTML=savedWeeklyRanges(selected,report,now);return;}
   const dates=report?.expirations??[];
   const scoped=report&&report.symbol===selected?(expiry?scopeContractReport(report,[expiry]):report):undefined;
   content.innerHTML=`<section class="panel"><h2>Radar de inversión · Cadena de opciones · ${esc(selected)}</h2><p>Cadena guardada por el escritorio. El filtro consulta únicamente este lote.</p>${report?`<p>Fecha de consulta: ${new Date(report.at).toLocaleString('es',{timeZone:'America/New_York'})} ET ${now-report.at>300000?'· Datos anteriores: pendiente de una consulta más reciente.':''}</p>`:''}<label>Vencimiento <select id="saved-expiry"><option value="">Todos los guardados</option>${dates.map(d=>`<option value="${esc(d)}" ${d===expiry?'selected':''}>${esc(d)}</option>`).join('')}</select></label><div id="saved-chain">${optionOiHeatmapPanel(selected,scoped,report?.at??now)}</div>${!report?'<p>Cadena completa pendiente para este activo en el lote. No se consulta Massive ni se inventan contratos.</p>':''}</section>`;
@@ -89,7 +91,8 @@ async function pull(){
  }catch(e){if(token!==generation)return;document.querySelector<HTMLElement>('#web-status')!.textContent='Conexión pendiente · reintento automático';if(!saved)content.innerHTML=`<section class="panel">${esc(String(e))}</section>`;setTimeout(()=>{if(token===generation&&webAutoRefreshAllowed())void pull()},15000);}
 }
 document.querySelectorAll<HTMLButtonElement>('[data-symbol]').forEach(b=>b.onclick=()=>{selected=b.dataset.symbol!;saved=undefined;expiry='',blockQuery='',blockSide='all';void pull()});
-document.querySelectorAll<HTMLButtonElement>('[data-view]').forEach(b=>b.onclick=()=>{view=b.dataset.view as 'detailed'|'chain'|'blocks'|'maps';if(saved&&saved.frame.symbol===(view==='blocks'?'QQQ':selected))paint();else void pull()});
+document.querySelectorAll<HTMLButtonElement>('[data-view]').forEach(b=>b.onclick=()=>{view=b.dataset.view as 'detailed'|'chain'|'blocks'|'maps'|'weekly';if(saved&&saved.frame.symbol===(view==='blocks'?'QQQ':selected))paint();else void pull()});
 setInterval(()=>{if(!document.hidden&&webAutoRefreshAllowed())void pull()},300000);void pull();
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&webAutoRefreshAllowed())void pull()});
+
 
