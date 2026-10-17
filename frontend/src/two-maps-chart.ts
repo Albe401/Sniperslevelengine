@@ -9,16 +9,30 @@ import type {Group,MapSelection} from './two-maps';
 export interface TradingMapModel {symbol:string;asof:number;bars:Candle[];groups:Group[];levels:ColoredMapLevel[];selection:MapSelection;auction?:AuctionReading}
 const day=(t:number)=>new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York'}).format(t);
 /** Canonical OHLC only: never synthesize a candle from its close. */
-export function tradingMapBars(state:LiveState|undefined,asof:number,minutes=1):Candle[]{
+export function tradingMapBars(state:LiveState|undefined,asof:number,minutes=1,hours:'all'|'regular'='all'):Candle[]{
+ if(!Number.isInteger(minutes)||minutes<=0)throw new Error('Invalid interval');
+ const session=state?.chartHistory?.sessions?.filter(s=>s.date===day(asof)&&Number.isFinite(s.openMs)&&Number.isFinite(s.closeMs)&&s.closeMs>s.openMs);
+ if(hours==='regular'&&session?.length!==1)return [];
  const source=new Map((state?.chartHistory?.minutes??[]).map(b=>[b.timestampMs,b]));
  for(const b of Object.values(state?.minutes??{}))source.set(b.timestampMs,b);
- const valid=[...source.values()].filter(b=>Number.isSafeInteger(b.timestampMs)&&b.timestampMs%60000===0&&b.timestampMs<=asof&&b.timestampMs>=asof-6*3600000&&day(b.timestampMs)===day(asof)&&[b.open,b.high,b.low,b.close].every(n=>Number.isFinite(n)&&n>0)&&b.high>=Math.max(b.open,b.close)&&b.low<=Math.min(b.open,b.close)&&b.low<=b.high).sort((a,b)=>a.timestampMs-b.timestampMs);
+ const valid=[...source.values()].filter(b=>Number.isSafeInteger(b.timestampMs)&&b.timestampMs%60000===0&&b.timestampMs<=asof&&day(b.timestampMs)===day(asof)&&[b.open,b.high,b.low,b.close].every(n=>Number.isFinite(n)&&n>0)&&b.high>=Math.max(b.open,b.close)&&b.low<=Math.min(b.open,b.close)&&b.low<=b.high).sort((a,b)=>a.timestampMs-b.timestampMs);
  const buckets=new Map<number,Candle>();
- for(const b of valid){const t=Math.floor(b.timestampMs/(minutes*60000))*minutes*60000,old=buckets.get(t);const volume=Number.isFinite(b.volume)&&b.volume>=0?b.volume:NaN;
+ for(const b of valid){if(hours==='regular'&&(b.timestampMs<session![0].openMs||b.timestampMs>=session![0].closeMs))continue;const t=Math.floor(b.timestampMs/(minutes*60000))*minutes*60000,old=buckets.get(t);const volume=Number.isFinite(b.volume)&&b.volume>=0?b.volume:NaN;
   if(old){old.high=Math.max(old.high,b.high);old.low=Math.min(old.low,b.low);old.close=b.close;old.volume+=volume;}
   else buckets.set(t,{...b,timestampMs:t,volume});
  }
  return [...buckets.values()];
+}
+/** Preserve gaps inside observed data without appending empty bars up to wall-clock time. */
+export function tradingMapTimeline(bars:Candle[],asof:number,minutes=1,groups:Group[]=[]){
+ if(!Number.isInteger(minutes)||minutes<=0)throw new Error('Invalid interval');
+ const step=minutes*60000,limit=Math.floor(asof/step)*step;
+ const observed=[...bars.map(b=>b.timestampMs),...groups.map(g=>Math.floor(g.startMs/step)*step)].filter(t=>Number.isFinite(t)&&t<=limit);
+ const first=observed.length?Math.min(...observed):limit-60*60000,last=observed.length?Math.max(...observed):limit;
+ const rows=new Map(bars.map(b=>[b.timestampMs,b]));
+ const data=[];
+ for(let t=first;t<=last;t+=step){const b=rows.get(t),time=t/1000 as UTCTimestamp;data.push(b?{time,open:b.open,high:b.high,low:b.low,close:b.close}:{time});}
+ return {first,last,data};
 }
 let latest:TradingMapModel|undefined;
 export function setTradingMapModel(model:TradingMapModel){latest=model;}
@@ -50,10 +64,9 @@ class TradingMapChart {
   const paint=()=>{if(!this.node.isConnected){this.dispose();if(owner===this)owner=undefined;return;}const range=this.chart.timeScale().getVisibleLogicalRange(),height=this.chart.panes()[0].getHeight();const probe=this.candles.coordinateToPrice(0),signature=JSON.stringify([range,node.clientWidth,node.clientHeight,height,probe,this.candles.coordinateToPrice(height)]);if(signature!==this.signature){this.signature=signature;this.draw();}this.frame=requestAnimationFrame(paint);};this.frame=requestAnimationFrame(paint);
  }
  update(m:TradingMapModel){
-  const key=`${m.symbol}:${m.selection.barMinutes??1}`,changed=key!==this.key;this.key=key;this.model=m;
-  const step=(m.selection.barMinutes??1)*60000,asof=Math.floor(m.asof/step)*step,first=m.bars[0]?.timestampMs??asof-60*60000;
-  const rows=new Map(m.bars.map(b=>[b.timestampMs,b]));const data=[];
-  for(let t=first;t<=asof;t+=step){const b=rows.get(t),time=t/1000 as UTCTimestamp;data.push(b?{time,open:b.open,high:b.high,low:b.low,close:b.close}:{time});}
+  const key=`${m.symbol}:${m.selection.barMinutes??1}:${m.selection.extendedHours?'extended':'regular'}`,changed=key!==this.key;this.key=key;this.model=m;
+  const step=(m.selection.barMinutes??1)*60000;
+  const {first,last:asof,data}=tradingMapTimeline(m.bars,m.asof,m.selection.barMinutes??1,m.groups);
   const heat=m.selection.view==='flow';
   this.candles.applyOptions({autoscaleInfoProvider:(base:()=>AutoscaleInfo|null)=>{
    const info=base();if(!heat){if(!info?.priceRange)return info;const span=Math.max(info.priceRange.maxValue-info.priceRange.minValue,.2),prices=m.levels.map(l=>l.price).filter(p=>p>=info.priceRange!.minValue-span&&p<=info.priceRange!.maxValue+span);const low=Math.min(...prices,info.priceRange.minValue),high=Math.max(...prices,info.priceRange.maxValue),pad=Math.max((high-low)*.06,.1);return {priceRange:{minValue:low-pad,maxValue:high+pad}};}if(!m.groups.length)return info;
@@ -125,3 +138,4 @@ class TradingMapChart {
  action(action:string){if(action==='fit'){this.chart.timeScale().fitContent();this.candles.priceScale().applyOptions({autoScale:true});this.follow=false;}if(action==='follow'){this.follow=true;this.chart.timeScale().scrollToRealTime();this.candles.priceScale().applyOptions({autoScale:true});}this.draw();}
  dispose(){const range=this.chart.timeScale().getVisibleLogicalRange();if(range&&this.key){if(viewports.size>20)viewports.clear();viewports.set(this.key,{...range,first:this.first,follow:this.follow});}cancelAnimationFrame(this.frame);this.chart.remove();}
 }
+
