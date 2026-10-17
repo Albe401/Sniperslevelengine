@@ -66,6 +66,7 @@ function paint(){
   const dates=report?.expirations??[];
   const scoped=report&&report.symbol===selected?(expiry?scopeContractReport(report,[expiry]):report):undefined;
   content.innerHTML=`<section class="panel"><h2>Radar de inversión · Cadena de opciones · ${esc(selected)}</h2><p>Cadena guardada por el escritorio. El filtro consulta únicamente este lote.</p>${report?`<p>Fecha de consulta: ${new Date(report.at).toLocaleString('es',{timeZone:'America/New_York'})} ET ${now-report.at>300000?'· Datos anteriores: pendiente de una consulta más reciente.':''}</p>`:''}<label>Vencimiento <select id="saved-expiry"><option value="">Todos los guardados</option>${dates.map(d=>`<option value="${esc(d)}" ${d===expiry?'selected':''}>${esc(d)}</option>`).join('')}</select></label><div id="saved-chain">${optionOiHeatmapPanel(selected,scoped,report?.at??now)}</div>${!report?'<p>Cadena completa pendiente para este activo en el lote. No se consulta Massive ni se inventan contratos.</p>':''}</section>`;
+  content.insertAdjacentHTML('afterbegin',savedWeeklyRanges(selected,report,now));
   bindOptionOiHeatmap(document.querySelector<HTMLElement>('#saved-chain')!,paint);
   document.querySelector<HTMLSelectElement>('#saved-expiry')!.onchange=e=>{expiry=(e.target as HTMLSelectElement).value;paint()};
  }
@@ -94,5 +95,6 @@ document.querySelectorAll<HTMLButtonElement>('[data-symbol]').forEach(b=>b.oncli
 document.querySelectorAll<HTMLButtonElement>('[data-view]').forEach(b=>b.onclick=()=>{view=b.dataset.view as 'detailed'|'chain'|'blocks'|'maps'|'weekly';if(saved&&saved.frame.symbol===(view==='blocks'?'QQQ':selected))paint();else void pull()});
 setInterval(()=>{if(!document.hidden&&webAutoRefreshAllowed())void pull()},300000);void pull();
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&webAutoRefreshAllowed())void pull()});
+
 
 

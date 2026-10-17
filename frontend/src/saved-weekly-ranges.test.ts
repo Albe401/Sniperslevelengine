@@ -15,3 +15,8 @@ it('does not mutate the captured inventory and escapes the symbol',()=>{
  const before=JSON.stringify(report);savedWeeklyRanges('NVDA',report,at);expect(JSON.stringify(report)).toBe(before);
  expect(savedWeeklyRanges('<script>',undefined,at)).not.toContain('<script>');
 });
+it('explains a Saturday observation paired with an after-hours Friday price',()=>{
+ const saturday={...report,at:Date.parse('2026-10-17T16:05:56Z'),priceAt:Date.parse('2026-10-16T23:59:58Z')};
+ const html=savedWeeklyRanges('NVDA',saturday,saturday.at+600000);
+ expect(html).toContain('Rango pendiente');expect(html).toContain('after-hours');expect(html).toContain('Precio de referencia:');expect(html).not.toContain('Movimiento ±');
+});
