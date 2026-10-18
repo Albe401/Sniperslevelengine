@@ -6,6 +6,7 @@ import {createHash} from 'node:crypto';
 import {gunzipSync,gzipSync} from 'node:zlib';
 import {neon} from '@neondatabase/serverless';
 import {loadWeeklyArchive} from './weekly-archive.mjs';
+import {loadWatchlistAsset} from './watchlist-assets.mjs';
 export const symbols=['AAPL','MSFT','AMZN','GOOGL','META','NVDA','TSLA','QQQ','SPY','IWM'];
 const watchlist=JSON.parse(await readFile(new URL('../frontend/src/web-watchlist.json',import.meta.url),'utf8'));
 const allowedSymbols=new Set(watchlist.map(a=>a.symbol));
@@ -36,7 +37,9 @@ async function latest(symbol='QQQ'){
  let value;
  if(process.env.DATABASE_URL){
   const sql=neon(process.env.DATABASE_URL);
-  try{value=await loadSavedAsset(sql,symbol,cached?.value);
+  try{
+   const legacy=symbols.includes(symbol)?await loadSavedAsset(sql,symbol,cached?.value):{available:false};
+   value=legacy.available?legacy:await loadWatchlistAsset(sql,symbol,decodeFrame);
    if(value.available){const frame=value.frames[symbol];
     if(!frame.weeklyRangeSnapshot){try{frame.weeklyRangeSnapshot=await loadWeeklyArchive(sql,frame,value.capturedMs,decodeFrame);}catch{ /* Preserve the normal frame if the optional archive is unavailable. */ }}
    }

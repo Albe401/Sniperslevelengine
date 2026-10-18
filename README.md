@@ -74,3 +74,18 @@ ni la precisión predictiva. Las secciones sin datos se mantienen pendientes.
 - [Lightweight Charts](https://tradingview.github.io/lightweight-charts/)
 
 El buscador incluye los 187 tickers del catálogo del escritorio. La selección no activa consultas de mercado. Los diez activos capturados tienen datos disponibles; los restantes muestran pendiente hasta ampliar su captura. La IV histórica se incluye solo donde existe evidencia local y conserva sus fechas originales.
+
+## Capturas del watchlist
+
+La API consulta `snipers_snapshots.watchlist_assets` para activos fuera del lote
+original de diez. Cada activo conserva su fecha, fuente y SHA-256; una captura
+fallida no reemplaza la última válida. El productor complementario reutiliza los
+trabajadores Rust de historia y opciones y no abre sockets ni ejecuta órdenes.
+Se instala en el motor como `scripts/watchlist_snapshots.py`, con el binario
+`snipers-snapshot-asset`. La frecuencia objetivo es cinco minutos por ciclo,
+con tres consultas simultáneas; un ciclo lento conserva las fechas reales.
+Los índices que no admite el receptor Stocks, como SPX, siguen pendientes.
+
+En el visor guardado, las referencias pueden dibujarse junto a velas de la
+última sesión. Se etiquetan SNAPSHOT: no representan exposición histórica
+de esas velas ni habilitan señales en vivo.

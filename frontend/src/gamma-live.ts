@@ -1,3 +1,4 @@
+import {capturedChartLevels} from './captured-chart-levels';
 import {auctionChartBarsSvg,chartAuctionProfile} from './auction-chart-bars';
 import {auctionDisplayMemory} from './auction-display-memory';
 import './auction-chart-bars.css';
@@ -47,6 +48,7 @@ import './gamma-live.css';
 let interval=2,expanded=false,profileMetric:"gex"|"oi"|"volume"|"bidask"="oi",profileCenter:number|undefined,profileSymbol='';
 let profileHorizon:ProfileHorizon='NEXT4';
 let capturedProfileClock:number|undefined;
+let capturedReferencePrices:number[]=[];
 /** Saved-data viewer uses its capture clock; desktop defaults remain wall-clock based. */
 export function setCapturedProfileClock(at:number|undefined){capturedProfileClock=at;}
 const profileNow=()=>capturedProfileClock??Date.now();
@@ -181,7 +183,7 @@ function drawRoute(){
  }
  if(routeSvg.innerHTML!==html)routeSvg.innerHTML=html;
 }
-function cleanup(){chartAuctionReading=undefined;chartAuctionSymbol='';chartAuctionActive=false;executionAbsorptionRead=undefined;executionAbsorptionBars=[];executionAbsorptionActive=false;chartAlarmPicker?.dispose();chartAlarmPicker=undefined;chartAlerts?.dispose();chartAlerts=undefined;routeDrawings?.dispose();routeDrawings=undefined;markers?.detach();markers=undefined;routeSvg?.remove();routeSvg=undefined;technical=undefined;technicalKey='';routeCurrent=false;routeChartBarMs=undefined;routeStatsPrefix='';chart?.remove();chart=undefined;host=undefined;candles=undefined;lines=[];chartKey='';profileKey='';dataKey='';lineKey='';cancelAnimationFrame(scaleFrame);}
+function cleanup(){capturedReferencePrices=[];chartAuctionReading=undefined;chartAuctionSymbol='';chartAuctionActive=false;executionAbsorptionRead=undefined;executionAbsorptionBars=[];executionAbsorptionActive=false;chartAlarmPicker?.dispose();chartAlarmPicker=undefined;chartAlerts?.dispose();chartAlerts=undefined;routeDrawings?.dispose();routeDrawings=undefined;markers?.detach();markers=undefined;routeSvg?.remove();routeSvg=undefined;technical=undefined;technicalKey='';routeCurrent=false;routeChartBarMs=undefined;routeStatsPrefix='';chart?.remove();chart=undefined;host=undefined;candles=undefined;lines=[];chartKey='';profileKey='';dataKey='';lineKey='';cancelAnimationFrame(scaleFrame);}
 export function bindGammaLive(s:LiveState|undefined,symbol:string,active:boolean,refresh:()=>void,now=Date.now()) {
  const root=document.querySelector<HTMLElement>('.gamma-live'),node=document.getElementById('gamma-live-chart');
  if(profileSymbol!==symbol){profileCenter=undefined;profileSymbol=symbol;}
@@ -207,7 +209,7 @@ export function bindGammaLive(s:LiveState|undefined,symbol:string,active:boolean
  root.querySelectorAll<HTMLButtonElement>('[data-gl-interval]').forEach(b=>b.onclick=()=>{interval=Number(b.dataset.glInterval);refresh();});
  root.querySelectorAll<HTMLButtonElement>('[data-gl-action]').forEach(b=>b.onclick=()=>{if(b.dataset.glAction==='expand'){expanded=!expanded;refresh();}else if(b.dataset.glAction==='follow'){chart?.priceScale('right').setAutoScale(true);chart?.timeScale().scrollToRealTime();}else{chart?.priceScale('right').setAutoScale(true);chart?.timeScale().fitContent();}});
  if(host!==node){cleanup();host=node;chart=createChart(node,{autoSize:true,layout:{background:{type:ColorType.Solid,color:'rgba(6,19,38,0)'},textColor:'#9bb7cf',fontFamily:'Inter Variable',fontSize:13,attributionLogo:true,panes:{enableResize:true,separatorColor:"#35d4df",separatorHoverColor:"#17e3be"}},grid:{vertLines:{visible:false},horzLines:{visible:false}},crosshair:{mode:CrosshairMode.Normal},rightPriceScale:{borderColor:'#244a70',scaleMargins:{top:.08,bottom:.08}},timeScale:{borderColor:'#244a70',timeVisible:true,rightOffset:6,barSpacing:9,tickMarkFormatter:(t:import('lightweight-charts').Time)=>interval===1440?new Date(Number(t)*1000).toLocaleDateString('es',{timeZone:'America/New_York',day:'2-digit',month:'short'}):new Date(Number(t)*1000).toLocaleTimeString('es',{timeZone:'America/New_York',hour:'2-digit',minute:'2-digit'})},handleScroll:{mouseWheel:true,pressedMouseMove:true,horzTouchDrag:true,vertTouchDrag:true},handleScale:{mouseWheel:true,pinch:true,axisPressedMouseMove:{time:true,price:true},axisDoubleClickReset:{time:true,price:true}},localization:{locale:'es',timeFormatter:(t:import('lightweight-charts').Time)=>new Date(Number(t)*1000).toLocaleString('es',{timeZone:'America/New_York'})}});
- candles=chart.addSeries(CandlestickSeries,{upColor:'#17d6a2',downColor:'#ff6273',borderVisible:false,wickUpColor:'#17d6a2',wickDownColor:'#ff6273',priceLineColor:'#35d4df',autoscaleInfoProvider:(base:()=>AutoscaleInfo|null)=>{const info=base();return info?.priceRange?{...info,priceRange:gammaPriceRange(info.priceRange.minValue,info.priceRange.maxValue,latest)}:info;}});vol=chart.addSeries(LineSeries,{color:'#17e3be',lineWidth:2,title:'CVD · operaciones',priceFormat:{type:'volume'},lastValueVisible:true,priceLineVisible:true},1);chart.panes()[1].setHeight(160);vol.createPriceLine({price:0,color:"#8493a8",lineWidth:1,lineStyle:2,axisLabelVisible:true,title:"0"});vwap=chart.addSeries(LineSeries,{color:'#ff9800',lineWidth:2,lastValueVisible:false,priceLineVisible:false,crosshairMarkerVisible:false});
+ candles=chart.addSeries(CandlestickSeries,{upColor:'#17d6a2',downColor:'#ff6273',borderVisible:false,wickUpColor:'#17d6a2',wickDownColor:'#ff6273',priceLineColor:'#35d4df',autoscaleInfoProvider:(base:()=>AutoscaleInfo|null)=>{const info=base();return info?.priceRange?{...info,priceRange:gammaPriceRange(Math.min(info.priceRange.minValue,...capturedReferencePrices),Math.max(info.priceRange.maxValue,...capturedReferencePrices),latest)}:info;}});vol=chart.addSeries(LineSeries,{color:'#17e3be',lineWidth:2,title:'CVD · operaciones',priceFormat:{type:'volume'},lastValueVisible:true,priceLineVisible:true},1);chart.panes()[1].setHeight(160);vol.createPriceLine({price:0,color:"#8493a8",lineWidth:1,lineStyle:2,axisLabelVisible:true,title:"0"});vwap=chart.addSeries(LineSeries,{color:'#ff9800',lineWidth:2,lastValueVisible:false,priceLineVisible:false,crosshairMarkerVisible:false});
  let lastProfile=-Infinity;const sync=(at:number)=>{if(!host?.isConnected){cleanup();return;}if(at-lastProfile>=100){host.dataset.pricePaneHeight=String(chart?.panes()[0].getHeight()??host.clientHeight);const label=host.querySelector<HTMLElement>('.gl-cvd-label');if(label&&chart)label.style.top=(chart.panes()[0].getHeight()+7)+'px';profile();paintRouteProfiles();drawRoute();routeDrawings?.paint();paintBigTrades();paintExecutionAbsorption();paintAuctionBars();lastProfile=at;}scaleFrame=requestAnimationFrame(sync);};scaleFrame=requestAnimationFrame(sync);
  }
  flowRows=[];
@@ -220,7 +222,12 @@ export function bindGammaLive(s:LiveState|undefined,symbol:string,active:boolean
  latest=gammaLiveModel(s,symbol,active,now);
  const expiryDates=profileExpirations(s?.symbol===symbol?s.optionSnapshotStatus?.structuralEnrichment:undefined,profileHorizon,now);
  latest={...latest,contractProfile:chartContractReport(s,symbol,active,latest.h?{...latest.h,expirations:expiryDates}:undefined,now),contractProfileExpected:true};
- if(!prepared.currentOverlay)latest={...latest,contractProfile:undefined,rows:[],profileRows:[],profileGexRows:[],levels:latest.levels.map(l=>({...l,dominant:false,strike:null})),call:undefined,put:undefined};
+ const capturedReferences=prepared.currentOverlay?[]:capturedChartLevels(s,symbol,capturedProfileClock,now);
+ capturedReferencePrices=capturedReferences.map(l=>l.price);
+ if(!prepared.currentOverlay){
+  latest={...latest,complete:false,contractProfile:undefined,rows:[],profileRows:[],profileGexRows:[],levels:latest.levels.map(l=>({...l,dominant:false,strike:null})),call:undefined,put:undefined};
+  if(capturedReferences.length){const status=root.querySelector('.gl-header > span');if(status)status.textContent='REFERENCIAS DEL SNAPSHOT · velas históricas · sin señales en vivo';}
+ }
  const bars=prepared.bars;
  chartAuctionReading=s?.symbol===symbol?s.auctionMap??undefined:undefined;chartAuctionSymbol=symbol;chartAuctionActive=active;
  executionAbsorptionRead=s?.cvd;executionAbsorptionSymbol=symbol;executionAbsorptionActive=active;executionAbsorptionBars=bars.map(b=>b.timestampMs);
@@ -247,10 +254,11 @@ export function bindGammaLive(s:LiveState|undefined,symbol:string,active:boolean
  const snapshotStructure=latest.fresh?(latest.h?.structure.provisional??(latest.h?.structure.complete?latest.h.structure:undefined)):undefined;
  const quickM2=snapshotStructure?.selected.M2;
  const quickZero=latest.fresh&&latest.h?.exposure.scanComplete&&latest.h.exposure.gexComplete?latest.h.exposure.zeroGamma:null;
- const nextLineKey=JSON.stringify([symbol,quickLevels,quickM2,quickZero,latest.levels.map(l=>[l.id,l.strike,l.label]),latest.h?.structure.provisional!=null,latest.call?.vacuumLow,latest.call?.vacuumHigh,latest.put?.vacuumLow,latest.put?.vacuumHigh]);
+ const nextLineKey=JSON.stringify([symbol,capturedReferences,quickLevels,quickM2,quickZero,latest.levels.map(l=>[l.id,l.strike,l.label]),latest.h?.structure.provisional!=null,latest.call?.vacuumLow,latest.call?.vacuumHigh,latest.put?.vacuumLow,latest.put?.vacuumHigh]);
  if(nextLineKey!==lineKey){lineKey=nextLineKey;
  for(const l of lines)candles!.removePriceLine(l);lines=[];
  const add=(p:number|null|undefined,title:string,color:string)=>{if(p!=null&&Number.isFinite(p)&&p>0)lines.push(candles!.createPriceLine({price:p,title,color,lineWidth:quickLevels?2:1,lineStyle:2,axisLabelVisible:true}));};
+ for(const l of capturedReferences)add(l.price,l.name,'#a5bfd8');
  for(const l of latest.levels.filter(l=>!quickLevels||l.id!=='liquidity'))add(l.strike,({call:'CW',put:'PW',liquidity:'Imán L',main:'Imán P'} as Record<string,string>)[l.id]??l.label,quickLevels?(l.id==='put'?'#ff6273':l.id==='call'?'#17d6a2':'#bc7dff'):(l.id==='put'?'#ff6273':l.id==='call'?'#35d4df':'#e8c66e'));
  if(quickLevels){add(quickZero,'ZERO GAMMA','#f0c869');}
  for(const [r,label] of [[latest.call,'Vacío superior'],[latest.put,'Vacío inferior']] as const){if(r?.vacuumLow!=null&&r.vacuumHigh!=null){for(const p of [r.vacuumLow,r.vacuumHigh])lines.push(candles!.createPriceLine({price:p,title:label==='Vacío superior'?'VS':'VI',color:'#7c91b6',lineWidth:1,lineStyle:3,axisLabelVisible:true}));}}
