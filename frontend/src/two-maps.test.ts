@@ -41,6 +41,15 @@ describe('two maps quantitative boundaries',()=>{
  it('marks depth unavailable rather than inventing resting or removed orders',()=>{
   const html=twoMapsPanel(state(),'SPY',true,t+1000,newSelection('SPY'));expect(html).toContain('Massive no ofrece Level 2');expect(html).toContain('NO EVALUABLES');
  });
+ it('shows only structural levels in the public web view, without execution heat',()=>{
+  const html=twoMapsPanel(state(),'SPY',false,t+1000,{...newSelection('SPY'),view:'flow'},undefined,true);
+  expect(html).toContain('Mapa de niveles');
+  expect(html).not.toContain('Flujo por strike');
+  expect(html).not.toContain('Calor =');
+  expect(html.toLowerCase()).not.toContain('calor');
+  expect(html).not.toContain('data-map-metric');
+  expect(html).not.toContain('187.500');
+ });
  it('does not fabricate zero PUT volume when only CALL executions were observed',()=>{
   const html=twoMapsPanel(state(),'SPY',true,t+1000,{...newSelection('SPY'),view:'levels'});expect(html).toContain('<span>PUT —</span>');expect(html).toContain('último puede estar en curso');
  });
