@@ -7,7 +7,7 @@
  * Formula (measurement): OI(cell) = sum of open_interest over reference tickers with the
  * same (underlying, strike, expiration, side) AND standard deliverable. Unit: contracts.
  *   Source: OIC "open option contracts still active", compiled by OCC from opening/closing
- *   trades; Massive open_interest = "held at the end of the last trading day".
+ *   trades; Data open_interest = "held at the end of the last trading day".
  * Deliverable rule: standard iff shares_per_contract === standardShares (default 100) and no
  *   additional_underlyings. OCC Infomemo #26853 describes non-standard deliverables and root suffixes;
  *   some adjustments preserve standard deliverables. OI still counts contracts; different deliverables imply different exposure and are excluded here.
@@ -27,7 +27,7 @@ export type Side = 'call' | 'put';
 export interface Contract {
   ticker: string; symbol: string | null; expiration: string; strike: number; side: string;
   sharesPerContract: number | null;   // Null when the provider row omits it.
-  extraDeliverables: number | null;          // additional_underlyings length; Massive omits it when empty.
+  extraDeliverables: number | null;          // additional_underlyings length; Data omits it when empty.
 }
 export interface Observation extends Contract { oi: number | null }
 export interface Input {
@@ -45,7 +45,7 @@ export interface Input {
   maxUnderlyingAgeMs?: number;    // Explicit caller policy, not an official threshold. Without it no price line.
   underlying?: Underlying | null; // Measured underlying price for the strike separator line.
 }
-/** Massive snapshot underlying_asset: price, last_updated (ns -> ms), timeframe. */
+/** Data snapshot underlying_asset: price, last_updated (ns -> ms), timeframe. */
 export interface Underlying { symbol: string; timestampPrecision: 'exact_ms' | 'approximate_ms'; price: number; updatedMs: number; timeframe: string | null; distinct: number }
 export type CellState = 'known' | 'missing' | 'conflict' | 'partial' | 'excluded' | 'unknown_deliverable' | 'no_contract';
 export interface Cell {
@@ -265,7 +265,7 @@ export function buildOiHeatmap(input: Input): Heatmap {
     acceptedReferenceCoverage: expectedContracts > 0 ? knownContracts / expectedContracts : null,
     coverage: universeComplete && expectedContracts > 0 ? knownContracts / expectedContracts : null };
 }
-/** Adapters for already-fetched Massive JSON, not network clients. Nothing is filled in. */
+/** Adapters for already-fetched Data JSON, not network clients. Nothing is filled in. */
 const deliverable = (r: any) => ({
   sharesPerContract: Number.isFinite(r?.shares_per_contract) ? r.shares_per_contract : null,
   extraDeliverables: r?.additional_underlyings === undefined ? 0 :

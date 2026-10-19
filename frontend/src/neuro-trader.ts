@@ -1,7 +1,7 @@
 import {invoke,isTauri} from './snapshot-observation';
 import {sharedNeuroDirection} from './live';
 export function neuroTraderPage():string {
-  return `<section id="neuro-trader-workspace"><div class="panel-head"><div><span class="eyebrow">MÓDULO INDEPENDIENTE · MASSIVE</span><h1>Neuro Trader Engine</h1></div><button id="neuro-retry">Conectar módulo</button></div><p id="neuro-status" role="status">Iniciando módulo independiente…</p><iframe id="neuro-frame" title="Neuro Trader Engine" hidden style="width:100%;height:calc(100vh - 200px);min-height:680px;border:1px solid #332c6a;border-radius:12px;background:#07061a" sandbox="allow-scripts allow-same-origin allow-popups"></iframe></section>`;
+  return `<section id="neuro-trader-workspace"><div class="panel-head"><div><span class="eyebrow">MÓDULO INDEPENDIENTE · DATA</span><h1>Neuro Trader Engine</h1></div><button id="neuro-retry">Conectar módulo</button></div><p id="neuro-status" role="status">Iniciando módulo independiente…</p><iframe id="neuro-frame" title="Neuro Trader Engine" hidden style="width:100%;height:calc(100vh - 200px);min-height:680px;border:1px solid #332c6a;border-radius:12px;background:#07061a" sandbox="allow-scripts allow-same-origin allow-popups"></iframe></section>`;
 }
 export function bindNeuroTrader():void {
   const container=document.querySelector('#neuro-trader-workspace');if(!container)return;
@@ -27,7 +27,7 @@ export function bindNeuroTrader():void {
     button.disabled=true;status.textContent='Iniciando Neuro Trader Engine…';
     try{const url=await invoke<string>('open_neuro_trader');if(!container.isConnected)return;
       if(url!=='http://127.0.0.1:8768/ui/')throw Error('Dirección del módulo no admitida');
-      frame.src=`${url}?ui=${Date.now()}`;frame.hidden=false;status.textContent='Panel independiente conectado al servicio local. Consulta su estado de datos de Massive dentro del panel.';
+      frame.src=`${url}?ui=${Date.now()}`;frame.hidden=false;status.textContent='Panel independiente conectado al servicio local. Consulta su estado de datos de Data dentro del panel.';
     }catch(error){if(container.isConnected)status.textContent=String(error);}finally{button.disabled=false;}
   };
   button.onclick=()=>void start();void start();

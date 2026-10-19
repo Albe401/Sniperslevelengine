@@ -39,7 +39,7 @@ describe('two maps quantitative boundaries',()=>{
   const html=twoMapsPanel(undefined,'SPY',false,t,{...newSelection('SPY'),view:'flow'});expect(html).toContain('ledger de ejecuciones');expect(html).not.toContain('187.500');
  });
  it('marks depth unavailable rather than inventing resting or removed orders',()=>{
-  const html=twoMapsPanel(state(),'SPY',true,t+1000,newSelection('SPY'));expect(html).toContain('Massive no ofrece Level 2');expect(html).toContain('NO EVALUABLES');
+  const html=twoMapsPanel(state(),'SPY',true,t+1000,newSelection('SPY'));expect(html).toContain('Data no ofrece Level 2');expect(html).toContain('NO EVALUABLES');
  });
  it('shows only structural levels in the public web view, without execution heat',()=>{
   const html=twoMapsPanel(state(),'SPY',false,t+1000,{...newSelection('SPY'),view:'flow'},undefined,true);
