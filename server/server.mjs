@@ -53,10 +53,13 @@ export function validAssetBundle(b,symbol,now=Date.now()){
  if(validBundle(b,now))return true;
  const f=b?.frames?.[symbol];return b?.completeBatchVerified===true&&Number.isFinite(b.capturedMs)&&b.capturedMs<=now&&f?.symbol===symbol&&(!(typeof f.publishedMs==='number')||f.publishedMs<=b.capturedMs);
 }
+export function applySecurityHeaders(res){
+  res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','same-origin');
+  res.setHeader('Content-Security-Policy',"default-src 'self'; connect-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; object-src 'none'; base-uri 'self'; frame-ancestors 'self' https://sniperstradingacademy.com https://www.sniperstradingacademy.com http://localhost:3000");
+}
 export function makeHandler({provider=latest}={}){
  return async(req,res)=>{
-  res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','same-origin');res.setHeader('X-Frame-Options','DENY');
-  res.setHeader('Content-Security-Policy',"default-src 'self'; connect-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'");
+  applySecurityHeaders(res);
   const json=(status,body)=>{let bytes=Buffer.from(JSON.stringify(body));const headers={'Content-Type':'application/json','Cache-Control':'no-store','Vary':'Accept-Encoding'};if(bytes.length>1024&&/\bgzip\b/.test(req.headers['accept-encoding']??'')){bytes=gzipSync(bytes);headers['Content-Encoding']='gzip';}res.writeHead(status,headers);res.end(bytes)};
   try{
    const url=new URL(req.url,'http://localhost');

@@ -1,6 +1,7 @@
-import {makeHandler} from '../server/server.mjs';
+import {applySecurityHeaders,makeHandler} from '../server/server.mjs';
 export function adaptVercelHandler(handler){
  return async(req,res)=>{
+  applySecurityHeaders(res);
   const url=new URL(req.url,'http://localhost');
   const route=url.searchParams.get('__snipersRoute')??req.query?.__snipersRoute;
   if(route!==undefined){
@@ -11,6 +12,7 @@ export function adaptVercelHandler(handler){
  };
 }
 export default async function handler(req,res){
+ applySecurityHeaders(res);
  if(!process.env.DATABASE_URL){
   res.writeHead(503,{'Content-Type':'application/json','Cache-Control':'no-store'});
   res.end(JSON.stringify({error:'configuration_pending',detail:'Configura DATABASE_URL en Vercel.'}));return;
