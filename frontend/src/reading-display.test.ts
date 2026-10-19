@@ -1,5 +1,5 @@
 import {expect,it} from 'vitest';
-import {mapHorizon,offSession} from './reading-display';
+import {currentMapHorizon,mapHorizon,offSession} from './reading-display';
 import {dayMap} from './day-map';
 import {horizonCards} from './visual-readings';
 import type {Horizon,OffSummary} from './live';
@@ -8,6 +8,13 @@ it('permite próximo vencimiento explícito sin sustituirlo por NEXT4',()=>{
  expect(mapHorizon([h])).toBe(h);
  const day={...h,mode:'DAY'};expect(mapHorizon([h,day])).toBe(day);
  expect(mapHorizon([{...h,mode:'NEXT4'}])).toBeUndefined();
+});
+it('no presenta como vigente un nivel guardado de una captura anterior',()=>{
+ const now=Date.parse('2026-10-19T12:30:00Z');
+ const current={...h,expirations:['2026-10-23'],observedMs:now-5*60_000};
+ expect(currentMapHorizon({phase:'ready',observedMs:current.observedMs,horizons:[current]},now)).toBe(current);
+ const old={...current,observedMs:now-16*60_000};
+ expect(currentMapHorizon({phase:'ready',observedMs:old.observedMs,horizons:[old]},now)).toBeUndefined();
 });
 it('muestra referencias parciales etiquetadas y no puntuaciones confirmadas',()=>{
  const html=dayMap(h,true,[],true,null);

@@ -1,5 +1,6 @@
 import {savedWeeklyRanges} from './saved-weekly-ranges';
 import {webAutoRefreshAllowed,webRefreshLabel} from './web-refresh-policy';
+import {currentMapHorizon} from './reading-display';
 import {blockScannerPanel,type CapturedBlockScanner} from './block-scanner-panel';
 
 import {quickReadingPanels} from './quick-reading-panels';
@@ -34,6 +35,7 @@ tickerSelect.onchange=()=>selectTicker(tickerSelect.value);searchInput.onkeydown
 function paint(){
  if(!saved?.available)return;
  const data=saved,frame=data.frame,now=data.capturedMs;
+ const clock=Date.now(),levelsCurrent=now<=clock+1000&&clock-now<=15*60_000&&!!currentMapHorizon(frame.optionSnapshotStatus,clock);
  setCapturedProfileClock(now);
  const fields=frame as LiveState&{ivHistory?:{observation:Extra};qqqReport?:ComponentRead};
  const iv=fields.ivHistory?.observation;
@@ -43,10 +45,14 @@ function paint(){
  seedCapturedComponentRead(frame.qqq_report??fields.qqqReport,now);
  const targets=Object.values(data.extras??{}).filter(r=>r.command==='get_fmp_targets'&&r.observedMs<=now).sort((a,b)=>b.observedMs-a.observedMs)[0];
  if(targets&&(targets.value as {rows?:unknown})?.rows)seedCapturedAnalystTargets((targets.value as {rows:Record<string,TargetRow>}).rows,now);
- document.querySelector<HTMLElement>('#web-status')!.textContent=`Captura ${new Date(now).toLocaleString('es',{timeZone:'America/New_York'})} ET · ${webRefreshLabel()}`;
+ document.querySelector<HTMLElement>('#web-status')!.textContent=`Captura ${new Date(now).toLocaleString('es',{timeZone:'America/New_York'})} ET · ${levelsCurrent?webRefreshLabel():'niveles vigentes pendientes'}`;
  if(view==='detailed'){
-  content.innerHTML=`<section id="live-workspace" class="visual-reading" data-live-view="detailed">${quickReadingPanels(frame,selected,true,buildIntradayControl(frame,selected,true,now),now)}</section><p class="web-note">Lectura detallada del lote guardado en Neon. Actualización lunes a viernes · cada cinco minutos ET; sin consultas al mercado desde la web.</p>`;
-  bindLevelCardSpacing();bindGammaLive(frame,selected,true,paint,now);
+  if(!levelsCurrent){
+   content.innerHTML=`<section class="panel"><h2>Niveles vigentes pendientes · ${esc(selected)}</h2><p>La última captura o la cadena de opciones ya no está vigente. Captura disponible: ${new Date(now).toLocaleString('es',{timeZone:'America/New_York'})} ET. Se comprobará de nuevo automáticamente.</p></section>`;
+  }else{
+   content.innerHTML=`<section id="live-workspace" class="visual-reading" data-live-view="detailed">${quickReadingPanels(frame,selected,true,buildIntradayControl(frame,selected,true,now),now)}</section><p class="web-note">Lectura detallada del lote guardado en Neon. Actualización lunes a viernes · cada cinco minutos ET; sin consultas al mercado desde la web.</p>`;
+   bindLevelCardSpacing();bindGammaLive(frame,selected,true,paint,now);
+  }
  }else if(view==='blocks'){
   const captured=Object.values(data.extras??{}).filter(r=>r.command==='get_block_alerts'&&r.observedMs<=now).sort((a,b)=>b.observedMs-a.observedMs)[0];
   const scanner=captured?.value as CapturedBlockScanner|undefined;
