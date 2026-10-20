@@ -96,6 +96,14 @@ async function pull(){
 document.querySelectorAll<HTMLButtonElement>('[data-symbol]').forEach(b=>b.onclick=()=>{selected=b.dataset.symbol!;saved=undefined;expiry='',blockQuery='',blockSide='all';void pull()});
 document.querySelectorAll<HTMLButtonElement>('[data-view]').forEach(b=>b.onclick=()=>{view=b.dataset.view as 'detailed'|'chain'|'blocks'|'weekly';if(saved&&saved.frame.symbol===(view==='blocks'?'QQQ':selected))paint();else void pull()});
 setInterval(()=>{if(!document.hidden&&webAutoRefreshAllowed())void pull()},300000);void pull();
+// Expire visible levels at their observation deadline even if the next
+// database request fails or the browser has not reached its five-minute poll.
+setInterval(()=>{
+ if(view!=='detailed'||!saved?.available||!content.querySelector('#live-workspace'))return;
+ const snapshot=saved.frame.optionSnapshotStatus;
+ const clock=Date.now();
+ if(saved.capturedMs>clock+1000||clock-saved.capturedMs>15*60_000||!currentMapHorizon(snapshot,clock))paint();
+},30000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&webAutoRefreshAllowed())void pull()});
 
 
