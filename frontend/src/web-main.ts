@@ -1,6 +1,6 @@
 import {savedWeeklyRanges} from './saved-weekly-ranges';
 import {webAutoRefreshAllowed,webRefreshLabel} from './web-refresh-policy';
-import {currentMapHorizon} from './reading-display';
+import {savedReadingDisplay,savedReadingNotice} from './saved-reading-display';
 import {blockScannerPanel,type CapturedBlockScanner} from './block-scanner-panel';
 
 import {quickReadingPanels} from './quick-reading-panels';
@@ -35,7 +35,7 @@ tickerSelect.onchange=()=>selectTicker(tickerSelect.value);searchInput.onkeydown
 function paint(){
  if(!saved?.available)return;
  const data=saved,frame=data.frame,now=data.capturedMs;
- const clock=Date.now(),levelsCurrent=now<=clock+1000&&clock-now<=15*60_000&&!!currentMapHorizon(frame.optionSnapshotStatus,clock);
+ const clock=Date.now(),display=savedReadingDisplay(frame,selected,now,clock);
  setCapturedProfileClock(now);
  const fields=frame as LiveState&{ivHistory?:{observation:Extra};qqqReport?:ComponentRead};
  const iv=fields.ivHistory?.observation;
@@ -45,14 +45,11 @@ function paint(){
  seedCapturedComponentRead(frame.qqq_report??fields.qqqReport,now);
  const targets=Object.values(data.extras??{}).filter(r=>r.command==='get_fmp_targets'&&r.observedMs<=now).sort((a,b)=>b.observedMs-a.observedMs)[0];
  if(targets&&(targets.value as {rows?:unknown})?.rows)seedCapturedAnalystTargets((targets.value as {rows:Record<string,TargetRow>}).rows,now);
- document.querySelector<HTMLElement>('#web-status')!.textContent=`Captura ${new Date(now).toLocaleString('es',{timeZone:'America/New_York'})} ET · ${levelsCurrent?webRefreshLabel():'niveles vigentes pendientes'}`;
+ document.querySelector<HTMLElement>('#web-status')!.textContent=`Captura ${new Date(now).toLocaleString('es',{timeZone:'America/New_York'})} ET · ${display.label}${display.partial?' · cobertura parcial':''} · ${webRefreshLabel()}`;
  if(view==='detailed'){
-  if(!levelsCurrent){
-   content.innerHTML=`<section class="panel"><h2>Niveles vigentes pendientes · ${esc(selected)}</h2><p>La última captura o la cadena de opciones ya no está vigente. Captura disponible: ${new Date(now).toLocaleString('es',{timeZone:'America/New_York'})} ET. Se comprobará de nuevo automáticamente.</p></section>`;
-  }else{
-   content.innerHTML=`<section id="live-workspace" class="visual-reading" data-live-view="detailed">${quickReadingPanels(frame,selected,true,buildIntradayControl(frame,selected,true,now),now)}</section><p class="web-note">Lectura detallada del lote guardado en Neon. Actualización lunes a viernes · cada cinco minutos ET; sin consultas al mercado desde la web.</p>`;
-   bindLevelCardSpacing();bindGammaLive(frame,selected,true,paint,now);
-  }
+  if(!display.valid){content.innerHTML=savedReadingNotice(frame,selected,now,clock);return;}
+  content.innerHTML=savedReadingNotice(frame,selected,now,clock)+`<section id="live-workspace" class="visual-reading" data-live-view="detailed" data-saved-reading="true">${quickReadingPanels(frame,selected,true,buildIntradayControl(frame,selected,true,now),now)}</section><p class="web-note">Lectura detallada del lote guardado en Neon. Actualización lunes a viernes · cada cinco minutos ET; sin consultas al mercado desde la web.</p>`;
+  bindLevelCardSpacing();bindGammaLive(frame,selected,true,paint,now);
  }else if(view==='blocks'){
   const captured=Object.values(data.extras??{}).filter(r=>r.command==='get_block_alerts'&&r.observedMs<=now).sort((a,b)=>b.observedMs-a.observedMs)[0];
   const scanner=captured?.value as CapturedBlockScanner|undefined;
@@ -96,14 +93,15 @@ async function pull(){
 document.querySelectorAll<HTMLButtonElement>('[data-symbol]').forEach(b=>b.onclick=()=>{selected=b.dataset.symbol!;saved=undefined;expiry='',blockQuery='',blockSide='all';void pull()});
 document.querySelectorAll<HTMLButtonElement>('[data-view]').forEach(b=>b.onclick=()=>{view=b.dataset.view as 'detailed'|'chain'|'blocks'|'weekly';if(saved&&saved.frame.symbol===(view==='blocks'?'QQQ':selected))paint();else void pull()});
 setInterval(()=>{if(!document.hidden&&webAutoRefreshAllowed())void pull()},300000);void pull();
-// Expire visible levels at their observation deadline even if the next
-// database request fails or the browser has not reached its five-minute poll.
+// Refresh the age notice without discarding the archived chart or resetting its viewport.
 setInterval(()=>{
- if(view!=='detailed'||!saved?.available||!content.querySelector('#live-workspace'))return;
- const snapshot=saved.frame.optionSnapshotStatus;
- const clock=Date.now();
- if(saved.capturedMs>clock+1000||clock-saved.capturedMs>15*60_000||!currentMapHorizon(snapshot,clock))paint();
+ if(view!=='detailed'||!saved?.available)return;
+ const notice=content.querySelector('.web-saved-reading-notice');
+ if(notice)notice.outerHTML=savedReadingNotice(saved.frame,selected,saved.capturedMs,Date.now());
+ const display=savedReadingDisplay(saved.frame,selected,saved.capturedMs,Date.now());
+ document.querySelector<HTMLElement>('#web-status')!.textContent=`Captura ${new Date(saved.capturedMs).toLocaleString('es',{timeZone:'America/New_York'})} ET · ${display.label}${display.partial?' · cobertura parcial':''} · ${webRefreshLabel()}`;
 },30000);
+
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&webAutoRefreshAllowed())void pull()});
 
 
