@@ -2,6 +2,11 @@ import type {LiveState} from './live';
 import {currentMapHorizon} from './reading-display';
 import {escapeHtml as esc} from './model';
 
+/** Original desktop labels describe the capture, not the current market. */
+export function capturedReadingMarkup(markup:string){
+ return markup.replace(/en vivo/gi,'en la captura').replace(/PRECIO ACTUAL/g,'PRECIO EN CAPTURA');
+}
+
 /** Presentation of an archived observation, never permission for a live signal. */
 export function savedReadingDisplay(frame:LiveState,symbol:string,capturedMs:number,clock:number){
  const valid=frame.symbol===symbol&&Number.isSafeInteger(capturedMs)&&capturedMs>0&&Number.isFinite(clock)&&capturedMs<=clock&&Number.isFinite(frame.publishedMs)&&frame.publishedMs>0&&frame.publishedMs<=capturedMs;

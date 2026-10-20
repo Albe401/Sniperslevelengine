@@ -1,6 +1,6 @@
 import {savedWeeklyRanges} from './saved-weekly-ranges';
 import {webAutoRefreshAllowed,webRefreshLabel} from './web-refresh-policy';
-import {savedReadingDisplay,savedReadingNotice} from './saved-reading-display';
+import {savedReadingDisplay,savedReadingNotice,capturedReadingMarkup} from './saved-reading-display';
 import {blockScannerPanel,type CapturedBlockScanner} from './block-scanner-panel';
 
 import {quickReadingPanels} from './quick-reading-panels';
@@ -48,7 +48,7 @@ function paint(){
  document.querySelector<HTMLElement>('#web-status')!.textContent=`Captura ${new Date(now).toLocaleString('es',{timeZone:'America/New_York'})} ET · ${display.label}${display.partial?' · cobertura parcial':''} · ${webRefreshLabel()}`;
  if(view==='detailed'){
   if(!display.valid){content.innerHTML=savedReadingNotice(frame,selected,now,clock);return;}
-  content.innerHTML=savedReadingNotice(frame,selected,now,clock)+`<section id="live-workspace" class="visual-reading" data-live-view="detailed" data-saved-reading="true">${quickReadingPanels(frame,selected,true,buildIntradayControl(frame,selected,true,now),now)}</section><p class="web-note">Lectura detallada del lote guardado en Neon. Actualización lunes a viernes · cada cinco minutos ET; sin consultas al mercado desde la web.</p>`;
+  content.innerHTML=savedReadingNotice(frame,selected,now,clock)+`<section id="live-workspace" class="visual-reading" data-live-view="detailed" data-saved-reading="true">${capturedReadingMarkup(quickReadingPanels(frame,selected,true,buildIntradayControl(frame,selected,true,now),now))}</section><p class="web-note">Lectura detallada del lote guardado en Neon. Actualización lunes a viernes · cada cinco minutos ET; sin consultas al mercado desde la web.</p>`;
   bindLevelCardSpacing();bindGammaLive(frame,selected,true,paint,now);
  }else if(view==='blocks'){
   const captured=Object.values(data.extras??{}).filter(r=>r.command==='get_block_alerts'&&r.observedMs<=now).sort((a,b)=>b.observedMs-a.observedMs)[0];

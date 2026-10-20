@@ -1,6 +1,6 @@
 import {it,expect} from 'vitest';
 import {readFileSync} from 'node:fs';
-import {savedReadingDisplay,savedReadingNotice} from './saved-reading-display';
+import {savedReadingDisplay,savedReadingNotice,capturedReadingMarkup} from './saved-reading-display';
 import {currentMapHorizon} from './reading-display';
 import {displayStructure} from './reading-display';
 import type {LiveState} from './live';
@@ -31,3 +31,5 @@ it.skipIf(!process.env.SNIPERS_WEB_REAL_FRAME)('preserves levels from the real p
  const rendered=displayStructure(currentMapHorizon(d.frame.optionSnapshotStatus,result.renderAt),true);
  expect(rendered?.callWall?.strike).toBe(original.callWall.strike);expect(rendered?.putWall?.strike).toBe(original.putWall.strike);expect(rendered?.magnet).toBe(original.magnet);
 });
+
+it('labels the stored desktop markup as a capture without changing selectors or values',()=>{expect(capturedReadingMarkup('<section data-live-view="detailed">en vivo provisional · PRUEBA EN VIVO · PRECIO ACTUAL 725.00</section>')).toBe('<section data-live-view="detailed">en la captura provisional · PRUEBA en la captura · PRECIO EN CAPTURA 725.00</section>');});
