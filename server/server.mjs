@@ -13,6 +13,14 @@ const allowedSymbols=new Set(watchlist.map(a=>a.symbol));
 const quickFields=new Set('symbol publishedMs startedMs stocks options ticks bars minutes chartHistory history metrics optionSnapshotStatus selection flow flowExpiry cvd offExchange dailyAtr dailyRange positionMaps wallPull wallFlow adjustedReadings adjustedAlignment levelDeltas magnetConfirmations optionBaselineRecords gapReport priceAlerts qqq_report treasury auctionMap structuralPaths directionOi rawOptions levelDynamics intradayAtr priceNow snapshotUnavailable contractChain'.split(' '));
 for(const field of ['rangeContext','localVolume','greekSupport','thetaVega','optionLiquidity','swingReport','neuroContext','qqqReport','optionTiming','etfBlocks','etfCvd','etfFlow','dataService','ivHistory'])quickFields.add(field);
 quickFields.add('weeklyRangeSnapshot');
+quickFields.add('gexbotDominants');
+export function publicGexbot(value,symbol,capturedMs){
+ const keys=['positiveOi','negativeOi','positiveVolume','negativeVolume','zeroGamma'];
+ if(!value||value.source!=='Gexbot Classic'||value.symbol!==symbol||value.category!=='gex_full'
+  ||!Number.isSafeInteger(value.generatedMs)||value.generatedMs>capturedMs||capturedMs-value.generatedMs>600000
+  ||keys.some(key=>typeof value[key]!=='number'||!Number.isFinite(value[key])||value[key]<=0))return undefined;
+ return {source:value.source,symbol,category:'gex_full',generatedMs:value.generatedMs,...Object.fromEntries(keys.map(key=>[key,value[key]]))};
+}
 const root=resolve(fileURLToPath(new URL('..',import.meta.url)));
 const caches=new Map();
 let quotaRetryAt=0;
@@ -72,6 +80,7 @@ export function makeHandler({provider=latest}={}){
     if(!validAssetBundle(bundle,symbol))throw Error('Invalid capture');
     const extras=Object.fromEntries(Object.entries(bundle.extras??{}).filter(([,r])=>['get_contract_inventory','get_fmp_targets','preview_route_4h','get_block_alerts'].includes(r.command)&&(r.command!=='get_contract_inventory'||r.args?.symbol===symbol)));
     const frame=Object.fromEntries(Object.entries(bundle.frames[symbol]).filter(([key])=>quickFields.has(key)));
+    if(frame.gexbotDominants)frame.gexbotDominants=publicGexbot(frame.gexbotDominants,symbol,bundle.capturedMs);
     return json(200,{available:true,id:bundle.id,capturedMs:bundle.capturedMs,coverage:bundle.coverage,frame,extras});
    }
    if(req.method!=='GET'&&req.method!=='HEAD')return json(405,{error:'read_only'});

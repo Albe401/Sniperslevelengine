@@ -36,6 +36,7 @@ import './route-chart.css';
 import {structuralMapPreview} from './structural-map-preview';
 import {optionActivityPanel} from './option-activity-panel';
 import {gammaChartData} from './gamma-chart-data';
+import {gexbotMarks,type GexbotDominants,type GexbotMark} from './gexbot-dominants';
 import {extendedChartHistory} from './extended-chart-history';
 import {gammaReading} from './gamma-reading';
 import {createChart,createSeriesMarkers,CandlestickSeries,LineSeries,ColorType,CrosshairMode,type AutoscaleInfo,type IChartApi,type ISeriesApi} from 'lightweight-charts';
@@ -93,6 +94,22 @@ function paintAuctionBars(){
 function paintBigTrades(){host?.querySelector('.gl-big-trades')?.remove();}
 let chartAlerts:ChartAlerts|undefined;let chartAlarmPicker:ChartAlarmPicker|undefined;
 let chart:IChartApi|undefined,candles:ISeriesApi<'Candlestick'>|undefined,vol:ISeriesApi<'Line'>|undefined,vwap:ISeriesApi<'Line'>|undefined,host:HTMLElement|undefined;
+let webGexbotMarks:GexbotMark[]=[];
+let webGexbotObservedMs:number|undefined;
+function paintWebGexbot(){
+ if(!host||!chart||!candles)return;
+ const layer=host.querySelector<HTMLElement>('.gl-web-gexbot')??host.appendChild(Object.assign(document.createElement('div'),{className:'gl-web-gexbot'}));
+ const height=chart.panes()[0].getHeight();
+ const status=webGexbotMarks.length&&webGexbotObservedMs
+  ?`GEXBOT · captura ${new Date(webGexbotObservedMs).toLocaleTimeString('es',{timeZone:'America/New_York',hour:'2-digit',minute:'2-digit'})} ET · VOL sólido / OI punteado`
+  :'GEXBOT · sin captura vigente para este activo';
+ const html=`<small class="gl-web-gexbot-status">${status}</small>`+webGexbotMarks.map(mark=>{
+  const y=candles!.priceToCoordinate(mark.price);
+  if(y==null||y<24||y>height-24)return '';
+  return `<div class="gl-web-gexbot-mark ${mark.side} ${mark.weight}" style="top:${y}px"><i></i><span>GEXBOT ${mark.label} · $${mark.price.toFixed(2)}</span></div>`;
+ }).join('');
+ if(layer.innerHTML!==html)layer.innerHTML=html;
+}
 let lines:ReturnType<ISeriesApi<'Candlestick'>['createPriceLine']>[]=[],chartKey='',profileKey='',dataKey='',lineKey='',latest:ReturnType<typeof gammaLiveModel>|undefined,scaleFrame=0;
 const pct=(n:number|null|undefined)=>n!=null&&Number.isFinite(n)?`${Math.round(n)}%`:'—';
 const metric=(name:string,n:number|null|undefined)=>`<div class="gl-metric"><span>${name}</span><div><i style="width:${Math.max(0,Math.min(100,n??0))}%"></i></div><b>${pct(n)}</b></div>`;
@@ -219,6 +236,9 @@ export function bindGammaLive(s:LiveState|undefined,symbol:string,active:boolean
  const daysBadge=root.querySelector<HTMLElement>('#chart-history-days');
  if(daysBadge)daysBadge.textContent=`${chartHistory?.sessions.length??0}/30 sesiones`;
  const prepared=gammaChartData(s,symbol,active,interval,now,chartHistory);
+ const published=(s as (LiveState&{gexbotDominants?:GexbotDominants})|undefined)?.gexbotDominants;
+ webGexbotMarks=active&&prepared.currentOverlay?gexbotMarks(published,symbol,now,Date.now()):[];
+ webGexbotObservedMs=webGexbotMarks.length?published?.generatedMs:undefined;
  latest=gammaLiveModel(s,symbol,active,now);
  const expiryDates=profileExpirations(s?.symbol===symbol?s.optionSnapshotStatus?.structuralEnrichment:undefined,profileHorizon,now);
  latest={...latest,contractProfile:chartContractReport(s,symbol,active,latest.h?{...latest.h,expirations:expiryDates}:undefined,now),contractProfileExpected:true};
@@ -288,6 +308,7 @@ function profileRows(){
  return latest?.contractProfile?.rows.map(r=>({strike:r.strike,call:r.call.volume,put:r.put.volume}))??[];
 }
 function profile(){
+ paintWebGexbot();
  const svg=document.getElementById('gamma-live-profile');if(!svg||!host||!candles)return;
  const datesLabel=document.querySelector<HTMLElement>('.gl-profile-dates');
  const fullInventory=inventoryProfile(profileSymbol,profileNow());

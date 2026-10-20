@@ -31,3 +31,10 @@
 .gl-profile header .gl-profile-dates{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;max-height:76px;overflow-y:auto;overflow-x:hidden;margin:7px 0 3px;padding-right:3px;scrollbar-width:thin;overscroll-behavior:contain}
 .gl-expiry-chip{display:block;background:#102039;border:1px solid #355473;border-radius:4px;padding:5px 2px;color:#e5f3ff;font-size:10px;font-weight:600;line-height:1.2;text-align:center;white-space:nowrap;font-variant-numeric:tabular-nums}
 .gl-expiry-empty{grid-column:1/-1;color:#9bb7cf;font-size:10px}
+.gl-web-gexbot{position:absolute;inset:0;z-index:4;pointer-events:none;overflow:hidden}
+.gl-web-gexbot-mark{position:absolute;right:83px;display:flex;align-items:center;gap:5px;transform:translateY(-50%);white-space:nowrap;font:700 9px 'Inter Variable',sans-serif;text-shadow:0 1px 3px #061326}
+.gl-web-gexbot-mark i{display:block;width:42px;border-top:3px solid currentColor}
+.gl-web-gexbot-mark span{padding:3px 5px;border:1px solid currentColor;border-radius:3px;background:#071524e8}
+.gl-web-gexbot-mark.positive{color:#28e8b5}.gl-web-gexbot-mark.negative{color:#ff678a}
+.gl-web-gexbot-mark.oi{right:202px;opacity:.7}.gl-web-gexbot-mark.oi i{width:22px;border-top-width:2px;border-top-style:dashed}
+.gl-web-gexbot-status{position:absolute;top:7px;left:11px;padding:3px 6px;border:1px solid #275065;border-radius:3px;background:#071524e8;color:#b6d9e3;font-size:9px}
