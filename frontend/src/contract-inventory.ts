@@ -4,7 +4,8 @@ import type {EtfDetail} from './etf-enrichment';
 import {scopeContractReport} from './contract-profile';
 import {escapeHtml as esc} from './model';
 import './contract-inventory.css';
-export type InventoryHorizon='DAY'|'WEEK'|'FOUR_WEEKS'|'MONTH'|'SIX_MONTHS';
+export type InventoryHorizon='DAY'|'WEEK'|'FOUR_WEEKS'|'MONTH'|'THREE_MONTHS'|'SIX_MONTHS';
+export const oiHorizonChoices:[InventoryHorizon,string][]=[['DAY','0DTE'],['WEEK','1 semana'],['MONTH','1 mes'],['THREE_MONTHS','3 meses'],['SIX_MONTHS','6 meses']];
 const day=(n:number)=>new Date(n).toLocaleDateString('en-CA',{timeZone:'America/New_York'});
 export function inventoryEnd(today:string,months=6):string {
  const [y,m,d]=today.split('-').map(Number),last=new Date(Date.UTC(y,m-1+months+1,0)).getUTCDate();
@@ -12,7 +13,7 @@ export function inventoryEnd(today:string,months=6):string {
 }
 export function inventoryDates(r:EtfReport|undefined,mode:InventoryHorizon,now:number):string[]{
  const today=day(now),days=mode==='DAY'?0:mode==='WEEK'?7:28;
- const end=mode==='SIX_MONTHS'?inventoryEnd(today):mode==='MONTH'?inventoryEnd(today,1):new Date(Date.parse(today+'T12:00:00Z')+days*86400000).toISOString().slice(0,10);
+ const end=mode==='SIX_MONTHS'?inventoryEnd(today):mode==='THREE_MONTHS'?inventoryEnd(today,3):mode==='MONTH'?inventoryEnd(today,1):new Date(Date.parse(today+'T12:00:00Z')+days*86400000).toISOString().slice(0,10);
  const referenceDates=(r?.heatmap?.reference??[]).map(c=>(c as {expiration_date?:unknown})?.expiration_date).filter((d):d is string=>typeof d==='string');
  return [...new Set([...(r?.enrichment?.details.map(c=>c.expiration)??[]),...referenceDates].filter(d=>/^\d{4}-\d{2}-\d{2}$/.test(d)&&d>=today&&d<=end))].sort();
 }
@@ -33,6 +34,8 @@ export function seedCapturedInventory(report:EtfReport|undefined,symbol:string,c
  while(memory.size>4)memory.delete(memory.keys().next().value!);
 }
 let horizon:InventoryHorizon='SIX_MONTHS',expiry='',page=0,search='',sideFilter='call';
+export function inventoryOiHorizonControls():string {return `<div class="saved-chain-toolbar oi-horizon-controls" role="group" aria-label="Plazo del interés abierto">${oiHorizonChoices.map(([mode,label])=>`<button type="button" data-oi-inventory-horizon="${mode}" aria-pressed="${horizon===mode}">${label}</button>`).join('')}</div>`;}
+export function selectInventoryOiHorizon(mode:InventoryHorizon):void {horizon=mode;expiry='';page=0;scoped=undefined;}
 let scoped:{report:EtfReport;key:string;value:EtfReport}|undefined;
 export function inventoryProfile(symbol:string,now:number):EtfReport|undefined {
  const r=memory.get(symbol)?.report;if(!r||r.symbol!==symbol||r.at>now||now-r.at>300000||day(r.at)!==day(now))return;

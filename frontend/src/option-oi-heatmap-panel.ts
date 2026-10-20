@@ -10,7 +10,7 @@ let view:View='comparison',scale:'linear'|'log1p'='linear',normalization:'column
 let strikeCount=31,expirationPage=0,selected='';
 let cached:{report:EtfReport;key:string;map:Heatmap}|undefined;
 
-export function optionOiHeatmapPanel(symbol:string,r?:EtfReport,now=Date.now()):string {
+export function optionOiHeatmapPanel(symbol:string,r?:EtfReport,now=Date.now(),horizonControls=''):string {
  let map:Heatmap|undefined,error='';
  if(r)try {
   if(r.symbol!==symbol||r.at>now||now-r.at>300_000)throw Error('Cadena caducada o de otro activo; actualiza la cadena.');
@@ -39,7 +39,7 @@ export function optionOiHeatmapPanel(symbol:string,r?:EtfReport,now=Date.now()):
  <button type="button" data-oi-strikes="-5" ${strikeCount<=11?'disabled':''}>− strikes</button><button type="button" data-oi-strikes="5" ${strikeCount>=101?'disabled':''}>+ strikes</button></div>
  <div class="oi-layout-metadata"><span>Cobertura OI <b>${map?.coverage==null?'Pendiente':(map.coverage*100).toFixed(1)+'%'}</b></span><span>Fecha efectiva OI <b>${esc(map?.oiDate??'No suministrada')}</b></span><span>Precio al consultar <b>${number(map?.underlying?.price)}</b></span><span>Color <b>${map?.scaleStatus==='provisional'?'Provisional':map?'Datos del filtro':'Pendiente'}</b></span></div>
  ${map?.scaleStatus==='provisional'?'<p class="oi-layout-warning" role="status">Escala provisional: faltan contratos o datos verificables. Los máximos observados pueden cambiar.</p>':''}
- ${oiMapReadingPanel(map)}
+ ${oiMapReadingPanel(map,horizonControls)}
  ${map?`<div class="oi-layout-toolbar"><button type="button" data-oi-expiry-page="-1" ${expirationPage===0?'disabled':''}>Vencimientos anteriores</button><span>${expirations.length} vencimientos · página ${expirationPage+1}/${pages} · ${strikes.length}/${all.length} strikes visibles</span><button type="button" data-oi-expiry-page="1" ${expirationPage===pages-1?'disabled':''}>Siguientes vencimientos</button></div>`:''}
  <div class="oi-layout-maps ${view==='comparison'?'oi-layout-comparison':''}">${sides.map(side=>`<article class="oi-layout-map oi-layout-${side}"><header><strong>${side.toUpperCase()}</strong><span>OI · contratos</span></header>${map&&strikes.length&&dates.length?`<div class="oi-data-scroll"><table class="oi-data-table"><caption>${side.toUpperCase()} · ${normalization==='column'?'máximo independiente por columna':'máximo común de la matriz'}</caption><thead><tr><th scope="col">Strike</th>${dates.map(d=>`<th scope="col">${esc(d)}</th>`).join('')}</tr></thead><tbody>${strikes.map(strike=>`<tr ${map!.underlying?.price===strike?'class="oi-atm"':''}><th scope="row">${number(strike)}</th>${dates.map(d=>renderCell(cells.get(JSON.stringify([strike,d,side])))).join('')}</tr>`).join('')}</tbody></table></div>`:`<div class="oi-no-data"><strong>${error?'No se pudo verificar el mapa':'Esperando datos de la cadena'}</strong><p>${esc(error||'Actualiza la cadena completa. No se muestran números ni colores inventados.')}</p></div>`}<footer><span>Menor OI</span><i aria-hidden="true"></i><span>Mayor OI · ${normalization==='column'?'por columna':'matriz'}</span></footer></article>`).join('')}</div>
  <div class="oi-layout-detail" role="status"><strong>Detalle de la celda</strong><span>${chosen?esc(title(chosen)):'Selecciona una celda para ver OI exacto, vencimiento, estado y cobertura.'}</span></div>
