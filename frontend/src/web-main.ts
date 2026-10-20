@@ -9,6 +9,7 @@ import {buildIntradayControl} from './intraday-control';
 import {bindGammaLive,setCapturedProfileClock} from './gamma-live';
 import {optionOiHeatmapPanel,bindOptionOiHeatmap} from './option-oi-heatmap-panel';
 import {scopeContractReport} from './contract-profile';
+import {inventoryDates,type InventoryHorizon} from './contract-inventory';
 import {seedCapturedInventory} from './contract-inventory';
 import {seedCapturedAnalystTargets} from './analyst-targets';
 import {seedCapturedIvHistory} from './iv-history';
@@ -23,14 +24,14 @@ import './styles.css';import './restrained.css';import './visual-readings.css';i
 const symbols=['AAPL','MSFT','AMZN','GOOGL','META','NVDA','TSLA','QQQ','SPY','IWM'];
 type Extra={command:string;args?:{symbol?:string};observedMs:number;value:unknown};
 type Saved={available:boolean;id:string;capturedMs:number;frame:LiveState;extras:Record<string,Extra>;coverage:Record<string,unknown>};
-let selected='QQQ',view:'detailed'|'chain'|'blocks'|'weekly'='detailed',generation=0,saved:Saved|undefined,expiry='',blockQuery='',blockSide='all';
+let selected='QQQ',view:'detailed'|'chain'|'blocks'|'weekly'='detailed',generation=0,saved:Saved|undefined,expiry='',horizon:InventoryHorizon='SIX_MONTHS',blockQuery='',blockSide='all';
 const app=document.querySelector<HTMLDivElement>('#app')!;
 app.innerHTML=`<div class="web-shell"><aside class="web-sidebar"><img src="/assets/route-lion.png" alt="Snipers"><h2>SNIPERS</h2><button data-view="detailed">Lectura detallada</button><button data-view="blocks">Bloques de compra y venta</button><button data-view="chain">Radar de inversión<br><small>Cadena de opciones</small></button><button data-view="weekly">Radar de inversión<br><small>Radar semanal de precios</small></button><small>Datos guardados por el escritorio<br>Actualización lunes a viernes · cada cinco minutos ET</small></aside><main class="web-main"><header class="web-topbar"><strong>Algoritmo de probabilidad</strong><span id="web-status">Leyendo la base de datos…</span></header><nav class="web-assets">${symbols.map(s=>`<button data-symbol="${s}">${s}</button>`).join('')}</nav><section id="web-content"></section></main></div>`;
 const content=document.querySelector<HTMLElement>('#web-content')!;
 const search=document.createElement('div');search.className='web-ticker-search';search.innerHTML=`<label for="ticker-search">Buscar ticker del watchlist (${watchlist.length})</label><input id="ticker-search" type="search" placeholder="Escribe un ticker…" autocomplete="off"><select id="ticker-select" aria-label="Seleccionar ticker">${watchlist.map(a=>`<option value="${esc(a.symbol)}" ${a.symbol===selected?'selected':''}>${esc(a.symbol)} · ${esc(a.name)}</option>`).join('')}</select><small id="ticker-results">${watchlist.length} tickers</small>`;document.querySelector('.web-assets')!.before(search);
 const searchInput=document.querySelector<HTMLInputElement>('#ticker-search')!,tickerSelect=document.querySelector<HTMLSelectElement>('#ticker-select')!;
 searchInput.oninput=()=>{const q=searchInput.value.trim().toUpperCase(),rows=watchlist.filter(a=>a.symbol.includes(q));tickerSelect.innerHTML=rows.map(a=>`<option value="${esc(a.symbol)}">${esc(a.symbol)} · ${esc(a.name)}</option>`).join('');document.querySelector('#ticker-results')!.textContent=`${rows.length} tickers`;};
-const selectTicker=(symbol:string)=>{selected=symbol;searchInput.value='';tickerSelect.innerHTML=watchlist.map(a=>`<option value="${esc(a.symbol)}" ${a.symbol===selected?'selected':''}>${esc(a.symbol)} · ${esc(a.name)}</option>`).join('');document.querySelector('#ticker-results')!.textContent=`${watchlist.length} tickers`;saved=undefined;expiry='',blockQuery='',blockSide='all';content.innerHTML='<section class="panel">Cargando datos guardados…</section>';void pull();};
+const selectTicker=(symbol:string)=>{selected=symbol;searchInput.value='';tickerSelect.innerHTML=watchlist.map(a=>`<option value="${esc(a.symbol)}" ${a.symbol===selected?'selected':''}>${esc(a.symbol)} · ${esc(a.name)}</option>`).join('');document.querySelector('#ticker-results')!.textContent=`${watchlist.length} tickers`;saved=undefined;expiry='',horizon='SIX_MONTHS',blockQuery='',blockSide='all';content.innerHTML='<section class="panel">Cargando datos guardados…</section>';void pull();};
 tickerSelect.onchange=()=>selectTicker(tickerSelect.value);searchInput.onkeydown=e=>{if(e.key==='Enter'&&tickerSelect.value)selectTicker(tickerSelect.value)};
 function paint(){
  if(!saved?.available)return;
@@ -62,11 +63,15 @@ function paint(){
   const report=(archived?.value??records[0]?.value) as EtfReport|undefined;
   const weeklyReport=(frame as LiveState&{weeklyRangeSnapshot?:EtfReport}).weeklyRangeSnapshot??report;
   if(view==='weekly'){content.innerHTML=savedWeeklyRanges(selected,weeklyReport,now);return;}
-  const dates=report?.expirations??[];
-  const scoped=report&&report.symbol===selected?(expiry?scopeContractReport(report,[expiry]):report):undefined;
-  content.innerHTML=`<section class="panel"><h2>Radar de inversión · Cadena de opciones · ${esc(selected)}</h2><p>Cadena guardada por el escritorio. El filtro consulta únicamente este lote.</p>${report?`<p>Fecha de consulta: ${new Date(report.at).toLocaleString('es',{timeZone:'America/New_York'})} ET ${now-report.at>300000?'· Datos anteriores: pendiente de una consulta más reciente.':''}</p>`:''}<label>Vencimiento <select id="saved-expiry"><option value="">Todos los guardados</option>${dates.map(d=>`<option value="${esc(d)}" ${d===expiry?'selected':''}>${esc(d)}</option>`).join('')}</select></label><div id="saved-chain">${optionOiHeatmapPanel(selected,scoped,report?.at??now)}</div>${!report?'<p>Cadena completa pendiente para este activo en el lote. No se consulta Data ni se inventan contratos.</p>':''}</section>`;
+  const dates=inventoryDates(report,horizon,now);
+  if(expiry&&!dates.includes(expiry))expiry='';
+  const scoped=report&&report.symbol===selected?scopeContractReport(report,expiry?[expiry]:dates):undefined;
+  const horizons:[InventoryHorizon,string][]=[['DAY','0DTE'],['WEEK','Semanal · 7 días'],['FOUR_WEEKS','4 semanas'],['MONTH','Mensual · un mes'],['SIX_MONTHS','Todos · 6 meses']];
+  content.innerHTML=`<section class="panel"><h2>Radar de inversión · Cadena de opciones · ${esc(selected)}</h2><p>Cadena guardada por el escritorio. Los filtros usan únicamente este lote.</p>${report?`<p>Fecha de consulta: ${new Date(report.at).toLocaleString('es',{timeZone:'America/New_York'})} ET ${now-report.at>300000?'· Datos anteriores: pendiente de una consulta más reciente.':''}</p>`:''}<div class="saved-chain-toolbar"><button type="button" id="saved-chain-refresh">Actualizar captura</button>${horizons.map(([mode,label])=>`<button type="button" data-saved-horizon="${mode}" aria-pressed="${horizon===mode}">${label}</button>`).join('')}<label>Vencimiento <select id="saved-expiry"><option value="">Todos los del horizonte</option>${dates.map(d=>`<option value="${esc(d)}" ${d===expiry?'selected':''}>${esc(d)}</option>`).join('')}</select></label></div><div id="saved-chain">${report&&!dates.length?'<p role="status">No hay vencimientos guardados para este horizonte en la captura. No se sustituyen por otro plazo.</p>':optionOiHeatmapPanel(selected,scoped,report?.at??now)}</div>${!report?'<p>Cadena completa pendiente para este activo en el lote. No se consulta Data ni se inventan contratos.</p>':''}</section>`;
   content.insertAdjacentHTML('afterbegin',savedWeeklyRanges(selected,weeklyReport,now));
-  bindOptionOiHeatmap(document.querySelector<HTMLElement>('#saved-chain')!,paint);
+  if(!report||dates.length)bindOptionOiHeatmap(document.querySelector<HTMLElement>('#saved-chain')!,paint);
+  document.querySelector<HTMLButtonElement>('#saved-chain-refresh')!.onclick=()=>{void pull()};
+  document.querySelectorAll<HTMLButtonElement>('[data-saved-horizon]').forEach(button=>button.onclick=()=>{horizon=button.dataset.savedHorizon as InventoryHorizon;expiry='';paint()});
   document.querySelector<HTMLSelectElement>('#saved-expiry')!.onchange=e=>{expiry=(e.target as HTMLSelectElement).value;paint()};
  }
  document.querySelectorAll<HTMLButtonElement>('[data-symbol]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.symbol===selected)));
@@ -90,7 +95,7 @@ async function pull(){
   saved=value;paint();
  }catch(e){if(token!==generation)return;document.querySelector<HTMLElement>('#web-status')!.textContent='Conexión pendiente · reintento automático';if(!saved)content.innerHTML=`<section class="panel">${esc(String(e))}</section>`;setTimeout(()=>{if(token===generation&&webAutoRefreshAllowed())void pull()},15000);}
 }
-document.querySelectorAll<HTMLButtonElement>('[data-symbol]').forEach(b=>b.onclick=()=>{selected=b.dataset.symbol!;saved=undefined;expiry='',blockQuery='',blockSide='all';void pull()});
+document.querySelectorAll<HTMLButtonElement>('[data-symbol]').forEach(b=>b.onclick=()=>{selected=b.dataset.symbol!;saved=undefined;expiry='',horizon='SIX_MONTHS',blockQuery='',blockSide='all';void pull()});
 document.querySelectorAll<HTMLButtonElement>('[data-view]').forEach(b=>b.onclick=()=>{view=b.dataset.view as 'detailed'|'chain'|'blocks'|'weekly';if(saved&&saved.frame.symbol===(view==='blocks'?'QQQ':selected))paint();else void pull()});
 setInterval(()=>{if(!document.hidden&&webAutoRefreshAllowed())void pull()},300000);void pull();
 // Refresh the age notice without discarding the archived chart or resetting its viewport.
