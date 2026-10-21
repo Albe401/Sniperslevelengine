@@ -6,6 +6,7 @@ import {blockScannerPanel,type CapturedBlockScanner} from './block-scanner-panel
 import {quickReadingPanels} from './quick-reading-panels';
 import {twoMapsPanel,bindTwoMaps} from './two-maps';
 import {auctionMapPanel} from './auction-map-panel';
+import {auctionHistoryReference} from './auction-history';
 import {bindLevelCardSpacing} from './level-card-spacing';
 import {buildIntradayControl} from './intraday-control';
 import {bindGammaLive,setCapturedProfileClock} from './gamma-live';
@@ -58,7 +59,7 @@ function paint(){
  }else if(view==='maps'){
   if(!display.valid){content.innerHTML=savedReadingNotice(frame,selected,now,clock);return;}
   const spot=frame.ticks?.[selected]?.price;
-  const auction=capturedReadingMarkup(auctionMapPanel(selected,true,now,frame.auctionMap??undefined,typeof spot==='number'&&Number.isFinite(spot)?spot:null,undefined,true));
+  const auction=capturedReadingMarkup(auctionMapPanel(selected,true,now,frame.auctionMap??undefined,typeof spot==='number'&&Number.isFinite(spot)?spot:null,auctionHistoryReference(selected,frame.chartHistory,now),true));
   content.innerHTML=savedReadingNotice(frame,selected,now,clock)+`<section class="web-snapshot-maps" data-saved-reading="true">${twoMapsPanel(frame,selected,true,now)}<div class="tm-auction-below">${auction}</div></section><p class="web-note">Mapa de calor y AMT del mismo lote guardado; los datos pendientes no se sustituyen por lecturas en vivo.</p>`;
   bindTwoMaps(paint);
  }else if(view==='blocks'){
