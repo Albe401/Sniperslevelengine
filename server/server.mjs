@@ -5,7 +5,7 @@ import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 import {gunzipSync,gzipSync} from 'node:zlib';
 import {neon} from '@neondatabase/serverless';
-import {loadWeeklyArchive} from './weekly-archive.mjs';
+import {loadWeeklyArchives} from './weekly-archive.mjs';
 import {loadWatchlistAsset} from './watchlist-assets.mjs';
 export const symbols=['AAPL','MSFT','AMZN','GOOGL','META','NVDA','TSLA','QQQ','SPY','IWM'];
 const watchlist=JSON.parse(await readFile(new URL('../frontend/src/web-watchlist.json',import.meta.url),'utf8'));
@@ -13,6 +13,7 @@ const allowedSymbols=new Set(watchlist.map(a=>a.symbol));
 const quickFields=new Set('symbol publishedMs startedMs stocks options ticks bars minutes chartHistory history metrics optionSnapshotStatus selection flow flowExpiry cvd offExchange dailyAtr dailyRange positionMaps wallPull wallFlow adjustedReadings adjustedAlignment levelDeltas magnetConfirmations optionBaselineRecords gapReport priceAlerts qqq_report treasury auctionMap structuralPaths directionOi rawOptions levelDynamics intradayAtr priceNow snapshotUnavailable contractChain'.split(' '));
 for(const field of ['rangeContext','localVolume','greekSupport','thetaVega','optionLiquidity','swingReport','neuroContext','qqqReport','optionTiming','etfBlocks','etfCvd','etfFlow','dataService','ivHistory'])quickFields.add(field);
 quickFields.add('weeklyRangeSnapshot');
+quickFields.add('weeklyRangeSnapshots');
 quickFields.add('gexbotDominants');
 export function publicGexbot(value,symbol,capturedMs){
  const keys=['positiveOi','negativeOi','positiveVolume','negativeVolume','zeroGamma'];
@@ -49,7 +50,7 @@ async function latest(symbol='QQQ'){
    const legacy=symbols.includes(symbol)?await loadSavedAsset(sql,symbol,cached?.value):{available:false};
    value=legacy.available?legacy:await loadWatchlistAsset(sql,symbol,decodeFrame);
    if(value.available){const frame=value.frames[symbol];
-    if(!frame.weeklyRangeSnapshot){try{frame.weeklyRangeSnapshot=await loadWeeklyArchive(sql,frame,value.capturedMs,decodeFrame);}catch{ /* Preserve the normal frame if the optional archive is unavailable. */ }}
+    if(!frame.weeklyRangeSnapshot){try{frame.weeklyRangeSnapshots=await loadWeeklyArchives(sql,frame,value.capturedMs,decodeFrame,symbols.includes(symbol));}catch{ /* Preserve the normal frame if the optional archive is unavailable. */ }}
    }
   }
   catch(error){if(isQuotaError(error)){quotaRetryAt=Date.now()+300000;throw quotaError();}throw error;}

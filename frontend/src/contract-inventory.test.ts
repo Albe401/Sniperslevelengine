@@ -14,6 +14,13 @@ it('reads saved inventory at capture time without changing its date or accepting
  seedCapturedInventory({...r,at:now+1},'QQQ',now);expect(inventoryProfile('QQQ',now)).toBeUndefined();
  seedCapturedInventory(undefined,'QQQ',now);
 });
+it('retains an older same-day saved chain only at its explicit archive clock',()=>{
+ const r={...report(),at:now-8*60000};expect(validInventory(r,'QQQ',now)).toBe(false);
+ seedCapturedInventory(r,'QQQ',now);expect(inventoryProfile('QQQ',now)?.at).toBe(r.at);
+ expect(inventoryProfile('QQQ',now+1)).toBeUndefined();
+ seedCapturedInventory({...r,at:now-86400000},'QQQ',now);expect(inventoryProfile('QQQ',now)).toBeUndefined();
+ seedCapturedInventory(undefined,'QQQ',now);
+});
 it.each([['2026-10-08','2027-04-08'],['2026-08-31','2027-02-28'],['2027-08-31','2028-02-29'],['2026-12-31','2027-06-30']])('uses six calendar months from %s',(start,end)=>expect(inventoryEnd(start)).toBe(end));
 it('distinguishes four weeks, one calendar month and six months',()=>{const r=report();expect(inventoryDates(r,'DAY',now)).toEqual(['2026-10-08']);expect(inventoryDates(r,'WEEK',now)).toHaveLength(2);expect(inventoryDates(r,'FOUR_WEEKS',now)).toHaveLength(3);expect(inventoryDates(r,'MONTH',now)).toHaveLength(4);expect(inventoryDates(r,'SIX_MONTHS',now)).toHaveLength(5);});
 it('bounds the three-month OI view by calendar date',()=>{const r=report();r.enrichment!.details.push(c('2027-01-08'),c('2027-01-09'));expect(inventoryDates(r,'THREE_MONTHS',now)).toContain('2027-01-08');expect(inventoryDates(r,'THREE_MONTHS',now)).not.toContain('2027-01-09');expect(inventoryDates(r,'SIX_MONTHS',now)).toContain('2027-01-09');});

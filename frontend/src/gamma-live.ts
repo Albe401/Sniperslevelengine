@@ -327,7 +327,7 @@ function profile(){
  if(profileMetric==='oi'){
   if(footer){
    if(!fullInventory)footer.textContent='OI pendiente · actualiza la cadena · sin referencia independiente vigente';
-   else try {const {map}=reportOiProfile(fullInventory);footer.textContent=`OI · ${map.expectedContracts} contratos estándar · cobertura ${map.coverage==null?'pendiente':(map.coverage*100).toFixed(1)+'%'} · captura ${new Date(map.observedMs).toLocaleString('es',{timeZone:'America/New_York'})} ET · fecha OI ${map.oiDate??'no suministrada'} · ${map.universeComplete?'referencia verificada':'referencia parcial'}`;}
+   else try {const {map}=reportOiProfile(fullInventory);footer.textContent=`OI · ${map.expectedContracts} contratos estándar · cobertura ${map.coverage==null?'pendiente':(map.coverage*100).toFixed(1)+'%'} · captura ${new Date(map.observedMs).toLocaleString('es',{timeZone:'America/New_York'})} ET · fecha OI ${map.oiDate??'no suministrada'} · ${map.universeComplete?'referencia verificada':'referencia parcial'}${capturedProfileClock!=null&&capturedProfileClock-map.observedMs>300000?' · cadena anterior, solo referencia histórica':''}`;}
    catch{footer.textContent='OI pendiente · referencia independiente no utilizable; actualiza la cadena';}
   }
  }

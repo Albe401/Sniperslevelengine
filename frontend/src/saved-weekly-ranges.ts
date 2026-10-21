@@ -1,7 +1,12 @@
 import {scannedWeeklyEntry,weeklyRange,type WeeklySnapshot} from './investment-weekly-ranges';
 import {escapeHtml as esc} from './model';
 import type {EtfReport} from './etf-dealers';
-export function savedWeeklyRanges(symbol:string,report:EtfReport|undefined,capturedMs:number){
+export function savedWeeklyRanges(symbol:string,report:EtfReport|undefined,capturedMs:number,alternatives:EtfReport[]=[]){
+ // Try archived references in their supplied order. Reuse the same strict
+ // desktop validation; no failed pair is repaired with quotes of another day.
+ for(const candidate of [report,...alternatives]){
+  try{if(!candidate||!Number.isFinite(candidate.at)||candidate.at>capturedMs)continue;scannedWeeklyEntry({...candidate,days:7} as WeeklySnapshot,symbol,candidate.at);report=candidate;break;}catch{/* Keep the reason visible if every candidate fails. */}
+ }
  const heading=`<h2>Radar de inversión · Radar semanal de precios · ${esc(symbol)}</h2>`;
  try{
   if(!report||!Number.isFinite(report.at)||report.at>capturedMs)throw Error('Cadena de opciones pendiente en esta captura.');

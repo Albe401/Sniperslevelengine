@@ -56,11 +56,11 @@ it('retries a failed visible scan and removes the old error without overlapping 
 
 it('identifies the failed input without conflating missing chain and stale price',()=>{
  const now=Date.parse('2026-10-12T18:00:00Z');const base={symbol:'NBIS',days:7,at:now,spot:207.5,priceAt:now,enrichment:{details:[]}} as unknown as import('./investment-weekly-ranges').WeeklySnapshot;
- expect(()=>scannedWeeklyEntry(base,'NBIS',now)).toThrow('Cadena de opciones de Massive vacía');
- expect(()=>scannedWeeklyEntry({...base,priceAt:now-120001},'NBIS',now)).toThrow('Precio de Massive caducado');
+ expect(()=>scannedWeeklyEntry(base,'NBIS',now)).toThrow('Cadena de opciones de Data vacía');
+ expect(()=>scannedWeeklyEntry({...base,priceAt:now-120001},'NBIS',now)).toThrow('Precio de Data caducado');
  expect(()=>scannedWeeklyEntry({...base,priceAt:NaN},'NBIS',now)).toThrow('Fecha del precio');
- expect(()=>scannedWeeklyEntry({...base,spot:0},'NBIS',now)).toThrow('Precio de Massive ausente');
- expect(()=>scannedWeeklyEntry({...base,at:now-300001},'NBIS',now)).toThrow('Consulta de Massive caducada');
+ expect(()=>scannedWeeklyEntry({...base,spot:0},'NBIS',now)).toThrow('Precio de Data ausente');
+ expect(()=>scannedWeeklyEntry({...base,at:now-300001},'NBIS',now)).toThrow('Consulta de Data caducada');
  expect(()=>scannedWeeklyEntry(base,'QQQ',now)).toThrow('incompatible con el activo');
 });
 
