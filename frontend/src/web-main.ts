@@ -4,6 +4,8 @@ import {savedReadingDisplay,savedReadingNotice,capturedReadingMarkup} from './sa
 import {blockScannerPanel,type CapturedBlockScanner} from './block-scanner-panel';
 
 import {quickReadingPanels} from './quick-reading-panels';
+import {twoMapsPanel,bindTwoMaps} from './two-maps';
+import {auctionMapPanel} from './auction-map-panel';
 import {bindLevelCardSpacing} from './level-card-spacing';
 import {buildIntradayControl} from './intraday-control';
 import {bindGammaLive,setCapturedProfileClock} from './gamma-live';
@@ -24,9 +26,9 @@ import './styles.css';import './restrained.css';import './visual-readings.css';i
 const symbols=['AAPL','MSFT','AMZN','GOOGL','META','NVDA','TSLA','QQQ','SPY','IWM'];
 type Extra={command:string;args?:{symbol?:string};observedMs:number;value:unknown};
 type Saved={available:boolean;id:string;capturedMs:number;frame:LiveState;extras:Record<string,Extra>;coverage:Record<string,unknown>};
-let selected='QQQ',view:'detailed'|'chain'|'blocks'|'weekly'='detailed',generation=0,saved:Saved|undefined,expiry='',horizon:InventoryHorizon='SIX_MONTHS',blockQuery='',blockSide='all';
+let selected='QQQ',view:'detailed'|'maps'|'chain'|'blocks'|'weekly'='detailed',generation=0,saved:Saved|undefined,expiry='',horizon:InventoryHorizon='SIX_MONTHS',blockQuery='',blockSide='all';
 const app=document.querySelector<HTMLDivElement>('#app')!;
-app.innerHTML=`<div class="web-shell"><aside class="web-sidebar"><img src="/assets/route-lion.png" alt="Snipers"><h2>SNIPERS</h2><button data-view="detailed">Lectura detallada</button><button data-view="blocks">Bloques de compra y venta</button><button data-view="chain">Radar de inversión<br><small>Cadena de opciones</small></button><button data-view="weekly">Radar de inversión<br><small>Radar semanal de precios</small></button><small>Datos guardados por el escritorio<br>Actualización lunes a viernes · cada cinco minutos ET</small></aside><main class="web-main"><header class="web-topbar"><strong>Algoritmo de probabilidad</strong><span id="web-status">Leyendo la base de datos…</span></header><nav class="web-assets">${symbols.map(s=>`<button data-symbol="${s}">${s}</button>`).join('')}</nav><section id="web-content"></section></main></div>`;
+app.innerHTML=`<div class="web-shell"><aside class="web-sidebar"><img src="/assets/route-lion.png" alt="Snipers"><h2>SNIPERS</h2><button data-view="detailed">Lectura detallada</button><button data-view="maps">Mapas</button><button data-view="blocks">Bloques de compra y venta</button><button data-view="chain">Radar de inversión<br><small>Cadena de opciones</small></button><button data-view="weekly">Radar de inversión<br><small>Radar semanal de precios</small></button><small>Datos guardados por el escritorio<br>Actualización lunes a viernes · cada cinco minutos ET</small></aside><main class="web-main"><header class="web-topbar"><strong>Algoritmo de probabilidad</strong><span id="web-status">Leyendo la base de datos…</span></header><nav class="web-assets">${symbols.map(s=>`<button data-symbol="${s}">${s}</button>`).join('')}</nav><section id="web-content"></section></main></div>`;
 const content=document.querySelector<HTMLElement>('#web-content')!;
 const search=document.createElement('div');search.className='web-ticker-search';search.innerHTML=`<label for="ticker-search">Buscar ticker del watchlist (${watchlist.length})</label><input id="ticker-search" type="search" placeholder="Escribe un ticker…" autocomplete="off"><select id="ticker-select" aria-label="Seleccionar ticker">${watchlist.map(a=>`<option value="${esc(a.symbol)}" ${a.symbol===selected?'selected':''}>${esc(a.symbol)} · ${esc(a.name)}</option>`).join('')}</select><small id="ticker-results">${watchlist.length} tickers</small>`;document.querySelector('.web-assets')!.before(search);
 const searchInput=document.querySelector<HTMLInputElement>('#ticker-search')!,tickerSelect=document.querySelector<HTMLSelectElement>('#ticker-select')!;
@@ -51,8 +53,14 @@ function paint(){
  document.querySelector<HTMLElement>('#web-status')!.textContent=`Captura ${new Date(now).toLocaleString('es',{timeZone:'America/New_York'})} ET · ${display.label}${display.partial?' · cobertura parcial':''} · ${webRefreshLabel()}`;
  if(view==='detailed'){
   if(!display.valid){content.innerHTML=savedReadingNotice(frame,selected,now,clock);return;}
-  content.innerHTML=savedReadingNotice(frame,selected,now,clock)+`<section id="live-workspace" class="visual-reading" data-live-view="detailed" data-saved-reading="true">${capturedReadingMarkup(quickReadingPanels(frame,selected,true,buildIntradayControl(frame,selected,true,now),now))}</section><p class="web-note">Lectura detallada del lote guardado en Neon. Actualización lunes a viernes · cada cinco minutos ET; sin consultas al mercado desde la web.</p>`;
+  content.innerHTML=savedReadingNotice(frame,selected,now,clock)+`<section id="live-workspace" class="visual-reading" data-live-view="detailed" data-saved-reading="true">${capturedReadingMarkup(quickReadingPanels(frame,selected,true,buildIntradayControl(frame,selected,true,now),now,true))}</section><p class="web-note">Lectura detallada del lote guardado en Neon. Actualización lunes a viernes · cada cinco minutos ET; sin consultas al mercado desde la web.</p>`;
   bindLevelCardSpacing();bindGammaLive(frame,selected,true,paint,now);
+ }else if(view==='maps'){
+  if(!display.valid){content.innerHTML=savedReadingNotice(frame,selected,now,clock);return;}
+  const spot=frame.ticks?.[selected]?.price;
+  const auction=capturedReadingMarkup(auctionMapPanel(selected,true,now,frame.auctionMap??undefined,typeof spot==='number'&&Number.isFinite(spot)?spot:null,undefined,true));
+  content.innerHTML=savedReadingNotice(frame,selected,now,clock)+`<section class="web-snapshot-maps" data-saved-reading="true">${twoMapsPanel(frame,selected,true,now)}<div class="tm-auction-below">${auction}</div></section><p class="web-note">Mapa de calor y AMT del mismo lote guardado; los datos pendientes no se sustituyen por lecturas en vivo.</p>`;
+  bindTwoMaps(paint);
  }else if(view==='blocks'){
   const captured=Object.values(data.extras??{}).filter(r=>r.command==='get_block_alerts'&&r.observedMs<=now).sort((a,b)=>b.observedMs-a.observedMs)[0];
   const scanner=captured?.value as CapturedBlockScanner|undefined;
@@ -99,7 +107,7 @@ async function pull(){
  }catch(e){if(token!==generation)return;document.querySelector<HTMLElement>('#web-status')!.textContent='Conexión pendiente · reintento automático';if(!saved)content.innerHTML=`<section class="panel">${esc(String(e))}</section>`;setTimeout(()=>{if(token===generation&&webAutoRefreshAllowed())void pull()},15000);}
 }
 document.querySelectorAll<HTMLButtonElement>('[data-symbol]').forEach(b=>b.onclick=()=>selectTicker(b.dataset.symbol!));
-document.querySelectorAll<HTMLButtonElement>('[data-view]').forEach(b=>b.onclick=()=>{view=b.dataset.view as 'detailed'|'chain'|'blocks'|'weekly';if(saved&&saved.frame.symbol===(view==='blocks'?'QQQ':selected))paint();else void pull()});
+document.querySelectorAll<HTMLButtonElement>('[data-view]').forEach(b=>b.onclick=()=>{view=b.dataset.view as 'detailed'|'maps'|'chain'|'blocks'|'weekly';if(saved&&saved.frame.symbol===(view==='blocks'?'QQQ':selected))paint();else void pull()});
 setInterval(()=>{if(!document.hidden&&webAutoRefreshAllowed())void pull()},300000);void pull();
 // Refresh the age notice without discarding the archived chart or resetting its viewport.
 setInterval(()=>{

@@ -19,7 +19,7 @@ export function paintDetailedSnapshot(frame:Record<string,unknown>,capturedMs:nu
   const s=structuredClone(frame) as unknown as LiveState;
   const active=s.stocks.phase==='streaming';
   const control=buildIntradayControl(s,symbol,active,capturedMs);
-  reading=quickReadingPanels(s,symbol,active,control,capturedMs);
+  reading=quickReadingPanels(s,symbol,active,control,capturedMs,true);
  }
  host.innerHTML=`<header class="snapshot-image-title"><strong>${esc(symbol)} · LECTURA DETALLADA · SNAPSHOT</strong><span>${esc(time)} ET</span></header><section id="live-workspace" data-live-view="detailed" class="visual-reading">${reading}</section>`;
  bindLevelCardSpacing();

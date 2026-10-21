@@ -1,0 +1,9 @@
+.quant-fall-panel{container-type:inline-size;background:radial-gradient(ellipse at 80% 0,#10394c22,transparent 65%),#04111e50}
+.quant-fall-panel .section-head strong{font-size:12px;letter-spacing:.045em;color:#e8bd63}
+.quant-fall-status{color:#9adfff;border:1px solid #285471;border-radius:6px;padding:7px 9px;font-size:11px;margin-bottom:10px}
+.quant-fall-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.quant-fall-cell{display:flex;flex-direction:column;gap:6px;min-width:0;min-height:100px;border:1px solid #285471;border-left:3px solid #39d7ff;border-radius:8px;background:#071a2855;padding:10px;box-sizing:border-box}
+.quant-fall-cell>span{font-size:10px;color:#9adfff}.quant-fall-cell>strong{font-size:19px;color:#e9f5ff;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}.quant-fall-cell>small{font-size:10px;color:#a8c0d5;line-height:1.4}
+.quant-fall-cell.negative{border-left-color:#ff5a79}.quant-fall-cell.negative>strong{color:#ff879b}.quant-fall-cell.positive{border-left-color:#2bf4aa}.quant-fall-cell.positive>strong{color:#2bf4aa}.quant-fall-cell.accent{border-left-color:#b397ff}.quant-fall-cell.accent>strong{color:#b397ff}
+.quant-fall-note{font-size:10px;line-height:1.5;color:#a8c0d5;margin:12px 0 0}
+@container(max-width:360px){.quant-fall-grid{grid-template-columns:1fr}.quant-fall-cell{min-height:75px}}

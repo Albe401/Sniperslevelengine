@@ -1,5 +1,6 @@
 /* Same palette and compact card treatment as the existing structural/level maps. */
 .quick-command-layout.route-command-layout>.intraday-control.auction-map-stack{align-self:start;display:flex;flex-direction:column;gap:10px;padding:0;margin:0;border:0;background:transparent;min-height:0;height:auto}
+.tm-auction-below{margin-top:12px}.tm-auction-below>.auction-map-panel{width:100%;max-width:none;margin:0}
 .quick-command-layout.route-command-layout>.auction-map-stack>.structural-map-preview{width:100%;max-width:none;margin:0;padding:12px}
 .auction-map-panel .section-head{flex-wrap:wrap}.auction-map-panel .section-head strong{font-size:12px;letter-spacing:.045em}
 .auction-map-track{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 22px;position:relative;padding:4px 0;isolation:isolate}

@@ -13,6 +13,7 @@ import {optionsCvdPanel} from './options-cvd';
 import type {LiveState} from './live';
 import type {ControlReading} from './intraday-control';
 import {auctionMapPanel,quickMapStack} from './auction-map-panel';
+import {quantFallPanel} from './quant-fall-reading';
 import {auctionHistoryReference} from './auction-history';
 import {controlOutlook} from './control-outlook';
 import {readDirectionScore,directionBadge} from './direction-scanner';
@@ -30,7 +31,7 @@ import {selectedPrice,selectedPriceMarkup} from './selected-price';
 import {rangeFresh} from './daily-range';
 import {interpretationFresh} from './confirmations';
 /** One timestamp and one shared ATR calculation for the whole quick reading. */
-export function quickReadingPanels(s:LiveState|undefined,symbol:string,active:boolean,input:ControlReading,now=Date.now()):string {
+export function quickReadingPanels(s:LiveState|undefined,symbol:string,active:boolean,input:ControlReading,now=Date.now(),captured=false):string {
  const atr=intradayAtr(s,symbol,active,now);atr.context=atrContext(s,symbol,active,atr,now);
  const reading:ControlReading={...input,atr},direction=readDirectionScore(s,reading,active,now),linked=directionLevels(s,direction,symbol,active,now);
  reading.vannaEngine=vannaEngine(s,reading,active,now);linked.vanna=reading.vannaEngine.levels;
@@ -41,7 +42,7 @@ export function quickReadingPanels(s:LiveState|undefined,symbol:string,active:bo
  const quote=selectedPrice(symbol,s,active,now);
  const flowFresh=active&&s?.symbol===symbol&&s.options.phase==='streaming'&&interpretationFresh(s.publishedMs,now)&&s.options.lastEventMs!=null&&s.options.lastEventMs<=now&&now-s.options.lastEventMs<=15000;
  const route=routePreview(s,reading,active,now,atr);
- const mapStack=quickMapStack(structuralMapPreview(symbol,s,active,now,atr,reading.vannaEngine),auctionMapPanel(symbol,active,now,s?.auctionMap??undefined,quote.live?quote.value:null,auctionHistoryReference(symbol,s?.symbol===symbol?s.chartHistory:undefined,now)));
+ const mapStack=quickMapStack(structuralMapPreview(symbol,s,active,now,atr,reading.vannaEngine),captured?quantFallPanel(s,symbol,active,now):auctionMapPanel(symbol,active,now,s?.auctionMap??undefined,quote.live?quote.value:null,auctionHistoryReference(symbol,s?.symbol===symbol?s.chartHistory:undefined,now)));
  const routeProbability=routeChartReading(symbol,now)?.probability??routeProbabilityReading(symbol,now);
  const probability=routeProbability.call!=null||routeProbability.put!=null?routeProbability:active&&s?.symbol===symbol?baselineReading(symbol,now)??routeProbability:routeProbability;
  return `<div class="quick-command-layout route-command-layout"><section class="levels-route-design${symbol==='QQQ'?' qqq-components-layout':''}">${dayMap(h,fresh,s?.flow?.contract_windows??[],flowFresh,quote.live?quote.value:null,selectedPriceMarkup(quote,true),controlOutlook(reading),true,directionBadge(direction,atr,probability,symbol==='QQQ'?{label:componentLabel(currentComponentRead(now)),detail:currentComponentRead(now).reason,actors:componentQuickActors(currentComponentRead(now)),labelMarkup:componentQuickPercent(currentComponentRead(now))}:undefined),linked,atr,optionsCvdPanel(s,symbol,active,now,atr,reading.marketEvidence),{barrierRows:s?.flow?.bid_ask,oiReport:chartContractReport(s,symbol,active,h,now)})}<div class="flow-column">${routeVolatility(reading,now,atr)}${flowFour(s,symbol,active,now,atr,false)}${blockPressurePanel(s,symbol,active,now,atr)}</div></section>${mapStack}</div>${gammaRouteChart(s,symbol,active,now,true)}${route}${quickTopStrikes(s,symbol,active,now)}`;

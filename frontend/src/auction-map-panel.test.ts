@@ -48,6 +48,13 @@ describe('Live auction map quality and layout',()=>{
  it('rejects stale, future, disconnected and foreign-symbol readings',()=>{
   for(const r of [{...fixture(),asOfMs:now-15001},{...fixture(),asOfMs:now+1},{...fixture(),symbol:'SPY'}])expect(auctionMapPanel('QQQ',true,now,r)).not.toContain('99.00–100.00');expect(auctionMapPanel('QQQ',false,now,fixture())).not.toContain('99.00–100.00');
  });
+ it('shows only the same-symbol historical AMT included in the saved capture',()=>{
+  const archived={...fixture(),asOfMs:now-60000};
+  const html=auctionMapPanel('QQQ',true,now,archived,102.5,undefined,true);
+  expect(html).toContain('Perfil en captura');expect(html).toContain('99.00–100.00');
+  expect(auctionMapPanel('QQQ',true,now,{...archived,asOfMs:now+1},102.5,undefined,true)).not.toContain('99.00–100.00');
+  expect(auctionMapPanel('QQQ',true,now,{...archived,symbol:'SPY'},102.5,undefined,true)).not.toContain('99.00–100.00');
+ });
  it('shows a real conditional destination with explicit invalidation',()=>{
   const r=fixture();r.routes=[{direction:-1,destinationLow:99,destinationHigh:100,invalidationLevel:103,trigger:'Mantener salida',invalidation:'Cerrar sobre VAH',probability:null}];const html=auctionMapPanel('QQQ',true,now,r);expect(html).toContain('Posible destino 99.00–100.00');expect(html).toContain('Cerrar sobre VAH: 103.00');
  });

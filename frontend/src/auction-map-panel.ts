@@ -25,13 +25,14 @@ export function rejectionEvidence(r:RejectionReading|null|undefined,symbol:strin
  return r;
 }
 /** No demo prices, option-strike substitutions or inferred probabilities in the live UI. */
-export function auctionMapPanel(symbol:string,active:boolean,now:number,reading?:AuctionReading,spot:number|null=null,reference?:import('./auction-history').AuctionReference):string {
- const liveCandidate=!!reading&&active&&reading.symbol===symbol&&reading.asOfMs<=now&&now-reading.asOfMs<=15000&&reading.version==='auction-map-ticks-v1'&&auctionDisplayDay(reading.asOfMs)===auctionDisplayDay(now);
- const saved=auctionDisplayMemory.read(symbol,now);
+export function auctionMapPanel(symbol:string,active:boolean,now:number,reading?:AuctionReading,spot:number|null=null,reference?:import('./auction-history').AuctionReference,captured=false):string {
+ const capturedCandidate=!!reading&&captured&&reading.symbol===symbol&&Number.isFinite(reading.asOfMs)&&reading.asOfMs>0&&reading.asOfMs<=now&&reading.version==='auction-map-ticks-v1'&&auctionDisplayDay(reading.asOfMs)===auctionDisplayDay(now);
+ const liveCandidate=!!reading&&!captured&&active&&reading.symbol===symbol&&reading.asOfMs<=now&&now-reading.asOfMs<=15000&&reading.version==='auction-map-ticks-v1'&&auctionDisplayDay(reading.asOfMs)===auctionDisplayDay(now);
+ const saved=captured?undefined:auctionDisplayMemory.read(symbol,now);
  const retained=!liveCandidate&&saved?{...saved,reaction:'pending',routes:[],rejectionUpper:null,rejectionLower:null}:undefined;
  const historical=!liveCandidate&&!retained&&!!reference&&reference.symbol===symbol&&reference.reading.symbol===symbol&&reference.reading.version==='auction-map-bars-reference-v1'&&reference.reading.asOfMs<=now&&now-reference.reading.asOfMs<=14*86400000&&Number.isFinite(reference.close)&&reference.close>0;
- const r=liveCandidate?reading:retained??(historical?reference!.reading:reading);
- const valid=!!r&&(historical||!!retained||(active&&r.version==='auction-map-ticks-v1'&&Number.isFinite(r.asOfMs)&&r.asOfMs<=now&&now-r.asOfMs<=15000))&&r.symbol===symbol
+ const r=liveCandidate||capturedCandidate?reading:retained??(historical?reference!.reading:reading);
+ const valid=!!r&&(historical||!!retained||capturedCandidate||(active&&r.version==='auction-map-ticks-v1'&&Number.isFinite(r.asOfMs)&&r.asOfMs<=now&&now-r.asOfMs<=15000))&&r.symbol===symbol
   &&[r.pocLow,r.pocHigh,r.val,r.vah,r.totalVolume].every(v=>Number.isFinite(v)&&v>0)&&r.val<r.vah&&r.pocLow<r.pocHigh&&(historical||r.acceptedTrades>0)
   &&Array.isArray(r.bins)&&r.bins.every(b=>[b.low,b.high,b.volume,b.brackets,b.volumeRatio,b.timeRatio].every(Number.isFinite)&&b.low>0&&b.high>b.low&&b.volume>=0)
   &&Array.isArray(r.routes)&&r.routes.every(t=>[t.direction,t.destinationLow,t.destinationHigh,t.invalidationLevel].every(Number.isFinite)&&[1,-1].includes(t.direction)&&t.destinationLow>0&&t.destinationHigh>t.destinationLow&&t.invalidationLevel>0&&t.probability===null);
@@ -54,7 +55,7 @@ export function auctionMapPanel(symbol:string,active:boolean,now:number,reading?
  const dateLabel=historical&&valid?new Date(r!.asOfMs).toLocaleDateString('es',{timeZone:'America/New_York',weekday:'long',day:'2-digit',month:'2-digit'}):'';
  const sessionHistory=r?.sessionHistory;
  const sessionStatus=sessionHistory?.fromOpen&&sessionHistory.throughMs!=null?`Perfil RTH desde apertura · REST hasta ${new Date(sessionHistory.throughMs).toLocaleTimeString('es',{timeZone:'America/New_York',hour:'2-digit',minute:'2-digit'})} ET · en vivo provisional`:sessionHistory?.status==='loading'?`Recuperando sesión RTH · ${sessionHistory.pages} páginas · perfil parcial`:sessionHistory?.status&&sessionHistory.status!=='ready'?`Perfil parcial · ${sessionHistory.status}`:null;
- const status=!valid?'Pendiente de perfil del subyacente':retained?`Perfil del día guardado · ${active?'sin vigencia':'desconectado'} · última lectura ${new Date(r!.asOfMs).toLocaleTimeString('es',{timeZone:'America/New_York'})} ET`:historical?`Referencia histórica estimada · ${dateLabel}`:sessionStatus??(r!.provisional?`Perfil observado · parcial${r!.observedSinceMs!=null?' · desde '+new Date(r!.observedSinceMs!).toLocaleTimeString('es',{timeZone:'America/New_York',hour:'2-digit',minute:'2-digit'}):''}`:'Perfil observado');
+ const status=!valid?'Pendiente de perfil del subyacente':capturedCandidate?`Perfil en captura · lectura ${new Date(r!.asOfMs).toLocaleTimeString('es',{timeZone:'America/New_York'})} ET`:retained?`Perfil del día guardado · ${active?'sin vigencia':'desconectado'} · última lectura ${new Date(r!.asOfMs).toLocaleTimeString('es',{timeZone:'America/New_York'})} ET`:historical?`Referencia histórica estimada · ${dateLabel}`:sessionStatus??(r!.provisional?`Perfil observado · parcial${r!.observedSinceMs!=null?' · desde '+new Date(r!.observedSinceMs!).toLocaleTimeString('es',{timeZone:'America/New_York',hour:'2-digit',minute:'2-digit'}):''}`:'Perfil observado');
  const displayCards=[cards[1],cards[2],cards[3],cards[0],cards[6],cards[4],cards[5]];
  const cardMarkup=displayCards.map((c,i)=>{
   const boundary=valid?(c.key==='vah'?r!.vah:c.key==='val'?r!.val:null):null;
