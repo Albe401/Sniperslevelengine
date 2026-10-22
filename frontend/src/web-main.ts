@@ -102,7 +102,13 @@ async function pull(){
    throw Error('Base de datos no disponible');
   }
   const value=await response.json() as Saved;if(token!==generation)return;
-  if(!value.available){document.querySelector<HTMLElement>('#web-status')!.textContent=`${selected} · pendiente de datos guardados`;if(!saved)content.innerHTML=`<section class="panel">${esc(selected)} todavía no tiene un snapshot disponible en Neon. Se comprobará automáticamente; no se consultará Data desde la web.</section>`;setTimeout(()=>{if(token===generation&&webAutoRefreshAllowed())void pull()},15000);return;}
+  if(!value.available){
+   const isIndex=watchlist.some(asset=>asset.symbol===selected&&asset.kind==='INDEX');
+   document.querySelector<HTMLElement>('#web-status')!.textContent=`${selected} · ${isIndex?'índice sin cobertura de snapshot':'pendiente de datos guardados'}`;
+   if(!saved)content.innerHTML=isIndex?`<section class="panel" role="status">${esc(selected)} es un índice. El publicador actual de snapshots cubre acciones y ETF; no se inventa una gráfica ni se sustituye por QQQ o SPY.</section>`:`<section class="panel">${esc(selected)} todavía no tiene un snapshot disponible en Neon. Se comprobará automáticamente; no se consultará Data desde la web.</section>`;
+   if(!isIndex)setTimeout(()=>{if(token===generation&&webAutoRefreshAllowed())void pull()},15000);
+   return;
+  }
   if(value.frame.symbol!==requested||value.capturedMs>Date.now())throw Error('Lote inválido');
   saved=value;paint();
  }catch(e){if(token!==generation)return;document.querySelector<HTMLElement>('#web-status')!.textContent='Conexión pendiente · reintento automático';if(!saved)content.innerHTML=`<section class="panel">${esc(String(e))}</section>`;setTimeout(()=>{if(token===generation&&webAutoRefreshAllowed())void pull()},15000);}
