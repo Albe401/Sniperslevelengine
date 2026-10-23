@@ -1,5 +1,11 @@
 import {describe,it,expect} from 'vitest';
-import {levelCardPositions} from './level-card-spacing';
+import {levelCardPositions,retainedCvdSpace} from './level-card-spacing';
+
+it('retains the old CVD card footprint without rendering it in the web map',()=>{
+ expect(retainedCvdSpace(494.47)).toBe(166); // 800px viewport: 706 -> 872px panel
+ expect(retainedCvdSpace(270.98)).toBe(166); // 1500px viewport: 714 -> 880px panel
+ expect(retainedCvdSpace(260)).toBe(180);    // 1440px viewport: 742 -> 922px panel
+});
 describe('filled level map',()=>{
  for(const heights of [[80,240,114,114,240,80],[100,130,120,90,80,110],[50,55],[60,60,60,60,60,60,60,60],[400,400,400,400],[]]){
   it(`fills columns without overlaps or clipping for ${heights}`,()=>{

@@ -1,5 +1,11 @@
 let observer:ResizeObserver|undefined;
 let frame=0;
+/** Preserve the measured map height after the CVD card was removed from the web layout. */
+export function retainedCvdSpace(flowWidth:number):number {
+ // The former card added 166px at normal widths, 180px when its text wrapped
+ // in a narrow flow column. These include its margins and the column gap.
+ return Number.isFinite(flowWidth)&&flowWidth<=264?180:166;
+}
 export function levelCardPositions(heights:number[],availableHeight=0):{column:number;top:number;height:number}[]{
  const bottoms=[0,0],counts=[0,0],gap=6;
  const sizes=heights.map(v=>Number.isFinite(v)?Math.max(0,v):0);
@@ -42,7 +48,9 @@ export function bindLevelCardSpacing():void {
   flow.style.height='auto';flow.style.maxHeight='none';
   const css=getComputedStyle(panel);
   const inset=[css.paddingTop,css.paddingBottom,css.borderTopWidth,css.borderBottomWidth].reduce((n,v)=>n+(parseFloat(v)||0),0);
-  const fitted=Math.ceil(flow.getBoundingClientRect().height+inset);
+  const natural=flow.getBoundingClientRect();
+  const reserve=flow.querySelector('.cvd-panel')?0:retainedCvdSpace(natural.width);
+  const fitted=Math.max(824,Math.ceil(natural.height+inset+reserve));
   flow.style.height=height;flow.style.maxHeight=maxHeight;
   if(fitted>inset){layout.style.setProperty('--level-overview-height',`${fitted}px`);layout.classList.add('level-overview-fixed');}
  };
