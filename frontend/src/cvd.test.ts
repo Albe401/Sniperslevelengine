@@ -13,8 +13,9 @@ it('keeps ambiguous pressure and malformed deltas from implying a direction',()=
  expect(cvdPanel({...r,regular:{...p,buy:100,sell:80,unknown:30,delta:20,coveragePct:85.7}},'NVDA',true,'regular',now)).toContain('SIN PREDOMINIO CONFIRMADO');
  expect(cvdPanel({...r,regular:{...p,delta:999}},'NVDA',true,'regular',now)).not.toContain('PRESIÓN COMPRADORA');
 });
-it('places the CVD below the price and above the three analyst targets',()=>{
- const html=analystTargetsPanel('NVDA',100,undefined,cvdPanel(r,'NVDA',true,'regular',now));
- expect(html.indexOf('Precio del activo')).toBeLessThan(html.indexOf('MOTOR CVD'));
- expect(html.indexOf('MOTOR CVD')).toBeLessThan(html.indexOf('LOW TARGET'));
+it('retains the CVD calculation but does not place its visual panel among analyst targets',()=>{
+ const html=analystTargetsPanel('NVDA',100);
+ expect(html).toContain('Precio del activo');
+ expect(html).toContain('LOW TARGET');
+ expect(html).not.toContain('MOTOR CVD');
 });

@@ -63,7 +63,8 @@ it('keeps daily scale during intraday warmup without fabricating CVD agreement',
 it('renders the complete quick reading with one shared ATR and unchanged bias/control',()=>{
  const s=fixture(),r=buildIntradayControl(s,'QQQ',true,now),bias=readDirectionScore(s,r,true,now),baseline=JSON.stringify(r);
  const html=quickReadingPanels(s,'QQQ',true,r,now);
- for(const marker of ['route-volatility-meters','ATR14 · DIARIO','ATR14 · 5 MIN','0.53 ATR D','CVD / avance 5 min: alineados','Mapas del activo','PERFIL DE VOLUMEN','MAPA DE ACEPTACIÓN Y RECHAZO','CVD y compras','Motor CVD','Mapa de recorrido'])expect(html).toContain(marker);
+ for(const marker of ['route-volatility-meters','ATR14 · DIARIO','ATR14 · 5 MIN','0.53 ATR D','CVD / avance 5 min: alineados','Mapas del activo','PERFIL DE VOLUMEN','MAPA DE ACEPTACIÓN Y RECHAZO','CVD y compras','Mapa de recorrido'])expect(html).toContain(marker);
+ expect(html).not.toContain('Motor CVD');
  expect(JSON.stringify(r)).toBe(baseline);expect(readDirectionScore(s,r,true,now).call).toBe(bias.call);expect(html).toContain('no confirma agotamiento');expect(html.match(/class="route-volatility"/g)).toHaveLength(1);
 });
 it.each(['inactive','foreign','stale'])('the whole reading keeps %s ATR pending',kind=>{

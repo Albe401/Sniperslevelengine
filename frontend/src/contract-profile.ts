@@ -20,3 +20,16 @@ export function chartContractReport(s:LiveState|undefined,symbol:string,active:b
  if(!ds.length||new Set(ds.map(c=>c.ticker)).size!==ds.length||ds.some(c=>!Number.isFinite(c.strike)||c.strike<=0||!['call','put'].includes(c.kind)||[c.oi,c.volume,c.dex,c.gex].some(v=>v!=null&&(!Number.isFinite(v)||v<0))))return;
  return scopeContractReport(r,dates);
 }
+
+/** For saved web readings, prefer the independent full-chain OI reference when it belongs to this capture. */
+export function chartLevelOiReport(s:LiveState|undefined,symbol:string,active:boolean,h:Horizon|undefined,now:number):EtfReport|undefined {
+ const fallback=chartContractReport(s,symbol,active,h,now),dates=h?.expirations;
+ if(!active||s?.symbol!==symbol||!h||!dates?.length||new Set(dates).size!==dates.length)return fallback;
+ const record=(s as LiveState&{contractChain?:{observation?:{command?:string;args?:{symbol?:string};observedMs?:number;value?:EtfReport}}}).contractChain?.observation;
+ const r=record?.value,observed=record?.observedMs;
+ if(record?.command!=='get_contract_inventory'||record.args?.symbol!==symbol||!r||r.symbol!==symbol||r.days!==183||!r.heatmap||!r.enrichment||
+   !Number.isSafeInteger(observed)||observed!>now||now-observed!>300000||!Number.isSafeInteger(r.at)||r.at>observed!||now-r.at>300000||
+   dateFormatter.format(r.at)!==dateFormatter.format(now)||dates.some(d=>!r.expirations.includes(d))||
+   r.contracts!==r.enrichment.details.length||new Set(r.enrichment.details.map(c=>c.ticker)).size!==r.contracts)return fallback;
+ return scopeContractReport(r,dates);
+}

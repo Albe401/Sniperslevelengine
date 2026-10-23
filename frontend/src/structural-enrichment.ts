@@ -5,8 +5,7 @@ import type {LiveState} from './live';
 import type {StructuralCard} from './structural-map-preview';
 import type {EtfReport,EtfSide} from './etf-dealers';
 import {rankStrikes,enrichmentPanel,etfFlowPanel,type EtfFlow} from './etf-enrichment';
-import {blockPressurePanel,defaultBlockPeriod} from './block-pressure';
-import {cvdPanel} from './cvd';
+import {blockPressurePanel} from './block-pressure';
 import {escapeHtml as esc} from './model';
 import './structural-enrichment.css';
 const fmt=(n:number|null|undefined)=>n==null||!Number.isFinite(n)?'—':new Intl.NumberFormat('es',{notation:'compact',maximumFractionDigits:2}).format(n);
@@ -41,7 +40,7 @@ export function structuralEnrichmentPanel(symbol:string,s:LiveState|undefined,ac
  const r=structuralEvidenceReport(s,symbol,active,card,now),key=`${symbol}:${i}`;
  if(r)views.set(key,r);else views.delete(key);
  return `<details data-horizon-details="structural-evidence-${i}"><summary>${esc(card.name)} · detalle estructural</summary><div data-structural-evidence-host="${esc(key)}">${r?evidenceBody(key,r):'<p>Detalle pendiente: requiere cadena propia, reciente y coherente con este horizonte.</p>'}</div></details>`;
- }).join('')}<details data-horizon-details="structural-evidence-flow"><summary>CVD, flujo de opciones y bloques del activo</summary>${cvdPanel(s?.cvd,symbol,own,defaultBlockPeriod(now),now)}${etfFlowPanel(data,symbol,own,now)}${blockPressurePanel(s,symbol,own,now,undefined,false)}</details></details>`;
+ }).join('')}<details data-horizon-details="structural-evidence-flow"><summary>Flujo de opciones y bloques del activo</summary>${etfFlowPanel(data,symbol,own,now)}${blockPressurePanel(s,symbol,own,now,undefined,false)}</details></details>`;
 }
 if(typeof document!=='undefined'){
  const update=(target:Element,strike?:number,expiry?:string)=>{
