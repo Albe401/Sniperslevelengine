@@ -1,3 +1,4 @@
+import {bindMassiveExposurePanel} from './massive-exposure-panel';
 import {savedWeeklyRanges} from './saved-weekly-ranges';
 import {webAutoRefreshAllowed,webRefreshLabel} from './web-refresh-policy';
 import {savedReadingDisplay,savedReadingNotice,capturedReadingMarkup} from './saved-reading-display';
@@ -55,7 +56,7 @@ function paint(){
  if(view==='detailed'){
   if(!display.valid){content.innerHTML=savedReadingNotice(frame,selected,now,clock);return;}
   content.innerHTML=savedReadingNotice(frame,selected,now,clock)+`<section id="live-workspace" class="visual-reading" data-live-view="detailed" data-saved-reading="true">${capturedReadingMarkup(quickReadingPanels(frame,selected,true,buildIntradayControl(frame,selected,true,now),now,true))}</section><p class="web-note">Lectura detallada del lote guardado en Neon. Actualización lunes a viernes · cada cinco minutos ET; sin consultas al mercado desde la web.</p>`;
-  bindLevelCardSpacing();bindGammaLive(frame,selected,true,paint,now);
+  bindLevelCardSpacing();bindGammaLive(frame,selected,true,paint,now);bindMassiveExposurePanel(paint);
  }else if(view==='maps'){
   if(!display.valid){content.innerHTML=savedReadingNotice(frame,selected,now,clock);return;}
   const spot=frame.ticks?.[selected]?.price;
