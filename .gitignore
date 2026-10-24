@@ -11,6 +11,7 @@ target/
 *.exe
 *.dpapi
 test-results/
+__pycache__/
 verification/
 engine/fixtures/
 fixtures/*

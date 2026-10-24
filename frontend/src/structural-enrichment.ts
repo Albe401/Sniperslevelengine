@@ -50,10 +50,15 @@ if(typeof document!=='undefined'){
   selections.set(key,selected);host.innerHTML=evidenceBody(key,r);
  };
  const open=(target:Element)=>{
-  const card=target.closest<HTMLElement>('[data-structural-open]');
-  const panel=card?.closest('.structural-map-preview')?.querySelector<HTMLDetailsElement>('.structural-enrichment');
-  if(!panel||!card)return;panel.open=true;
-  panel.querySelectorAll<HTMLDetailsElement>('[data-horizon-details^="structural-evidence-"]').forEach(d=>{d.open=d.dataset.horizonDetails===`structural-evidence-${card.dataset.structuralOpen}`;});
+  const card=target.closest<HTMLElement>('[data-structural-open]'),options=target.closest<HTMLElement>('[data-structural-options]');
+  const owner=(card??options)?.closest('.structural-map-preview');
+  const panel=owner?.querySelector<HTMLDetailsElement>('.structural-enrichment');
+  if(!panel)return;panel.open=true;
+  const priceKey=card?'structural-price-'+card.dataset.structuralOpen:'structural-options-summary';
+  const hasPrice=!!owner?.hasAttribute('data-price-structure');
+  panel.querySelectorAll<HTMLDetailsElement>('[data-horizon-details^="structural-price-"], [data-horizon-details^="structural-evidence-"], [data-horizon-details="structural-options-summary"]').forEach(d=>{
+   d.open=hasPrice?d.dataset.horizonDetails===priceKey:d.dataset.horizonDetails==='structural-evidence-'+card?.dataset.structuralOpen;
+  });
   panel.querySelector<HTMLElement>('summary')?.focus();
  };
  document.addEventListener('click',event=>{const target=event.target;if(target instanceof Element)open(target);});

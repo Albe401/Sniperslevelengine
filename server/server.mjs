@@ -15,6 +15,7 @@ for(const field of ['rangeContext','localVolume','greekSupport','thetaVega','opt
 quickFields.add('weeklyRangeSnapshot');
 quickFields.add('weeklyRangeSnapshots');
 quickFields.add('gexbotDominants');
+quickFields.add('priceStructureReading');
 export function publicGexbot(value,symbol,capturedMs){
  const keys=['positiveOi','negativeOi','positiveVolume','negativeVolume','zeroGamma'];
  if(!value||value.source!=='Gexbot Classic'||value.symbol!==symbol||value.category!=='gex_full'

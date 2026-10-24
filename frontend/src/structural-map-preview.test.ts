@@ -2,15 +2,22 @@ import {it,expect} from 'vitest';
 import {structuralCards,structuralMapPreview,structuralAlignment} from './structural-map-preview';
 import type {LiveState} from './live';
 const now=Date.UTC(2026,9,5,15);
-it('shows partial shares in the circle without certifying structural direction',()=>{const s=state();Object.assign(s.optionSnapshotStatus.horizons[0].exposure,{dexComplete:false,eligible:3,deltaUsed:2,callDexPct:null,putDexPct:null});const cards=structuralCards(s,'QQQ',true,now);expect(cards[0].call).toBe(80);expect(cards[0].partial).toBe(true);expect(cards[0].side).toBe('PENDIENTE');expect(structuralAlignment(cards).label).toContain('PENDIENTE');const html=structuralMapPreview('QQQ',s,true,now);expect(html).toContain('class="horizon call partial"');expect(html).toContain('style="--share:80"');expect(html).toContain('<strong>80%</strong><span>PARCIAL</span>');expect(html).toContain('Muestra parcial: CALL 80% / PUT 20% · cobertura delta 67%. No confirma dirección.');expect(html).toContain('CALLS*');expect(html).toContain('PUTS*');});
-it('colors partial PUT dominance red while keeping the alignment pending',()=>{const s=state();Object.assign(s.optionSnapshotStatus.horizons[0].exposure,{dexComplete:false,eligible:3,deltaUsed:2,callDex:300,putDex:-700,netDex:-400,callDexPct:null,putDexPct:null});const cards=structuralCards(s,'QQQ',true,now);expect(cards[0].side).toBe('PENDIENTE');const html=structuralMapPreview('QQQ',s,true,now);expect(html).toContain('class="horizon put partial"');expect(html).toContain('style="--share:70"');expect(html).toContain('<strong>70%</strong><span>PARCIAL</span>');});
+it('keeps partial option exposure in detail, separate from price structure',()=>{
+ const s=state();Object.assign(s.optionSnapshotStatus.horizons[0].exposure,{dexComplete:false,eligible:3,deltaUsed:2,callDexPct:null,putDexPct:null});
+ const c=structuralCards(s,'QQQ',true,now)[0];expect(c.call).toBe(80);expect(c.partial).toBe(true);expect(c.side).toBe('PENDIENTE');
+ const html=structuralMapPreview('QQQ',s,true,now);expect(html.match(/data-structural-open=/g)).toHaveLength(6);expect(html.match(/data-price-structure-side="SIN DATOS"/g)).toHaveLength(5);expect(html).not.toContain('<strong>80%</strong>');expect(html).toContain('Exposición de opciones por vencimiento');
+});
+it('never infers a PUT price structure from PUT option dominance',()=>{
+ const s=state();Object.assign(s.optionSnapshotStatus.horizons[0].exposure,{dexComplete:false,eligible:3,deltaUsed:2,callDex:300,putDex:-700,netDex:-400,callDexPct:null,putDexPct:null});
+ expect(structuralCards(s,'QQQ',true,now)[0].side).toBe('PENDIENTE');expect(structuralMapPreview('QQQ',s,true,now)).not.toContain('data-price-structure-side="PUT"');
+});
 it('keeps the structural header compact while retaining pending horizon evidence',()=>{
  const s=state();const start=now-6*60000;
  s.ticks={QQQ:{symbol:'QQQ',price:106.3,tradeMs:now,bid:null,ask:null,quoteMs:null}} as LiveState['ticks'];s.options={phase:'denied'} as LiveState['options'];
  s.chartHistory={sessions:[{date:'2026-10-05',openMs:Date.UTC(2026,9,5,13,30),closeMs:Date.UTC(2026,9,5,20)}],minutes:[101,102,103,104,105,106].map((close,i)=>({timestampMs:start+i*60000,open:close-.2,high:close+.3,low:close-.3,close,volume:1000}))} as LiveState['chartHistory'];
  Object.assign(s.optionSnapshotStatus.horizons[0].exposure,{dexComplete:false,eligible:3,deltaUsed:2,callDexPct:null,putDexPct:null});
  const html=structuralMapPreview('QQQ',s,true,now);
- expect(html).toContain('<strong>MAPA ESTRUCTURAL</strong>');expect(html).not.toContain('PRECIO SUBIENDO');expect(html).not.toContain('OPCIONES PENDIENTES');expect(html).toContain('Muestra parcial: CALL');
+ expect(html).toContain('<strong>MAPA ESTRUCTURAL</strong>');expect(html).not.toContain('PRECIO SUBIENDO');expect(html).not.toContain('OPCIONES PENDIENTES');expect(html).toContain('Exposición de opciones por vencimiento');
 });
 const period={buy:800,sell:100,unknown:100,delta:700,coveragePct:90,lastMs:now,sinceMs:now-60000,changeOne:100,changeFive:700,gaps:0};
 function state(){return {symbol:'QQQ',publishedMs:now,stocks:{phase:'streaming'},metrics:{session:'2026-10-05',phase:'Sesión RTH'},cvd:{symbol:'QQQ',date:'2026-10-05',at:now,available:true,premarket:{...period},regular:{...period},rejected:0},optionSnapshotStatus:{phase:'ready',observedMs:now,horizons:['DAY','WEEK','NEXT4'].map(mode=>({mode,observedMs:now,expirations:mode==='NEXT4'?['2026-10-05','2026-10-06','2026-10-07','2026-10-08']:['2026-10-05'],exposure:{eligible:2,deltaUsed:2,unknownOi:0,dexComplete:true,callDex:800,putDex:-200,netDex:600,callDexPct:80,putDexPct:20}}))}} as unknown as LiveState}

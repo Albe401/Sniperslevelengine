@@ -7,7 +7,8 @@
     "dev": "vite --host 127.0.0.1",
     "build": "tsc --noEmit && vite build",
     "check": "tsc --noEmit",
-    "test": "vitest run src/snapshot-model.test.ts src/contract-inventory.test.ts src/option-oi-heatmap.test.ts src/quick-chart-levels.test.ts"
+    "test": "vitest run src/snapshot-model.test.ts src/contract-inventory.test.ts src/option-oi-heatmap.test.ts src/quick-chart-levels.test.ts",
+    "test:structure": "vitest run src/price-structure.test.ts src/price-structure-long.test.ts src/saved-price-structure.test.ts src/structural-map-preview.test.ts src/structural-enrichment.test.ts src/atr-quick-reading.test.ts"
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.2.8",

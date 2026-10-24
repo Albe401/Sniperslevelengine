@@ -34,7 +34,7 @@ it('audits full renders with 2048 enriched contracts and 5090 minutes without co
  const before=JSON.stringify(s),tracker=new ControlTracker(),durations:number[]=[];
  for(let i=0;i<40;i++){
   const start=performance.now(),r=tracker.update(buildIntradayControl(s,'QQQ',true,now),now),html=quickReadingPanels(s,'QQQ',true,r,now);
-  durations.push(performance.now()-start);expect(html.match(/data-structural-open=/g)).toHaveLength(3);expect(html).toContain('auction-map-visual');expect(html).not.toMatch(/\b(?:NaN|Infinity|undefined)\b/);expect(r.marketEvidence!.score.call).not.toBeNull();
+  durations.push(performance.now()-start);expect(html.match(/data-structural-open=/g)).toHaveLength(6);expect(html).toContain('auction-map-visual');expect(html).not.toMatch(/\b(?:NaN|Infinity|undefined)\b/);expect(r.marketEvidence!.score.call).not.toBeNull();
  }
  expect(JSON.stringify(s)).toBe(before);
  durations.sort((a,b)=>a-b);console.info('QUICK_STRESS',JSON.stringify({minutes:s.chartHistory!.minutes.length,contracts:details.length,updates:40,meanMs:durations.reduce((a,b)=>a+b,0)/40,p95Ms:durations[38],maxMs:durations[39]}));

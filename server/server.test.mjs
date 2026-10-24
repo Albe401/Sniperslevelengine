@@ -17,6 +17,11 @@ const bundle=()=>({available:true,id:'test',capturedMs:Date.now()-300001,frames:
 test('rejects future data and requires correct identity for all ten',()=>{const b=bundle();assert(validBundle(b));b.frames.AAPL.symbol='QQQ';assert(!validBundle(b));b.frames.AAPL.symbol='AAPL';b.capturedMs=Date.now()+1000;assert(!validBundle(b))});
 test('archives are exact and corruption fails',()=>{const raw=Buffer.from('{"symbol":"AAPL","price":123.45}');const f={compressedBase64:gzipSync(raw).toString('base64'),sha256:createHash('sha256').update(raw).digest('hex')};assert.equal(decodeFrame(f).price,123.45);assert.throws(()=>decodeFrame({...f,sha256:'bad'}))});
 test('public service starts without password',()=>{makeServer().close()});
+test('public API preserves frozen price structure without adding market credentials',async()=>{
+ const b=bundle();b.frames.QQQ.priceStructureReading={version:'price-structure-five-wilder14-pivots2-v1',symbol:'QQQ',capturedMs:b.capturedMs,cards:[]};b.frames.QQQ.apiKey='must-not-ship';
+ const server=makeServer({provider:async()=>b});await new Promise(r=>server.listen(0,'127.0.0.1',r));
+ try{const v=await(await fetch(`http://127.0.0.1:${server.address().port}/api/frame?symbol=QQQ`)).json();assert.deepEqual(v.frame.priceStructureReading,b.frames.QQQ.priceStructureReading);assert(!('apiKey' in v.frame));}finally{await new Promise(r=>server.close(r));}
+});
 test('web response excludes photos and unrelated sections',async()=>{
  const b=bundle();b.frames.QQQ.learningReport={private:true};b.images={QQQ:{base64:'should_not_ship'}};b.extras={news:{command:'get_benzinga_news',value:{}},other:{command:'get_contract_inventory',args:{symbol:'AAPL'},value:{}}};
  const server=makeServer({provider:async()=>b});await new Promise(r=>server.listen(0,'127.0.0.1',r));

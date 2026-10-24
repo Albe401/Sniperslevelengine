@@ -1,6 +1,7 @@
 """Five-minute durable outbox -> Neon. No provider sockets or order execution."""
 import argparse, hashlib, hmac, json, os, pathlib, secrets, socket, sqlite3, struct
 import subprocess, sys, threading, time, uuid, ctypes, gzip, base64
+from snapshot_price_structure import enrich_frames
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
 
@@ -156,7 +157,8 @@ def stage(db,value,source):
     captured=value['capturedMs']; slot=captured//INTERVAL*INTERVAL
     allowed={'symbol','publishedMs','startedMs','stocks','options','ticks','bars','minutes','chartHistory','history','metrics','optionSnapshotStatus','selection','flow','flowExpiry','cvd','offExchange','dailyAtr','dailyRange','positionMaps','wallPull','wallFlow','adjustedReadings','adjustedAlignment','levelDeltas','magnetConfirmations','optionBaselineRecords','gapReport','priceAlerts','qqq_report','treasury','auctionMap','structuralPaths','directionOi','rawOptions','levelDynamics','intradayAtr','priceNow','snapshotUnavailable'}
     allowed.update({'rangeContext','localVolume','greekSupport','thetaVega','optionLiquidity','swingReport','neuroContext','qqqReport','optionTiming','etfBlocks','etfCvd','etfFlow','dataService'})
-    value={**value,'frames':{symbol:{k:v for k,v in frame.items() if k in allowed} for symbol,frame in value['frames'].items()},'webSections':['quick','detailed','contract-chain'],'coverage':{**value.get('coverage',{}),'webSections':['quick','detailed','contract-chain'],'format':'json','photosEnabled':False}}
+    frames=enrich_frames({symbol:{k:v for k,v in frame.items() if k in allowed} for symbol,frame in value['frames'].items()},captured)
+    value={**value,'frames':frames,'webSections':['quick','detailed','contract-chain'],'coverage':{**value.get('coverage',{}),'webSections':['quick','detailed','contract-chain'],'format':'json','photosEnabled':False}}
     with LOCK: extras=json.loads(encode({k:v for k,v in EXTRAS.items() if v['observedMs']<=captured and v['command'] in {'get_contract_inventory','get_iv_history','get_fmp_targets','preview_route_4h'}}))
     # Capture existing IV evidence without starting reconstruction jobs or market calls.
     for symbol in value['frames']:
