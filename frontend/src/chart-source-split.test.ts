@@ -1,0 +1,3 @@
+import {it,expect} from 'vitest';
+import {gammaRouteChart} from './gamma-live';
+it('separates Massive detailed and provider quick chart capabilities',()=>{const now=Date.now(),own=gammaRouteChart(undefined,'QQQ',false,now,'massive'),provider=gammaRouteChart(undefined,'QQQ',false,now,true);expect(own).toContain('data-massive-gamma-chart="true"');expect(own).toContain('data-massive-gamma-toggle');expect(own).not.toContain('data-gexbot-web-chart');expect(own).not.toContain('data-route-profiles');expect(provider).toContain('data-gexbot-web-chart="true"');expect(provider).not.toContain('data-massive-gamma-toggle');expect(provider).toContain('data-route-profiles');});
