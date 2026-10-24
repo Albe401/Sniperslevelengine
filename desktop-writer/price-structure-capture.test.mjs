@@ -1,4 +1,4 @@
-import {test} from 'node:test';import assert from 'node:assert/strict';import {mkdtempSync,writeFileSync,utimesSync,rmSync} from 'node:fs';import {tmpdir} from 'node:os';import {join} from 'node:path';import {spawnSync} from 'node:child_process';
+import {test} from 'node:test';import assert from 'node:assert/strict';import {mkdtempSync,writeFileSync,utimesSync,unlinkSync,rmdirSync} from 'node:fs';import {tmpdir} from 'node:os';import {join} from 'node:path';import {spawnSync} from 'node:child_process';
 test('frozen writer rejects a history file completed after the immutable capture',()=>{
  const directory=mkdtempSync(join(tmpdir(),'snipers-structure-'));
  try{
@@ -10,5 +10,5 @@ test('frozen writer rejects a history file completed after the immutable capture
   };
   utimesSync(file,new Date(capturedMs+1000),new Date(capturedMs+1000));assert.equal(run().historyAsOfMs,null);
   utimesSync(file,new Date(capturedMs-1000),new Date(capturedMs-1000));assert.equal(run().historyAsOfMs,capturedMs-1000);
- }finally{rmSync(directory,{recursive:true,force:true});}
+ }finally{unlinkSync(join(directory,'QQQ.json'));rmdirSync(directory);}
 });

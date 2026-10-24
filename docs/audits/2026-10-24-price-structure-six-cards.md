@@ -16,6 +16,10 @@ A broad run exposed seven existing failing suites in the unchanged parent commit
 
 Historical validation is descriptive. Live-session acceptance and predictive performance are not established by these checks. The original company database and two-year SPY/QQQ minute archives are preserved; this operational cache is not presented as a ten-year backtest.
 
+The subsequent full-universe check covers 186 stocks/ETF and 930 timeframe cases, with 28,022 independent Python comparisons of aggregation, closed-form Wilder ATR, pivots, invalidation, seed sensitivity and summary counts. The publisher refreshed and read back all 176 supplementary assets, alongside the ten primary assets. Public Edge verification includes QQQ, SPY, BAC, a partial intraday case (ABBV), and a short weekly history case (CRWV).
+
+Actual coverage under the conservative every-minute rule is 61 assets with all five scales and 125 with partial coverage. Missing minute bars can legitimately mean no price-eligible trades, according to Massive's aggregate construction rules; they do not establish provider data loss. The current model deliberately does not impute a price or certify an absent minute. A future sparse-minute policy would need explicit, per-window proof of a complete REST result and different treatment of incomplete live transport. That extension is pending rather than silently treating every absent minute as a valid continuous observation. Recent listings can separately lack the required daily/weekly length. These exclusions are visible in the sixth card and retained in the audit.
+
 Sources defining inputs and ATR, rather than certifying the project's directional rule:
 
 - [Fidelity ATR guide](https://www.fidelity.com/learning-center/trading-investing/technical-analysis/technical-indicator-guide/atr)
