@@ -1,3 +1,4 @@
+import {optionSeriesMatches} from './option-series-identity';
 import type {EtfReport} from './etf-dealers';
 import {sameStrike} from './strike-key';
 import {reportOiHeatmap} from './option-oi-heatmap-report';
@@ -19,9 +20,9 @@ export function levelOpenInterest(report:EtfReport|undefined,strike:number,expir
  if(!dates.length||new Set(dates).size!==dates.length)return null;
  const finish=(call:number,put:number,contracts:number,verification:'reference'|'snapshot',scopeComplete:boolean,oiDate:string|null)=>{
   const total=call+put;
-  if(![call,put,total].every(n=>Number.isSafeInteger(n)&&n>=0)||total===0)return null;
-  const callPct=Math.round(100*call/total);
-  return {call,put,total,callPct,putPct:100-callPct,contracts,expirations:dates,verification,scopeComplete,oiDate};
+  if(![call,put,total].every(n=>Number.isSafeInteger(n)&&n>=0))return null;
+  const callPct=total>0?Math.round(100*call/total):null;
+  return {call,put,total,callPct,putPct:callPct==null?null:100-callPct,zeroOi:total===0,contracts,expirations:dates,verification,scopeComplete,oiDate};
  };
  // The full-chain inventory already carries the independent reference used by the OI map.
  // Reuse its verified cells when present; do not silently fall back on a conflicting snapshot.
@@ -44,7 +45,7 @@ export function levelOpenInterest(report:EtfReport|undefined,strike:number,expir
  // explicitly marked as snapshot-only, until the verified inventory is available.
  const rows=report.enrichment?.details.filter(c=>sameStrike(c.strike,strike)&&dates.includes(c.expiration))??[];
  if(dates.some(e=>!['call','put'].every(kind=>rows.some(c=>c.expiration===e&&c.kind===kind))))return null;
- if(!rows.length||new Set(rows.map(c=>c.ticker)).size!==rows.length||rows.some(c=>c.oi==null||!Number.isSafeInteger(c.oi)||c.oi<0))return null;
+ if(!rows.length||new Set(rows.map(c=>c.ticker)).size!==rows.length||rows.some(c=>!optionSeriesMatches(c,report.symbol)||!['call','put'].includes(c.kind)||c.oi==null||!Number.isSafeInteger(c.oi)||c.oi<0))return null;
  const call=rows.filter(c=>c.kind==='call').reduce((n,c)=>n+c.oi!,0),put=rows.filter(c=>c.kind==='put').reduce((n,c)=>n+c.oi!,0);
  return finish(call,put,rows.length,'snapshot',false,report.enrichment?.oiReferenceDate??null);
 }

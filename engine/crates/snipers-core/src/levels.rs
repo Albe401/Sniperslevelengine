@@ -92,6 +92,9 @@ pub struct ResultSet {
 fn nonnegative(v: Option<f64>) -> Option<f64> {
     v.filter(|x| x.is_finite() && *x >= 0.0)
 }
+fn contract_count(v: Option<f64>) -> Option<f64> {
+    nonnegative(v).filter(|x| x.fract() == 0.0 && *x <= 9_007_199_254_740_991.0)
+}
 fn ratio(value: f64, max: f64) -> f64 {
     if max > 0.0 {
         (value / max).clamp(0.0, 1.0)
@@ -132,14 +135,19 @@ pub fn calculate(
         if !c.strike.is_finite() || c.strike <= 0.0 || !["call", "put"].contains(&c.kind.as_str()) {
             return Err("Contrato de niveles inválido");
         }
-        let oi = nonnegative(c.oi);
-        let volume = nonnegative(c.volume);
+        if c.oi.is_some_and(|n| n > 9_007_199_254_740_991.0)
+            || c.volume.is_some_and(|n| n > 9_007_199_254_740_991.0)
+        {
+            return Err("Conteo de contratos fuera de rango");
+        }
+        let oi = contract_count(c.oi);
+        let volume = contract_count(c.volume);
         let gex = nonnegative(c.gex);
         if oi.is_none() || volume.is_none() {
             result.complete = false;
             result.missing_contracts += 1;
         }
-        if gex.is_none() {
+        if gex.is_none() || oi.is_none() {
             gex_complete = false;
         }
         let next = result.rows.len();
@@ -166,6 +174,13 @@ pub fn calculate(
             row.put_gex += gex.unwrap_or(0.0);
         }
     }
+    // A daily-change component is usable only for the same complete strike population.
+    let history = history && !result.rows.is_empty() && result.rows.iter().all(|r| {
+        let matched: Vec<_> = changes.iter().filter(|(k, _, _)| *k == r.strike).collect();
+        matched.len() == 1 && matched[0].1.zip(matched[0].2).is_some_and(|(c,p)|
+            [c,p].iter().all(|v| v.is_finite() && v.fract() == 0.0 && v.abs() <= 9_007_199_254_740_991.0))
+    });
+    result.history_available = history;
     result.gex_available = gex_complete;
     let mut max_call: f64 = 0.0;
     let mut max_put: f64 = 0.0;
@@ -179,6 +194,10 @@ pub fn calculate(
         row.total_oi = row.call_oi + row.put_oi;
         row.total_volume = row.call_volume + row.put_volume;
         row.total_gamma_weight = row.call_gamma_weight + row.put_gamma_weight;
+        if [row.call_oi,row.put_oi,row.total_oi,row.call_volume,row.put_volume,row.total_volume]
+            .iter().any(|v| !v.is_finite() || v.fract()!=0.0 || *v>9_007_199_254_740_991.0) {
+            return Err("Suma de contratos fuera del rango entero exacto");
+        }
         row.oi_dominance = bias(row.call_oi, row.put_oi);
         row.volume_dominance = bias(row.call_volume, row.put_volume);
         row.gamma_dominance = bias(row.call_gamma_weight, row.put_gamma_weight);
@@ -328,6 +347,7 @@ pub fn calculate(
                     }
                 })
                 .then_with(|| a.distance.abs().total_cmp(&b.distance.abs()))
+                .then_with(|| a.strike.total_cmp(&b.strike))
         });
         ranked.truncate(3);
         if prefix == "R" {
@@ -451,5 +471,24 @@ mod tests {
         c.oi = Some(f64::MAX);
         c.gamma = Some(10.0);
         assert!(calculate(&[c], 499.0, &[], false, false).is_err());
+    }
+    #[test]
+    fn fractional_or_unsafe_contract_counts_cannot_certify_a_level() {
+        let mut c = Contract {
+            strike: 500.0,
+            kind: "call".into(),
+            oi: Some(12.5),
+            volume: Some(3.0),
+            gamma: Some(0.02),
+            gex: Some(100.0),
+        };
+        let result = calculate(&[c.clone()], 499.0, &[], false, true).unwrap();
+        assert!(!result.complete && !result.gex_available);
+        assert_eq!(result.missing_contracts, 1);
+        assert_eq!(result.rows[0].call_oi, 0.0);
+        assert!(result.selected.values().all(Option::is_none));
+        c.oi = Some(12.0);
+        c.volume = Some(9_007_199_254_740_992.0);
+        assert!(calculate(&[c], 499.0, &[], false, true).is_err());
     }
 }

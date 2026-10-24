@@ -1,0 +1,152 @@
+{
+  "checkedMs": 1791904450292,
+  "reference": [
+    {
+      "cfi": "OCASPS",
+      "contract_type": "call",
+      "exercise_style": "american",
+      "expiration_date": "2026-10-16",
+      "primary_exchange": "BATO",
+      "shares_per_contract": 100,
+      "strike_price": 705,
+      "ticker": "O:QQQ261016C00705000",
+      "underlying_ticker": "QQQ"
+    },
+    {
+      "cfi": "OPASPS",
+      "contract_type": "put",
+      "exercise_style": "american",
+      "expiration_date": "2026-10-16",
+      "primary_exchange": "BATO",
+      "shares_per_contract": 100,
+      "strike_price": 705,
+      "ticker": "O:QQQ261016P00705000",
+      "underlying_ticker": "QQQ"
+    }
+  ],
+  "snapshots": [
+    {
+      "break_even_price": 742.65,
+      "day": {
+        "change": -3.42,
+        "change_percent": -8.23,
+        "close": 38.15,
+        "high": 38.15,
+        "last_updated": 1791902162142000000,
+        "low": 38.15,
+        "open": 38.15,
+        "previous_close": 41.57,
+        "volume": 5,
+        "vwap": 38.15
+      },
+      "details": {
+        "contract_type": "call",
+        "exercise_style": "american",
+        "expiration_date": "2026-10-16",
+        "shares_per_contract": 100,
+        "strike_price": 705,
+        "ticker": "O:QQQ261016C00705000"
+      },
+      "greeks": {
+        "delta": 0.9429194125767429,
+        "gamma": 0.004709750665641935,
+        "theta": -0.48186136964630627,
+        "vega": 0.06990461879652879
+      },
+      "implied_volatility": 0.34454240968132416,
+      "last_quote": {
+        "ask": 38.08,
+        "ask_size": 9,
+        "ask_exchange": 302,
+        "bid": 37.22,
+        "bid_size": 5,
+        "bid_exchange": 300,
+        "last_updated": 1791904432479065447,
+        "midpoint": 37.65,
+        "timeframe": "REAL-TIME"
+      },
+      "last_trade": {
+        "sip_timestamp": 1791902125578425856,
+        "conditions": [
+          232
+        ],
+        "price": 38.15,
+        "size": 5,
+        "exchange": 308,
+        "timeframe": "REAL-TIME"
+      },
+      "open_interest": 4058,
+      "underlying_asset": {
+        "change_to_break_even": 0.83,
+        "last_updated": 1791904450050584243,
+        "price": 741.82,
+        "ticker": "QQQ",
+        "timeframe": "REAL-TIME"
+      }
+    },
+    {
+      "break_even_price": 704.845,
+      "day": {
+        "change": 0.03,
+        "change_percent": 23.077,
+        "close": 0.16,
+        "high": 0.2,
+        "last_updated": 1791903302181000000,
+        "low": 0.13,
+        "open": 0.2,
+        "previous_close": 0.13,
+        "volume": 112,
+        "vwap": 0.1605
+      },
+      "details": {
+        "contract_type": "put",
+        "exercise_style": "american",
+        "expiration_date": "2026-10-16",
+        "shares_per_contract": 100,
+        "strike_price": 705,
+        "ticker": "O:QQQ261016P00705000"
+      },
+      "greeks": {
+        "delta": -0.021294525049388297,
+        "gamma": 0.0026818703086485163,
+        "theta": -0.1426773814238259,
+        "vega": 0.034621742832029144
+      },
+      "implied_volatility": 0.26702158653334246,
+      "last_quote": {
+        "ask": 0.16,
+        "ask_size": 1260,
+        "ask_exchange": 322,
+        "bid": 0.15,
+        "bid_size": 306,
+        "bid_exchange": 309,
+        "last_updated": 1791904441679817814,
+        "midpoint": 0.155,
+        "timeframe": "REAL-TIME"
+      },
+      "last_trade": {
+        "sip_timestamp": 1791904445643511762,
+        "conditions": [
+          209
+        ],
+        "price": 0.15,
+        "size": 2,
+        "exchange": 318,
+        "timeframe": "REAL-TIME"
+      },
+      "open_interest": 36783,
+      "underlying_asset": {
+        "change_to_break_even": -37,
+        "last_updated": 1791904450050584243,
+        "price": 741.82,
+        "ticker": "QQQ",
+        "timeframe": "REAL-TIME"
+      }
+    }
+  ],
+  "provenance": {
+    "source": "native docs/audits/2026-10-14-oi-heatmap/real-source.json",
+    "sha256": "41313a132475e46dd4d20cbfa843f8de88bf59484cf4fbaf91e294a9f0d10968",
+    "scope": "QQQ strike 705 expiry 2026-10-16, exact real rows only"
+  }
+}

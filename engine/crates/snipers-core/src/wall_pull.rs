@@ -11,6 +11,8 @@ pub struct LiveWindow {
 }
 fn zone(c: &Coverage) -> bool {
     c.levels_requested > 0
+        && c.levels_covered > 0
+        && (c.coverage_pct-100.0*c.levels_covered as f64/c.levels_requested as f64).abs()<=1e-9
         && c.levels_covered <= c.levels_requested
         && c.coverage_pct.is_finite()
         && (60.0..=100.0).contains(&c.coverage_pct)
@@ -26,6 +28,7 @@ pub fn summarize(w: &Window, side: &str) -> LiveWindow {
     let pull_target_covered = matches!(side, "CALL" | "PUT")
         && pull.levels_requested == 1
         && pull.levels_covered == 1
+        && pull.coverage_pct.is_finite() && (pull.coverage_pct-100.0).abs()<=1e-9
         && pull.contracts.is_some_and(|v| v.is_finite() && v >= 0.0);
     LiveWindow {
         minutes: w.minutes,

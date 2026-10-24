@@ -65,6 +65,9 @@ fn finite(value: &Value) -> Option<f64> {
 fn nonnegative(value: &Value) -> Option<f64> {
     finite(value).filter(|v| *v >= 0.0)
 }
+fn contract_count(value: &Value) -> Option<f64> {
+    nonnegative(value).filter(|v| v.fract() == 0.0 && *v <= 9_007_199_254_740_991.0)
+}
 fn nanoseconds(value: &Value) -> Option<u64> {
     value.as_u64().filter(|t| *t > 0).map(|t| t / 1_000_000)
 }
@@ -134,6 +137,16 @@ pub fn normalize(row: &Value, symbol: &str) -> Result<ContractSnapshot, &'static
     let strike = finite(&d["strike_price"])
         .filter(|v| *v > 0.0)
         .ok_or("Strike inválido")?;
+    // Every OCC series encodes expiry, side and strike, including adjusted roots.
+    // Apply the same identity guard to stocks/ETF as to SPX before grouping OI.
+    let raw = ticker.strip_prefix("O:").ok_or("Ticker de opciones inválido")?;
+    let tail = &raw[raw.len() - 15..];
+    let encoded_expiry = format!("20{}-{}-{}", &tail[..2], &tail[2..4], &tail[4..6]);
+    let encoded_kind = if &tail[6..7] == "C" { "call" } else { "put" };
+    let encoded_strike = tail[7..].parse::<u64>().map_err(|_| "Strike de opción inválido")? as f64 / 1000.0;
+    if expiration != encoded_expiry || kind != encoded_kind || strike != encoded_strike {
+        return Err("Vencimiento, tipo o strike no coincide con el ticker de opción");
+    }
     let g = &row["greeks"];
     let q = &row["last_quote"];
     let u = &row["underlying_asset"];
@@ -142,8 +155,8 @@ pub fn normalize(row: &Value, symbol: &str) -> Result<ContractSnapshot, &'static
         expiration: expiration.into(),
         strike,
         kind: kind.into(),
-        open_interest: nonnegative(&row["open_interest"]),
-        volume: nonnegative(&row["day"]["volume"]),
+        open_interest: contract_count(&row["open_interest"]),
+        volume: contract_count(&row["day"]["volume"]),
         shares_per_contract: nonnegative(&d["shares_per_contract"]),
         premium_multiplier: None,
         delta: finite(&g["delta"]).filter(|v| v.abs() <= 1.0),
@@ -249,6 +262,22 @@ mod tests {
         let mut zero = row();
         zero["open_interest"] = serde_json::json!(0);
         assert_eq!(normalize(&zero, "QQQ").unwrap().open_interest, Some(0.0));
+    }
+    #[test]
+    fn option_contract_counts_must_be_exact_nonnegative_integers() {
+        let mut sample = row();
+        sample["open_interest"] = serde_json::json!(12.5);
+        sample["day"] = serde_json::json!({"volume": 3.25});
+        let parsed = normalize(&sample, "QQQ").unwrap();
+        assert_eq!(parsed.open_interest, None);
+        assert_eq!(parsed.volume, None);
+        sample["open_interest"] = serde_json::json!(12);
+        sample["day"]["volume"] = serde_json::json!(3);
+        let parsed = normalize(&sample, "QQQ").unwrap();
+        assert_eq!(parsed.open_interest, Some(12.0));
+        assert_eq!(parsed.volume, Some(3.0));
+        sample["open_interest"] = serde_json::json!(9_007_199_254_740_992u64);
+        assert_eq!(normalize(&sample, "QQQ").unwrap().open_interest, None);
     }
     #[test]
     fn snapshot_multiplier_requires_standard_reference_metadata() {

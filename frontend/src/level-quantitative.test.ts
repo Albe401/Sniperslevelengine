@@ -8,9 +8,10 @@ it('requires sustained exact-level price reaction and fresh aligned covered CVD'
  expect(levelDefense(100,m,[e],now).label).toBe('Defensa compradora observada');
  expect(levelDefense(100,{...m,price:{...m.price,spot:99},cvd:{...m.cvd,signal:-.5}},[{...e,direction:-1,action:'Rechazo observado'}],now).label).toBe('Defensa vendedora observada');
  expect(levelDefense(100,{...m,cvd:{...m.cvd,signal:-.5}},[e],now).label).toBe('Defensa contradicha');
- for(const event of [{...e,sustained:false},{...e,level:101},{...e,at:now+1},{...e,at:now-300001},{...e,action:'Pérdida sostenida'}])expect(levelDefense(100,m,[event],now).label).toBe('Defensa pendiente');
- for(const c of [{...m.cvd,coverage:79},{...m.cvd,at:now-3001},{...m.cvd,signal:NaN},{...m.cvd,at:now+1}])expect(levelDefense(100,{...m,cvd:c},[e],now).label).toBe('Defensa pendiente');
- expect(levelDefense(100,undefined,[e],now).label).toBe('Defensa pendiente');
+ for(const event of [{...e,sustained:false},{...e,level:101},{...e,at:now+1},{...e,at:now-300001},{...e,action:'Pérdida sostenida'}])expect(levelDefense(100,m,[event],now).label).toBe('Sin reacción sostenida');
+ expect(levelDefense(100,{...m,price:{...m.price,spot:99}},[e],now).label).toBe('Defensa sin confirmar');
+ for(const c of [{...m.cvd,coverage:79},{...m.cvd,at:now-3001},{...m.cvd,signal:NaN},{...m.cvd,at:now+1}])expect(levelDefense(100,{...m,cvd:c},[e],now).label).toBe('Reacción sin CVD comparable');
+ expect(levelDefense(100,undefined,[e],now).label).toBe('Defensa no verificable');
 });
 import type {BidAskWindow} from './strike-bid-ask';
 const date='2026-10-12';

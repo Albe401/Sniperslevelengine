@@ -1,5 +1,6 @@
 //! Bounded view of structural analytics for one explicit expiration universe.
-use crate::{levels, liquidity, options::Observation};
+use crate::{calendar, levels, liquidity, options::Observation};
+use chrono::NaiveDate;
 use serde::Serialize;
 use std::collections::BTreeMap;
 
@@ -89,15 +90,23 @@ fn level_quality(contracts: &[&crate::options::ContractSnapshot]) -> Vec<LevelQu
     sorted.sort_by(|a, b| a.strike.total_cmp(&b.strike));
     sorted.chunk_by(|a, b| a.strike == b.strike).map(|local| {
         let strike = local[0].strike;
-        let valid = |c: &&&crate::options::ContractSnapshot| c.open_interest.is_some() && c.volume.is_some() && (c.open_interest == Some(0.0) || c.gamma.is_some());
-        let total_oi: f64 = local.iter().filter_map(|c| c.open_interest).sum();
+        let valid = |c: &&&crate::options::ContractSnapshot| exact_count(c.open_interest) && exact_count(c.volume) && (c.open_interest == Some(0.0) || valid_gamma(c.gamma));
+        let total_oi: f64 = local.iter().filter_map(|c| c.open_interest.filter(|_| exact_count(c.open_interest))).sum();
         let covered_oi: f64 = local.iter().filter(valid).filter_map(|c| c.open_interest).sum();
-        let missing_oi = local.iter().filter(|c| c.open_interest.is_none()).count();
+        let missing_oi = local.iter().filter(|c| !exact_count(c.open_interest)).count();
         LevelQuality { strike, total: local.len(), covered: local.iter().filter(valid).count(),
             oi_coverage: if missing_oi == 0 && total_oi > 0.0 { Some(100.0 * covered_oi / total_oi) } else { None },
-            missing_oi, missing_volume: local.iter().filter(|c| c.volume.is_none()).count(),
-            missing_gamma: local.iter().filter(|c| c.open_interest != Some(0.0) && c.gamma.is_none()).count() }
+            missing_oi, missing_volume: local.iter().filter(|c| !exact_count(c.volume)).count(),
+            missing_gamma: local.iter().filter(|c| c.open_interest != Some(0.0) && !valid_gamma(c.gamma)).count() }
     }).collect()
+}
+fn exact_count(value: Option<f64>) -> bool {
+    value.is_some_and(|n| {
+        n.is_finite() && n >= 0.0 && n.fract() == 0.0 && n <= 9_007_199_254_740_991.0
+    })
+}
+fn valid_gamma(value: Option<f64>) -> bool {
+    value.is_some_and(|n| n.is_finite() && n >= 0.0)
 }
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -139,12 +148,11 @@ fn rank_contracts(contracts: &[&crate::options::ContractSnapshot]) -> ContractRa
         .iter()
         .filter_map(|c| {
             let (oi, volume) = (c.open_interest?, c.volume?);
-            let gamma = if oi == 0.0 { 0.0 } else { c.gamma?.abs() * oi };
-            (oi.is_finite()
-                && volume.is_finite()
+            let gamma = if oi == 0.0 { 0.0 } else { c.gamma.filter(|g| g.is_finite() && *g >= 0.0)? * oi };
+            (exact_count(Some(oi))
+                && exact_count(Some(volume))
                 && gamma.is_finite()
-                && oi >= 0.0
-                && volume >= 0.0)
+                && gamma >= 0.0)
                 .then_some((*c, oi, volume, gamma))
         })
         .collect();
@@ -193,6 +201,9 @@ pub fn calculate(
         .values()
         .filter(|c| expirations.contains(&c.expiration))
         .collect();
+    if current.contracts.iter().any(|(key,c)|key!=&c.ticker) {
+        return Err("Clave y ticker de contrato no coinciden en la observación");
+    }
     let input: Vec<_> = contracts
         .iter()
         .map(|c| levels::Contract {
@@ -211,8 +222,32 @@ pub fn calculate(
             },
         })
         .collect();
-    let previous =
-        previous.filter(|p| p.symbol == current.symbol && p.observed_date < current.observed_date);
+    // An arbitrary older capture cannot be weighted as one-session OI change.
+    let expected_previous = NaiveDate::parse_from_str(&current.observed_date, "%Y-%m-%d")
+        .ok()
+        .and_then(|mut date| {
+            for _ in 0..10 {
+                date = date.pred_opt()?;
+                match calendar::schedule(date) {
+                    calendar::Day::Open(_) => return Some(date.to_string()),
+                    calendar::Day::Unknown => return None,
+                    _ => {}
+                }
+            }
+            None
+        });
+    let previous = previous.filter(|p| {
+        p.symbol == current.symbol
+            && p.observed_ms < current.observed_ms
+            && p.contracts.iter().all(|(key,c)|key==&c.ticker)
+            && contracts.iter().all(|c| p.contracts.get(&c.ticker).is_some_and(|old|
+                old.strike==c.strike && old.kind==c.kind && old.expiration==c.expiration))
+            && expected_previous.as_deref() == Some(p.observed_date.as_str())
+            && p.contracts.values().filter(|c| expirations.contains(&c.expiration)).count() == contracts.len()
+            && contracts.iter().all(|c| p.contracts.contains_key(&c.ticker))
+            && contracts.iter().all(|c| exact_count(c.open_interest))
+            && p.contracts.values().filter(|c| expirations.contains(&c.expiration)).all(|c| exact_count(c.open_interest))
+    });
     let mut grouped: BTreeMap<u64, (Option<f64>, Option<f64>)> = BTreeMap::new();
     for c in &contracts {
         let group = grouped
@@ -242,7 +277,7 @@ pub fn calculate(
     let levels = levels::calculate(&input, spot, &changes, history, true)?;
     let gamma_complete = contracts
         .iter()
-        .all(|c| c.open_interest == Some(0.0) || c.gamma.is_some());
+        .all(|c| c.open_interest == Some(0.0) || valid_gamma(c.gamma));
     let magnet = levels.selected.get("M1").copied().flatten();
     let liquidity = liquidity::calculate(
         &levels.rows,
@@ -358,9 +393,9 @@ pub fn calculate(
         let mut subset = current.clone();
         subset.contracts.retain(|_, c| {
             expirations.contains(&c.expiration)
-                && c.open_interest.is_some()
-                && c.volume.is_some()
-                && (c.open_interest == Some(0.0) || c.gamma.is_some())
+                && exact_count(c.open_interest)
+                && exact_count(c.volume)
+                && (c.open_interest == Some(0.0) || valid_gamma(c.gamma))
         });
         let covered = subset.contracts.len();
         if covered > 0 && covered < contracts.len() {
@@ -461,6 +496,7 @@ fn quick_pressure(rows: &[levels::Row], complete: bool) -> Option<f64> {
         return None;
     }
     let share = |a: f64, b: f64| if a + b > 0.0 { a / (a + b) } else { 0.5 };
+    if totals.iter().all(|v| *v==0.0) { return None; }
     Some(
         100.0
             * (share(totals[0], totals[1]) * 0.45
@@ -471,6 +507,37 @@ fn quick_pressure(rows: &[levels::Row], complete: bool) -> Option<f64> {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn invalid_persisted_contract_count_is_missing_in_quality_rank_and_provisional_view() {
+        let mut current = observation();
+        let expirations = vec!["2026-09-25".into(), "2026-10-02".into()];
+        let row = current.contracts.get_mut("O:QQQ261002C00520000").unwrap();
+        row.open_interest = Some(0.5);
+        let result = calculate(&current, None, &expirations, 500.0).unwrap();
+        assert!(!result.complete);
+        let quality = result.level_quality.iter().find(|q| q.strike == 520.0).unwrap();
+        assert_eq!((quality.covered, quality.missing_oi), (0, 1));
+        assert_eq!(result.top_contracts.covered, 2);
+        assert_eq!(result.provisional.unwrap().covered_contracts, 2);
+
+        let row = current.contracts.get_mut("O:QQQ261002C00520000").unwrap();
+        row.open_interest = Some(100.0);
+        row.volume = Some(0.5);
+        let result = calculate(&current, None, &expirations, 500.0).unwrap();
+        let quality = result.level_quality.iter().find(|q| q.strike == 520.0).unwrap();
+        assert_eq!((quality.covered, quality.missing_volume), (0, 1));
+        assert_eq!(result.top_contracts.covered, 2);
+        assert_eq!(result.provisional.unwrap().covered_contracts, 2);
+
+        let row = current.contracts.get_mut("O:QQQ261002C00520000").unwrap();
+        row.volume = Some(20.0);
+        row.gamma = Some(-0.02);
+        let result = calculate(&current, None, &expirations, 500.0).unwrap();
+        let quality = result.level_quality.iter().find(|q| q.strike == 520.0).unwrap();
+        assert_eq!((quality.covered, quality.missing_gamma), (0, 1));
+        assert_eq!(result.top_contracts.covered, 2);
+        assert_eq!(result.provisional.unwrap().covered_contracts, 2);
+    }
     #[test]
     fn quick_pressure_matches_python_weights_and_rejects_missing_data() {
         let row = crate::levels::Row {
@@ -489,7 +556,7 @@ mod tests {
         assert_eq!(super::quick_pressure(&[], true), None);
         assert_eq!(
             super::quick_pressure(&[Default::default()], true),
-            Some(50.0)
+            None
         );
     }
     use super::*;
@@ -569,9 +636,11 @@ mod tests {
     }
     #[test]
     fn isolates_expirations_asset_and_daily_comparable_universe() {
-        let current = observation();
+        let mut current = observation();
+        current.observed_ms = calendar::legacy_eastern_ms("2026-09-24 10:00:00").unwrap();
         let dates = vec!["2026-09-25".into()];
         let mut previous = current.clone();
+        previous.observed_ms = calendar::legacy_eastern_ms("2026-09-23 10:00:00").unwrap();
         previous.observed_date = "2026-09-23".into();
         for c in previous.contracts.values_mut() {
             c.open_interest = Some(90.0);
@@ -611,6 +680,18 @@ mod tests {
                 .unwrap()
                 .history_available
         );
+        let mut older = current.clone();
+        older.observed_date = "2026-09-22".into();
+        assert!(!calculate(&current, Some(&older), &dates, 500.0).unwrap().history_available);
+        older.observed_date = "2026-09-23".into();
+        let mut extra = older.contracts.values().next().unwrap().clone();
+        extra.ticker = "O:QQQ260925P00480000".into();
+        extra.strike = 480.0;
+        older.contracts.insert(extra.ticker.clone(), extra);
+        assert!(!calculate(&current, Some(&older), &dates, 500.0).unwrap().history_available);
+        older.contracts.remove("O:QQQ260925P00480000");
+        older.contracts.values_mut().next().unwrap().open_interest = Some(90.5);
+        assert!(!calculate(&current, Some(&older), &dates, 500.0).unwrap().history_available);
     }
     #[test]
     fn incomplete_inputs_never_publish_certified_routes() {

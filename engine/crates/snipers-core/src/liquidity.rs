@@ -220,15 +220,31 @@ fn wall(rows: &[LiquidityRow], spot: f64, call: bool) -> Option<Wall> {
     let mut candidates: Vec<_> = rows
         .iter()
         .filter(|r| {
-            if call {
-                r.strike() >= spot
+            // A wall must have observed contracts or trading on its own option side.
+            let side_present = if call {
+                r.base.call_oi > 0.0 || r.base.call_volume > 0.0
             } else {
-                r.strike() <= spot
-            }
+                r.base.put_oi > 0.0 || r.base.put_volume > 0.0
+            };
+            side_present
+                && if call {
+                    r.strike() >= spot
+                } else {
+                    r.strike() <= spot
+                }
         })
         .collect();
     if candidates.is_empty() {
-        candidates = rows.iter().collect();
+        candidates = rows
+            .iter()
+            .filter(|r| {
+                if call {
+                    r.base.call_oi > 0.0 || r.base.call_volume > 0.0
+                } else {
+                    r.base.put_oi > 0.0 || r.base.put_volume > 0.0
+                }
+            })
+            .collect();
     }
     let score = |r: &LiquidityRow| {
         if call {
@@ -629,7 +645,18 @@ pub fn calculate(
     if !spot.is_finite() || spot <= 0.0 || rows.len() > 20_000 {
         return Err("Entradas de liquidez inválidas");
     }
+    let mut strikes = std::collections::BTreeSet::new();
     for r in rows {
+        if !strikes.insert(r.strike.to_bits()) {
+            return Err("Strike duplicado en liquidez");
+        }
+        let counts=[r.call_oi,r.put_oi,r.total_oi,r.call_volume,r.put_volume,r.total_volume];
+        if counts.iter().any(|n|!n.is_finite()||*n<0.0||n.fract()!=0.0||*n>9_007_199_254_740_991.0)
+            || r.total_oi != r.call_oi+r.put_oi || r.total_volume != r.call_volume+r.put_volume
+            || [r.call_gamma_weight,r.put_gamma_weight,r.total_gamma_weight,r.gross_gex].iter().any(|n|!n.is_finite()||*n<0.0)
+            || !(-1.0..=1.0).contains(&r.dominance) || !(0.0..=100.0).contains(&r.score) {
+            return Err("Dominio o sumas de liquidez inconsistentes");
+        }
         if ![
             r.strike,
             r.call_oi,
@@ -685,52 +712,56 @@ pub fn calculate(
                     (a.strike() - spot)
                         .abs()
                         .total_cmp(&(b.strike() - spot).abs())
-                })
+                }).then_with(|| a.strike().total_cmp(&b.strike()))
             });
             ranked.first().map(|r| r.strike())
         });
-    let call = result.call_wall.as_ref().unwrap();
-    let put = result.put_wall.as_ref().unwrap();
-    [result.upside_target_1, result.upside_target_2] = targets(rows, call.strike, true);
-    [result.downside_target_1, result.downside_target_2] = targets(rows, put.strike, false);
-    result.upside_vacuum = vacuum(
-        rows,
-        spot,
-        true,
-        result
-            .upside_target_1
-            .as_ref()
-            .map_or(call.strike, |t| t.strike),
-    );
-    result.downside_vacuum = vacuum(
-        rows,
-        spot,
-        false,
-        result
-            .downside_target_1
-            .as_ref()
-            .map_or(put.strike, |t| t.strike),
-    );
-    result.call_wall_context = Some(zone(rows, call));
-    result.put_wall_context = Some(zone(rows, put));
-    result.upside_liquidity_barrier = Some(barrier(rows, spot, result.magnet, call, true));
-    result.downside_liquidity_barrier = Some(barrier(rows, spot, result.magnet, put, false));
-    result.call_pull = Some(pull(
-        rows,
-        spot,
-        put,
-        call,
-        result.upside_target_1.as_ref(),
-        result.upside_vacuum.as_ref(),
-    ));
-    result.put_pull = Some(pull(
-        rows,
-        spot,
-        call,
-        put,
-        result.downside_target_1.as_ref(),
-        result.downside_vacuum.as_ref(),
-    ));
+    if let Some(call) = result.call_wall.as_ref() {
+        [result.upside_target_1, result.upside_target_2] = targets(rows, call.strike, true);
+        result.upside_vacuum = vacuum(
+            rows,
+            spot,
+            true,
+            result
+                .upside_target_1
+                .as_ref()
+                .map_or(call.strike, |t| t.strike),
+        );
+        result.call_wall_context = Some(zone(rows, call));
+        result.upside_liquidity_barrier = Some(barrier(rows, spot, result.magnet, call, true));
+    }
+    if let Some(put) = result.put_wall.as_ref() {
+        [result.downside_target_1, result.downside_target_2] = targets(rows, put.strike, false);
+        result.downside_vacuum = vacuum(
+            rows,
+            spot,
+            false,
+            result
+                .downside_target_1
+                .as_ref()
+                .map_or(put.strike, |t| t.strike),
+        );
+        result.put_wall_context = Some(zone(rows, put));
+        result.downside_liquidity_barrier = Some(barrier(rows, spot, result.magnet, put, false));
+    }
+    if let (Some(call), Some(put)) = (result.call_wall.as_ref(), result.put_wall.as_ref()) {
+        result.call_pull = Some(pull(
+            rows,
+            spot,
+            put,
+            call,
+            result.upside_target_1.as_ref(),
+            result.upside_vacuum.as_ref(),
+        ));
+        result.put_pull = Some(pull(
+            rows,
+            spot,
+            call,
+            put,
+            result.downside_target_1.as_ref(),
+            result.downside_vacuum.as_ref(),
+        ));
+    }
     Ok(result)
 }
 #[cfg(test)]
@@ -827,5 +858,41 @@ mod tests {
             assert!(pull.pull_score > 60.0);
             assert!(!pull.path_valid && !pull.ready);
         }
+    }
+    #[test]
+    fn a_wall_requires_observed_activity_on_its_own_option_side() {
+        let put = Row {
+            strike: 99.0,
+            put_oi: 100.0,
+            put_volume: 20.0,
+            total_oi: 100.0,
+            total_volume: 20.0,
+            dominance: -1.0,
+            score: 50.0,
+            ..Default::default()
+        };
+        let put_only = calculate(&[put], 100.0, None, true).unwrap();
+        assert!(put_only.complete);
+        assert!(put_only.put_wall.is_some());
+        assert!(put_only.call_wall.is_none());
+        assert!(put_only.call_pull.is_none() && put_only.put_pull.is_none());
+        assert!(put_only.upside_vacuum.is_none());
+
+        let call = Row {
+            strike: 101.0,
+            call_oi: 100.0,
+            call_volume: 20.0,
+            total_oi: 100.0,
+            total_volume: 20.0,
+            dominance: 1.0,
+            score: 50.0,
+            ..Default::default()
+        };
+        let call_only = calculate(&[call], 100.0, None, true).unwrap();
+        assert!(call_only.complete);
+        assert!(call_only.call_wall.is_some());
+        assert!(call_only.put_wall.is_none());
+        assert!(call_only.call_pull.is_none() && call_only.put_pull.is_none());
+        assert!(call_only.downside_vacuum.is_none());
     }
 }

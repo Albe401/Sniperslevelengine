@@ -43,8 +43,8 @@ export function levelStrength(value:number|null|undefined,vacuum=false,provision
   const grade=valid?(value>=80?'MUY ALTA':value>=60?'ALTA':value>=40?'MEDIA':'BAJA'):'';
   const oi=context.oi;
   const scoreTrack=valid?`<div class="level-strength-track" role="meter" aria-label="${esc(label?label+' · ':'')}${title}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${value}"><i style="width:${value}%"></i></div>`:'';
-  const oiTrack=oi?`<div class="level-strength-track level-oi-track" role="img" aria-label="OI CALL ${oi.callPct}% / PUT ${oi.putPct}%" title="${esc(context.detail??'')} "><i class="oi-call" style="width:${oi.callPct}%"></i><i class="oi-put" style="width:${oi.putPct}%"></i></div>`:'';
-  return `<div class="level-strength" title="${esc(label?label+' · ':'')}${title}: puntuación del modelo, no probabilidad de rebote; no comparar scores entre tipos de nivel.${provisional?' Estructura provisional; cadena incompleta.':''}"><span>${title} <b>${valid?value.toFixed(1)+'/100 · '+grade:'Sin datos'}</b>${context.caption?` · <small class="wall-oi-count">${esc(context.caption)}</small>`:''}</span>${scoreTrack}${oiTrack}</div>`;
+  const oiTrack=oi&&!oi.zeroOi&&oi.callPct!=null&&oi.putPct!=null?`<div class="level-strength-track level-oi-track" role="img" aria-label="OI CALL ${oi.callPct}% / PUT ${oi.putPct}%" title="${esc(context.detail??'')} "><i class="oi-call" style="width:${oi.callPct}%"></i><i class="oi-put" style="width:${oi.putPct}%"></i></div>`:'';
+  return `<div class="level-strength" title="${esc(label?label+' · ':'')}${title}: concentración relativa del modelo dentro de la cadena consultada, no probabilidad de rebote; no comparar scores entre tipos de nivel.${provisional?' Estructura provisional; cadena incompleta.':''}"><span>${title} <b>${valid?value.toFixed(1)+'/100 · '+grade+(provisional?' · PARCIAL':''):'Sin datos'}</b>${context.caption?` · <small class="wall-oi-count">${esc(context.caption)}</small>`:''}</span>${scoreTrack}${oiTrack}</div>`;
 }
 export type MapOutlook=ReturnType<typeof controlOutlook>;
 export function mapLevelReading(labels:string[],strike:number|undefined,outlook?:MapOutlook,barrierCaption?:string,barrierAction?:string,barrierEvidence?:string):string {
@@ -52,7 +52,7 @@ export function mapLevelReading(labels:string[],strike:number|undefined,outlook?
  const row=strike==null?undefined:outlook.rows.find(r=>sameStrike(r.level,strike)&&labels.includes(r.name));
  return `<details class="map-level-reading" data-horizon-details="map-reading-${esc(labels.join('-'))}"><summary><span>${esc(barrierCaption??row?.state??'Esperando interacción')}</span><b>${esc(barrierAction??'Lectura +')}</b></summary><div class="map-reading-detail">${barrierEvidence?`<p>${esc(barrierEvidence)}</p>`:""}${row?`<p>${esc(row.quality)} · ${esc(row.state)}</p>`:''}<p class="map-reading-scope">Contexto intradía compartido</p>${sharedLevelDetail(outlook.marketEvidence,strike)}${[['Nivel decisivo',outlook.level,outlook.levelDetail],['Qué está cambiando',outlook.change,outlook.changeDetail],['Recorrido',outlook.route,outlook.routeDetail],['Qué cambia la lectura',outlook.invalidate,outlook.invalidateDetail]].map(([label,value,detail])=>`<p><b>${esc(label)}</b><span>${esc(value)}</span>${esc(detail)}</p>`).join('')}</div></details>`;
 }
-export function dayMap(horizon:Horizon|undefined,structureFresh:boolean,rows:ContractWindow[],flowFresh:boolean,currentPrice:number|null|undefined,spotHtml='',outlook?:MapOutlook,routeDesign=false,directionHtml='',linkedLevels?:DirectionLevels,atr?:AtrRead,headerContext="",options:{hideLiquidity?:boolean;barrierRows?:BidAskWindow[];oiReport?:EtfReport}={}):string {
+export function dayMap(horizon:Horizon|undefined,structureFresh:boolean,rows:ContractWindow[],flowFresh:boolean,currentPrice:number|null|undefined,spotHtml='',outlook?:MapOutlook,routeDesign=false,directionHtml='',linkedLevels?:DirectionLevels,atr?:AtrRead,headerContext="",options:{hideLiquidity?:boolean;barrierRows?:BidAskWindow[];oiReport?:EtfReport}={},now=Date.now()):string {
   if(currentPrice!=null&&(!Number.isFinite(currentPrice)||currentPrice<=0)){currentPrice=null;spotHtml='';}
   const s=displayStructure(horizon,structureFresh);
   const volumeAt=indexedLevelVolume(rows);
@@ -72,10 +72,10 @@ export function dayMap(horizon:Horizon|undefined,structureFresh:boolean,rows:Con
     const available=target!=null&&Number.isFinite(target)&&target>0;
     const oi=available?levelOpenInterest(options.oiReport,target,horizon?.expirations??[]):null;
     const pullQuant=available?quantitativeLevel(target,options.oiReport,options.barrierRows,horizon?.expirations??[],flowFresh):null;
-    const pullDefense=available?levelDefense(target,outlook?.marketEvidence,outlook?.levelEvents):null;
-    const caption=oi?`CALL ${oi.call} (${oi.callPct}%) · PUT ${oi.put} (${oi.putPct}%)`:'OI CALL / PUT: pendiente';
+    const pullDefense=available?levelDefense(target,outlook?.marketEvidence,outlook?.levelEvents,now):null;
+    const caption=oi?oi.zeroOi?'CALL 0 · PUT 0 · sin OI en este nivel':`CALL ${oi.call} (${oi.callPct}%) · PUT ${oi.put} (${oi.putPct}%)`:'OI CALL / PUT: sin cobertura verificada';
     const local=available?quality(target):{provisional:!!provisional,detail:''};
-    const strength=levelStrength(available?route?.score:undefined,false,local.provisional,direction+' PULL · pull_score del motor Rust; fórmula propia · '+local.detail+' · '+caption+' · '+(pullQuant?.detail??'')+' · '+(pullDefense?.label??'Defensa pendiente')+' · '+(pullDefense?.detail??''),{oi,caption});
+    const strength=levelStrength(available?route?.score:undefined,false,local.provisional,direction+' PULL · pull_score del motor Rust; fórmula propia · '+local.detail+' · '+caption+' · '+(pullQuant?.detail??'')+' · '+(pullDefense?.label??'Defensa no verificable')+' · '+(pullDefense?.detail??''),{oi,caption});
     return `<div class="route-wall-pull"><span>${direction} PULL <b>${available?price(target):'—'}</b></span>${strength}</div>`;
   };
   const missingZones:string[]=[];
@@ -103,14 +103,14 @@ export function dayMap(horizon:Horizon|undefined,structureFresh:boolean,rows:Con
     const oi=oiCard?levelOpenInterest(options.oiReport,strike,horizon?.expirations??[]):null;
     const bf=level.labels.some(l=>l.startsWith("BARRERA DE LIQUIDEZ"))?barrierFlow(options.barrierRows,strike,horizon?.expirations??[],flowFresh):null;
     const barrierCard=level.labels.some(l=>l.startsWith('BARRERA DE LIQUIDEZ'));
-    const oiCaption=oi?(wallCard?`CALL ${oi.call} (${oi.callPct}%) · PUT ${oi.put} (${oi.putPct}%)`:`OI CALL ${oi.callPct}% · PUT ${oi.putPct}%`):'OI CALL / PUT: pendiente';
+    const oiCaption=oi?oi.zeroOi?'OI CALL 0 · PUT 0 · sin OI en este nivel':wallCard?`CALL ${oi.call} (${oi.callPct}%) · PUT ${oi.put} (${oi.putPct}%)`:`OI CALL ${oi.callPct}% · PUT ${oi.putPct}%`:'OI CALL / PUT: sin cobertura verificada';
     const flowCaption=bf?`Flujo 5 min · CALL ${bf.callPct.toFixed(0)}% · PUT ${bf.putPct.toFixed(0)}%`:'Flujo CALL/PUT: sin cobertura';
     const barrierCaption=barrierCard?flowCaption:oiCard?oiCaption:undefined;
     const barrierAction=bf?.buyPct!=null&&bf.sellPct!=null&&Number.isFinite(bf.buyPct)&&Number.isFinite(bf.sellPct)?`Compra ${bf.buyPct.toFixed(0)}% · Venta ${bf.sellPct.toFixed(0)}% +`:'Compra/venta — · Lectura +';
-    const oiDetail=oi?`Interés abierto ${oi.verification==='reference'?'cotejado con el mapa de OI':'del snapshot local, sin cotejo independiente'}: CALL ${oi.call} · PUT ${oi.put} · ${oi.contracts} series · vencimientos ${oi.expirations.join(", ")}. ${oi.verification==='reference'&&!oi.scopeComplete?'Referencia global parcial; cifras de estas celdas verificadas. ':''}Fecha efectiva OI ${oi.oiDate??'no suministrada'}. Contratos abiertos, no compras/ventas ni inventario de dealers; mezcla CALL/PUT no confirma atracción del precio. `:"OI CALL / PUT: pendiente; no se sustituye por flujo de operaciones. ";
+    const oiDetail=oi?`Interés abierto ${oi.verification==='reference'?'cotejado con el mapa de OI':'del snapshot local, sin cotejo independiente'}: CALL ${oi.call} · PUT ${oi.put} · ${oi.contracts} series · vencimientos ${oi.expirations.join(", ")}. ${oi.zeroOi?'Ambos lados sin OI; porcentaje indefinido. ':''}${oi.verification==='reference'?'Población estándar de 100 acciones, sin entregables adicionales; ajustados excluidos. ':''}${oi.verification==='reference'&&!oi.scopeComplete?'Referencia global parcial; cifras de estas celdas verificadas. ':''}Fecha efectiva OI ${oi.oiDate??'no suministrada'}. Contratos abiertos, no compras/ventas ni inventario de dealers; mezcla CALL/PUT no confirma atracción del precio. `:"OI CALL / PUT: sin cobertura verificada; no se sustituye por flujo de operaciones. ";
     const strength=(score:number|null|undefined,label:string)=>levelStrength(score,false,quality(strike).provisional,label+' · '+quality(strike).detail,{oi:oiCard?oi:null,caption:wallCard?oiCaption:undefined,detail:oiDetail});
     const quant=quantitativeLevel(strike,options.oiReport,options.barrierRows,horizon?.expirations??[],flowFresh);
-    const defense=levelDefense(strike,outlook?.marketEvidence,outlook?.levelEvents);
+    const defense=levelDefense(strike,outlook?.marketEvidence,outlook?.levelEvents,now);
     const quantDetail=quant.detail+' '+defense.label+'. '+defense.detail;
     const barrierDetail=oiDetail+(bf?`5 min · strike exacto · muestra suscrita · CALL ${bf.call} / PUT ${bf.put} contratos · ASK (compra inferida) ${bf.buy} / BID (venta inferida) ${bf.sell} · sin clasificar ${bf.unknown} · cobertura clasificada ${bf.coverage.toFixed(1)}%. No indica intención ni apertura/cierre; no es porcentaje de fuerza estructural.`:"")+quantDetail;
     const v1=volumeAt(strike,horizon?.expirations??[],1,flowFresh),v5=volumeAt(strike,horizon?.expirations??[],5,flowFresh);
@@ -125,7 +125,7 @@ export function dayMap(horizon:Horizon|undefined,structureFresh:boolean,rows:Con
   const spot=`<div class="day-map-spot" aria-label="Precio del activo seleccionado">${spotHtml||`<strong>${currentPrice==null?'—':price(currentPrice)}</strong>`}</div>`;
   const header=routeDesign?`<header class="reading-toolbar direction-header"><div class="day-map-title-price"><h2>Mapa de niveles</h2>${spot}<div class="map-header-context">${linkedLevels?directionLevelsPanel(linkedLevels):""}${headerContext}</div></div>${directionHtml}</header>`:`<header class="reading-toolbar"><div><h2>Mapa de niveles</h2>${horizon?.mode==='NEXT_SESSION'?`<small>Próximo vencimiento · ${esc(horizon.expirations.join(', '))} · </small>`:''}${provisional?`<small>Cobertura de cadena · ${provisional.coveredContracts}/${provisional.totalContracts} contratos · sin señal confirmada</small>`:''}</div><div class="day-map-price-row">${spot}${directionHtml}</div></header>`;
   const health=mapDataQuality([
-   {name:'Estructura',kind:'derived',available:valid,asOf:horizon?.observedMs??null,source:horizon?.referenceSource??'Fuente pendiente',method:'Modelo estructural Snipers; versión de fórmula no aportada'},
+   {name:'Estructura',kind:'derived',available:valid,asOf:horizon?.observedMs??null,source:horizon?.referenceSource??'Fuente no identificada',method:'Modelo estructural Snipers; versión de fórmula no aportada'},
    {name:'OI',kind:'observed',available:!!options.oiReport?.enrichment,asOf:options.oiReport?.at??null,source:options.oiReport?.heatmap?'Cadena con referencia independiente':'Snapshot de opciones',method:`Vencimientos del horizonte; fecha efectiva OI ${options.oiReport?.enrichment?.oiReferenceDate??'no suministrada'}`},
    {name:'Flujo 1m/5m',kind:'observed',available:flowFresh,asOf:null,source:'Muestra suscrita',method:'Sin timestamp común por ventana en ContractWindow'},
    {name:'Precio',kind:'observed',available:currentPrice!=null,asOf:null,source:'Precio recibido por la interfaz',method:'Hora del trade no aportada a dayMap'},

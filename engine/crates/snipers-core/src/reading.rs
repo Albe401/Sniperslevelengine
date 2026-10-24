@@ -73,6 +73,9 @@ pub fn calculate(rows: &[Row], complete: bool, call_gex: f64, put_gex: f64) -> R
     {
         return waiting("Exposición inválida o desbordamiento");
     }
+    if totals[0]+totals[1]==0.0 && totals[2]+totals[3]==0.0 {
+        return waiting("Sin interés abierto ni volumen para una lectura estructural");
+    }
     let ratio = |c: f64, p: f64| if c + p > 0.0 { (c - p) / (c + p) } else { 0.0 };
     let oi = ratio(totals[0], totals[1]);
     let volume = ratio(totals[2], totals[3]);
@@ -172,6 +175,10 @@ mod tests {
                 case["putGex"].as_f64().unwrap(),
             );
             let e = &case["expected"];
+            if rows.iter().all(|r|r.call_oi+r.put_oi+r.call_volume+r.put_volume==0.0) {
+                assert!(!r.available && r.call_score.is_none() && r.put_score.is_none());
+                continue; // Explicit correction of the legacy undefined 0/0 directional ratio.
+            }
             assert!(r.available);
             assert_eq!(r.side, e["side"]);
             assert_eq!(r.reading, e["reading"]);

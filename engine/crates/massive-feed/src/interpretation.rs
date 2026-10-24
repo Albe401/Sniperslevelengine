@@ -289,14 +289,14 @@ pub fn confirmations(state: &LiveState, now: u64) -> BTreeMap<String, Confirmati
         .take(3)
         .map(|h| {
             // The active legacy UI prefers M1; a liquidity target must not replace it.
-            // Numeric M1 has no structural score: retain the explicit legacy 50 default.
+            // Use the score of this exact M1, from the same observed structure.
             let options = h
                 .structure
                 .selected
                 .get("M1")
                 .copied()
                 .flatten()
-                .map(|price| OptionsMagnet { price, score: None });
+                .map(|price| OptionsMagnet { price, score: h.structure.main_magnet_score });
             let magnet = session.top_levels.first().map(|level| OffMagnet {
                 price: level.level,
                 notional: level.notional,
@@ -406,6 +406,14 @@ mod tests {
         assert_eq!(results["DAY"].status, "CONFIRMED_STRONG");
         assert_eq!(results["DAY"].primary_magnet, Some(500.0));
         assert!(!results["DAY"].entry_confirmed);
+        let original_score=state.option_snapshot_status.horizons[0].structure.main_magnet_score;
+        assert_eq!(results["DAY"].options_score,original_score.map(|v|(v*100.).round_ties_even()/100.));
+        state.option_snapshot_status.horizons[0].structure.main_magnet_score=Some(0.5);
+        assert_eq!(confirmations(&state,now)["DAY"].options_score,Some(0.5));
+        state.option_snapshot_status.horizons[0].structure.main_magnet_score=None;
+        assert_eq!(confirmations(&state,now)["DAY"].status,"NO_OPTIONS_SCORE");
+        state.option_snapshot_status.horizons[0].structure.main_magnet_score=original_score;
+
         let adjusted = adjusted_readings(&state, now);
         assert!(adjusted["DAY"].trf_applied);
         assert!(!adjusted["DAY"].flow_applied);

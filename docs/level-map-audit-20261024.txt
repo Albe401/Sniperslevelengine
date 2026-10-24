@@ -1,0 +1,93 @@
+AUDITORÍA DEL MAPA DE NIVELES — 24 de octubre de 2026
+
+Resultado: correcciones implementadas y validadas; candidata nativa compilada. La aplicación abierta sigue usando su versión anterior hasta autorizar el reinicio. El estado de publicación web se registra por separado en manifest.json.
+
+ALCANCE
+Revisados el proyecto Python original y la implementación Rust utilizada por Snipers: normalización y referencia de contratos, paginación/deduplicación y almacén de OI, vencimientos, agregación por strike, componentes del score, CALL/PUT walls y sus zonas, imán principal y de liquidez, targets, barreras, vacíos, apertura del recorrido, PULL, cobertura de volumen, posición respecto al precio, lecturas ajustadas, confirmación/reclaim/trigger del imán y presentación del OI y de la fuerza. Las cinco escalas de precio y su sexta tarjeta resumen se conservan. No se cambiaron bots ni ejecución de órdenes.
+
+CORRECCIONES DEMOSTRADAS
+1. Validar que fecha, lado y strike del identificador OCC coincidan con la metadata también en acciones/ETF. Un contrato mal identificado no debe aportar OI a otro nivel. Rechazar claves que aliasen la misma identidad en una observación.
+2. Exigir cantidades enteras, no negativas, finitas y sumas exactas dentro del rango seguro 2^53−1. Liquidez rechaza strikes repetidos, sumas incompatibles, gamma/GEX negativos y scores fuera de dominio. Python deduplica el mismo ticker idéntico y rechaza duplicados contradictorios.
+3. Habilitar ΔOI sólo con baselines anteriores, identidades coincidentes y todos los cambios comparables del universo. No basta un indicador externo de historia disponible. Se mantiene la protección por día bursátil previo y pertenencia completa de series.
+4. Con cero OI y cero volumen, esperar datos; eliminar la lectura direccional artificial 50/50. OI conocido igual a cero se muestra como cero contratos, con porcentaje indefinido, sin confundirlo con datos ausentes.
+5. Mantener visible PARCIAL aunque un strike local tenga datos completos: la normalización de la fuerza usa la población global, que puede estar incompleta.
+6. Conectar la confirmación del imán a su score M1 real. Antes quedaba vacío y se sustituía por 50. Declarar unidades 0–100: 0,5 puntos sigue siendo 0,5, no 50. Sin score, esperar. Rechazar concentración notional incompatible con sus sumas.
+7. Exigir coherencia entre cantidad de niveles cubiertos y porcentaje de cobertura antes de habilitar la lectura de PULL.
+8. Resolver empates de igual score y distancia por strike ascendente. Una prueba mostró que M1 y M2 se intercambiaban cuando cambiaba el orden de páginas; ahora son deterministas.
+9. En el snapshot web, evaluar defensa con el reloj congelado de la captura. Conservar la procedencia del inventario independiente y explicar cuándo su población excluye contratos ajustados.
+
+CUENTA MATEMÁTICA Y UNIDADES
+OI por nivel K y vencimientos E:
+ C(K,E)=Σ OI de las series CALL únicas con ese strike y expiración en E.
+ P(K,E)=Σ OI de las series PUT únicas con ese strike y expiración en E.
+ T=C+P; %CALL=100 C/T; %PUT=100 P/T cuando T>0.
+ La interfaz redondea %CALL y usa 100−%CALL para que los dos porcentajes visibles sumen 100. Unidad: contratos, sin multiplicar por 100 acciones. Si T=0, no existe participación porcentual. Una serie ausente o desconocida no equivale a cero.
+ El snapshot ligero es una suma local, sin referencia independiente. El inventario cotejado con el mapa OI usa series estándar de 100 acciones sin entregables adicionales; excluye ajustados. Son poblaciones distintas y quedan identificadas. La cobertura completa de esas celdas no certifica toda la cadena.
+
+Gamma/GEX:
+ Gamma ponderada=Σ γ_i OI_i.
+ Exposición bruta por movimiento del 1%: Σ γ_i OI_i m_i S²×0,01, con multiplicador verificado m_i y precio S. Dimensión: variación aproximada de exposición delta en dólares ante un movimiento del 1%, bajo gamma local constante. Derivación del modelo, no inventario observado.
+ Neto=GEX_CALL−GEX_PUT es una convención de signos; ambas opciones largas tienen gamma positiva. OI y gamma no identifican quién está largo/corto ni el inventario dealer. El motor Python legado presupone 100 en ciertas rutas sin certificación independiente del entregable: no usar esa salida como exposición certificada de ajustados. El mapa nativo exige multiplicador verificado para GEX completo.
+
+Score base de concentración, modelo propio:
+ N(x)=x/max(x) dentro del mismo horizonte, 0 si todos son cero.
+ Dominancia=.6(C−P)/(C+P)+.4(VC−VP)/(VC+VP), con cada cociente 0 cuando su denominador es 0. VC y VP son volumen negociado, separado del stock OI.
+ Actividad=.6 ln(1+T)+.4 ln(1+VC+VP).
+ z=(actividad−media)/desviación estándar poblacional; componente sigma=clamp(max(z,0)/3,0,1). Población: strikes de ese horizonte.
+ Score=Σ peso_j componente_j, de 0 a 100; componentes N(C),N(P),N(|ΔC|+|ΔP|),N(volumen),|dominancia|,sigma,N(GEX bruto).
+ Pesos, en ese orden:
+ con historia y GEX: 12,5 / 12,5 / 15 / 15 / 15 / 10 / 20.
+ con historia sin GEX: 15 / 15 / 15 / 20 / 20 / 15 / 0.
+ sin historia con GEX: 15 / 15 / 0 / 20 / 15 / 10 / 25.
+ sin historia sin GEX: 20 / 20 / 0 / 25 / 20 / 15 / 0.
+ Todos suman 100. |ΔOI| mide magnitud de cambio, incluido cierre de posiciones; no significa crecimiento ni presión compradora.
+
+Fuerza de pared, modelo propio:
+ Con GEX positivo disponible: 100×[.35 N(OI propio)+.20 N(volumen propio)+.15 N(gamma×OI propio)+.10 dominancia propia positiva+.10 N(|ΔOI propio|)+.05 score_base/100+.05 N(GEX bruto)].
+ Sin ese GEX: pesos .38/.22/.18/.10/.07/.05, sin último componente. Suman 1. El score no se renormaliza arbitrariamente al faltar ΔOI: ese término vale 0 sin historia válida, según el modelo existente.
+ CALL se selecciona entre niveles con actividad CALL a/encima del precio; PUT con actividad PUT a/debajo. Si no hay candidatos de ese lado del precio, usa la concentración disponible de su tipo. No inventa una pared sin actividad propia. Una pared CALL por debajo del precio no habilita por sí sola un recorrido CALL; la geometría del PULL lo bloquea.
+ Umbrales propios: <40 baja, ≥40 media, ≥60 alta, ≥80 muy alta. Ninguno es una probabilidad de llegada/rechazo/ruptura. No comparar scores de distintos tipos de nivel como si tuvieran la misma calibración.
+
+Liquidez, imanes y recorrido, modelos propios:
+ Liquidez=100×[.35 N(T)+.20 N(volumen total)+.15 N(gamma total)+.15 N(GEX bruto)+.15 score_base/100].
+ Imán de liquidez=.75 liquidez+.25×100/[1+100 |K−S|/S].
+ Score target de ruptura=.60 liquidez+.25 score_base+.15×100 N(GEX bruto). Se prioriza el target cercano que cumple el filtro; el segundo busca mayor concentración más allá.
+ Vacíos: agrupar strikes de baja concentración, con umbral clamp(.7×mediana de fuerzas, .12, .35). Si no existe grupo, se etiqueta bolsillo de baja liquidez. Esto no mide profundidad real del libro de órdenes.
+ Barrera: concentración intermedia más cercana que supera 40, anclada en M1 sólo si M1 queda entre precio y pared; de lo contrario en el precio.
+ Apertura=100−media de concentración de los niveles intermedios. Sin strikes intermedios, la convención del modelo asigna apertura 100; no prueba que no haya órdenes o resistencia entre strikes.
+ PULL=100×[.30 fuerza pared de apoyo/100+.35 liquidez target/100+.20 apertura/100+.15 vacío/100]. Preparación exige geometría válida y umbrales del modelo, además de cobertura y flujo vigentes. Una lectura provisional no autoriza entrada.
+ Presión inferida de ejecuciones: alcista=CALL ASK+PUT BID; bajista=CALL BID+PUT ASK; desequilibrio=(alcista−bajista)/(alcista+bajista). Se mantiene exigencia de ≥80% de volumen clasificado para mostrar presión; ASK/BID no identifica apertura/cierre ni dealer.
+ Defensa requiere reacción sostenida exacta del nivel, precio en el lado correspondiente y CVD vigente alineado con cobertura ≥80%; una pared fuerte por OI no es defensa confirmada.
+
+ACEPTACIÓN CON DATOS REALES
+20 observaciones inmutables de 10 activos: QQQ, SPY, AAPL, MSFT, AMZN, GOOGL, META, NVDA, TSLA e IWM. Capturas del 23 y 24 de octubre de 2026; 5.982 registros de series entre ambos días. Inputs, timestamps y SHA-256 conservados en input-receipts.json; copias comprimidas en real/.
+30 universos: próximo vencimiento/sesión, semana y cuatro vencimientos. Son universos de opciones, distintos de 15m/1h/4h/diario/semanal del mapa estructural de precio.
+113.363 comprobaciones independientes sin importar código productivo: OI, volumen, gamma/GEX, dominancia, normalizaciones, desviación estándar, componentes, paredes, zonas, targets, vacíos, barreras, recorridos y PULL. 60 paredes provisionales comprobadas, 0 discrepancias finales.
+1.010 comprobaciones adicionales de la función TypeScript real de OI en 201 niveles; misma fecha, strike y expiraciones, con cero conocido y ausencias preservadas.
+Las 30 lecturas eran PARCIALES, principalmente por Greeks/otros campos ausentes. Esto valida la aritmética del subconjunto disponible; no convierte la cadena en completa. Sólo 11 universos tenían comparación de OI utilizable. El proveedor no suministró fecha efectiva OI en estas observaciones: ΔOI es diferencia entre observaciones, no prueba de actualización diaria del clearing.
+Ejemplo QQQ: referencia del subyacente 704,857; expiración 26/10/2026; 141/172 series completas. CALL WALL 710: 58,03/100 PARCIAL. PUT WALL 695: 83,75/100 PARCIAL. M1 705: 55,27/100 PARCIAL. Es una captura histórica del sábado, no señal de mercado abierto.
+
+PRUEBAS
+Núcleo Rust: 366 pruebas existentes + 9 regresiones nuevas, sin fallos; 1 prueba de capacidad de otro módulo marcada ignored.
+Proveedor/integración: 535 aprobadas; 4 pruebas manuales/de capacidad ignoradas por sus reglas existentes, conservadas en el log.
+Interfaz nativa completa: 2.057 aprobadas; después de aclarar sólo el texto de población OI, 38 pruebas afectadas aprobadas y compilación TypeScript exitosa.
+Python original: 19 pruebas offline aprobadas con su Python 3.13 instalado.
+Web: 220 pruebas relevantes aprobadas, sin omitir las 3 de OI real; 17 pruebas del servidor aprobadas; TypeScript y Vite correctos. Motor Rust archivado web: cargo check de ambos módulos y 9 regresiones aprobadas. Sus catálogos y scripts incrustados faltantes se conservaron como dependencias fuente, sin activarlos.
+Visual: Edge a 1920 y 1482 px, seis tarjetas conservadas, PARCIAL visible, sin desbordamiento interior ni errores JavaScript. Los conectores decorativos sobresalen deliberadamente hacia el riel y no cuentan como recorte de contenido.
+Rendimiento: un replay de 30 universos y 10 activos tardó 489,6 ms, incluida serialización, excluida compilación. No es una garantía de latencia en vivo.
+Todos los intentos fallidos, fixtures corregidos, comando y resultados permanecen en el archivo de auditoría. No se borraron fallos para presentar sólo el resultado favorable.
+
+FUENTES PRIMARIAS Y CLASIFICACIÓN
+OI como cantidad de contratos abiertos (medición estándar), no señal direccional:
+https://www.optionseducation.org/referencelibrary/faq/general-information
+Semántica del snapshot, open interest, Greeks y paginación:
+https://massive.com/docs/rest/options/snapshots/option-chain-snapshot
+Gamma como variación de delta por cambio del subyacente:
+https://www.optionseducation.org/advancedconcepts/gamma
+Los pesos, umbrales, selección de paredes, vacíos, score de fuerza, PULL y signos del neto son modelos/heurísticas cuantitativas propios. Ninguna fuente oficial certifica esos coeficientes ni el programa.
+
+LÍMITES Y PENDIENTES EXPLÍCITOS
+No hay calibración predictiva de rebote, ruptura, beneficio ni probabilidad. No se cambiaron pesos para aparentar mayor acierto. El histórico de precios de años no contiene por sí solo OI diario comparable de cada serie; falta ese dataset para un estudio predictivo sin sesgo retrospectivo.
+Falta aceptación durante sesión abierta; esta auditoría ocurrió el sábado. La falta de Greeks debe seguir siendo PARCIAL; una fórmula no recupera datos ausentes.
+El proyecto Python queda como legado/referencia; la GUI antigua y todos sus caminos de exposición ajustada no se certifican como instalación activa. El motor activo de esta app es Rust.
+La candidata nativa debe instalarse mediante reinicio explícitamente autorizado. Hasta entonces, el ejecutable abierto y las nuevas capturas primarias que produce conservan el motor anterior. Las correcciones de presentación web se publican aparte; no se confunde fuente archivada corregida con proceso de captura actualizado.

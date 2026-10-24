@@ -1,11 +1,36 @@
 import {expect,it} from 'vitest';
+import {readFileSync} from 'node:fs';
 import {levelOpenInterest} from './level-open-interest';
 import type {EtfReport} from './etf-dealers';
 const report=(details:unknown[])=>({expirations:['2026-10-09'],enrichment:{details:details.map(r=>({expiration:'2026-10-09',...(r as object)}))}} as unknown as EtfReport);
 const rows=[{ticker:'c',kind:'call',strike:279,oi:100,gamma:null},{ticker:'p',kind:'put',strike:279,oi:300,gamma:null}];
 it('shows open contracts independently of unavailable Greeks or executions',()=>{expect(levelOpenInterest(report(rows),279)).toMatchObject({call:100,put:300,callPct:25,putPct:75,total:400});expect(levelOpenInterest(report(rows),278)).toBeNull();});
-it('rejects missing sides, unknown OI, duplicates and invalid values',()=>{for(const ds of [rows.slice(0,1),[...rows,rows[0]],rows.map(r=>({...r,oi:null})),rows.map(r=>({...r,oi:-1})),rows.map(r=>({...r,oi:Infinity})),rows.map(r=>({...r,oi:0}))])expect(levelOpenInterest(report(ds),279)).toBeNull();});
-it('rounds percentages to a total of 100',()=>{const r=levelOpenInterest(report(rows.map((r,i)=>({...r,oi:i?145:55}))),279)!;expect(r.callPct+r.putPct).toBe(100);});
+it('rejects missing sides, unknown OI, duplicates and invalid values',()=>{for(const ds of [rows.slice(0,1),[...rows,rows[0]],rows.map(r=>({...r,oi:null})),rows.map(r=>({...r,oi:-1})),rows.map(r=>({...r,oi:Infinity})),rows.map(r=>({...r,oi:1.5}))])expect(levelOpenInterest(report(ds),279)).toBeNull();});
+it('rounds percentages to a total of 100',()=>{const r=levelOpenInterest(report(rows.map((r,i)=>({...r,oi:i?145:55}))),279)!;expect(r.callPct!+r.putPct!).toBe(100);});
+it('uses the same verified cells as the OI heatmap when independent reference is available',()=>{
+ const date='2026-10-09',ticker=(side:'call'|'put')=>`O:QQQ261009${side==='call'?'C':'P'}00279000`;
+ const reference=(side:'call'|'put',shares=100)=>({ticker:ticker(side),underlying_ticker:'QQQ',expiration_date:date,strike_price:279,contract_type:side,shares_per_contract:shares});
+ const snapshot=(side:'call'|'put',oi:number,shares=100)=>({details:{ticker:ticker(side),expiration_date:date,strike_price:279,contract_type:side,shares_per_contract:shares},underlying_asset:{ticker:'QQQ'},open_interest:oi});
+ const base={symbol:'QQQ',at:1791550000000,expirations:[date],enrichment:{details:rows},heatmap:{reference:[reference('call'),reference('put')],snapshots:[snapshot('call',100),snapshot('put',300)],referenceComplete:true,scopeStart:date,scopeEnd:date}} as unknown as EtfReport;
+ expect(levelOpenInterest(base,279,[date])).toMatchObject({call:100,put:300,total:400,verification:'reference',scopeComplete:true});
+ expect(levelOpenInterest({...base,heatmap:{...base.heatmap!,snapshots:[snapshot('call',0),snapshot('put',0)]}},279,[date])).toMatchObject({call:0,put:0,total:0,callPct:null,putPct:null,zeroOi:true,verification:'reference',scopeComplete:true});
+ expect(levelOpenInterest({...base,heatmap:{...base.heatmap!,snapshots:[snapshot('call',100)]}},279,[date])).toBeNull();
+ const adjusted={...base,heatmap:{...base.heatmap!,reference:[reference('call',50),reference('put')],snapshots:[snapshot('call',100,50),snapshot('put',300)]}};
+ expect(levelOpenInterest(adjusted,279,[date])).toMatchObject({call:0,put:300,verification:'reference'});
+ expect(levelOpenInterest({...base,heatmap:{...base.heatmap!,referenceComplete:false}},279,[date])).toBeNull();
+ expect(levelOpenInterest(report(rows),279)).toMatchObject({call:100,put:300,verification:'snapshot',scopeComplete:false});
+ expect(levelOpenInterest(report(rows.map(r=>({...r,oi:0}))),279)).toMatchObject({call:0,put:0,total:0,callPct:null,putPct:null,zeroOi:true,verification:'snapshot',scopeComplete:false});
+});
+it('recalculates a dated QQQ strike from the saved independent reference and snapshots',()=>{
+ const raw=JSON.parse(readFileSync(new URL('./fixtures/level-oi-real-20261014.json',import.meta.url),'utf8'));
+ const date='2026-10-16',strike=705;
+ const source=raw.snapshots.filter((r:{details:{strike_price:number;expiration_date:string}})=>r.details.strike_price===strike&&r.details.expiration_date===date);
+ const independent=(kind:string)=>source.filter((r:{details:{contract_type:string}})=>r.details.contract_type===kind).reduce((n:number,r:{open_interest:number})=>n+r.open_interest,0);
+ const r={symbol:'QQQ',at:raw.checkedMs,expirations:[date],heatmap:{reference:raw.reference,snapshots:raw.snapshots,referenceComplete:true,scopeStart:'2026-10-13',scopeEnd:date}} as unknown as EtfReport;
+ expect(source).toHaveLength(2);
+ expect(independent('call')).toBe(4058);expect(independent('put')).toBe(36783);
+ expect(levelOpenInterest(r,strike,[date])).toMatchObject({call:independent('call'),put:independent('put'),total:40841,verification:'reference',scopeComplete:true});
+});
 it('renders a split OI bar and percentages in existing magnet summary rows',async()=>{const {dayMap}=await import('./day-map');const h={mode:'DAY',expirations:['2026-10-09'],structure:{complete:true,selected:{M1:279},magnet:279,mainMagnetScore:61,liquidityMagnetScore:62,routes:[]}} as unknown as import('./live').Horizon;const outlook={rows:[],level:'',levelDetail:'',change:'',changeDetail:'',route:'',routeDetail:'',invalidate:'',invalidateDetail:''} as unknown as import('./day-map').MapOutlook;const html=dayMap(h,true,[],false,null,'',outlook,true,'',undefined,undefined,'',{oiReport:report(rows)});expect(html).toContain('OI CALL 25% · PUT 75%');expect(html).toContain('class="oi-put" style="width:75%"');expect(html).toContain('CALL 100 · PUT 300');expect(html).toContain('<b>OI CALL 25% · PUT 75% +</b>');expect(html).toContain('61.0/100');expect(html).toContain('62.0/100');expect(html.match(/<summary><span>OI CALL 25% · PUT 75%<\/span><b>.*?<\/b><\/summary>/g)).toHaveLength(2);});
 it('cuenta WALL y PULL por su strike exacto sin sumar niveles ni inventar datos',async()=>{
  const {dayMap}=await import('./day-map');
@@ -17,7 +42,16 @@ it('cuenta WALL y PULL por su strike exacto sin sumar niveles ni inventar datos'
  expect(call).toContain('CALL 100 (25%) · PUT 300 (75%)');expect(call).toContain('CALL 200 (33%) · PUT 400 (67%)');
  expect(put).toContain('CALL 300 (38%) · PUT 500 (62%)');expect(put).toContain('CALL 400 (40%) · PUT 600 (60%)');
  expect(call).not.toContain('CALL 400');expect(put).not.toContain('CALL 100');expect(html).toContain('80.0/100');expect(html).toContain('65.0/100');
- expect(render(undefined)).toContain('OI CALL / PUT: pendiente');
+ expect(render(undefined)).toContain('OI CALL / PUT: sin cobertura verificada');
  expect(render(report(ds.filter(r=>r.ticker!=='p279')))).not.toContain('CALL 200 (33%)');
  expect(dayMap(h,false,[],false,null,'',undefined,true,'',undefined,undefined,'',{oiReport:report(ds)})).not.toContain('CALL 100 (25%)');
+});
+it('renders verified zero OI without a false 0%/0% bar or an unavailable-data label',async()=>{
+ const {dayMap}=await import('./day-map');
+ const h={mode:'DAY',expirations:['2026-10-09'],structure:{complete:true,selected:{M1:279},routes:[]}} as unknown as import('./live').Horizon;
+ const html=dayMap(h,true,[],false,null,'',undefined,true,'',undefined,undefined,'',{oiReport:report(rows.map(r=>({...r,oi:0})))});
+ expect(html).toContain('OI CALL 0 · PUT 0 · sin OI en este nivel');
+ expect(html).not.toContain('OI CALL / PUT: sin cobertura verificada');
+ expect(html).not.toContain('width:null%');
+ expect(html).not.toContain('OI CALL 0% / PUT 0%');
 });

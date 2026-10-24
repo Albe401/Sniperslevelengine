@@ -5,7 +5,8 @@ export function levelQuality(rows:LevelQuality[]|undefined,low:number,high=low,c
  const complete=local.length>0&&local.every(q=>q.total>0&&q.covered===q.total);
  // Both count and known OI must support the reading. Unknown OI cannot be outweighed.
  const strong=local.length>0&&local.every(q=>q.total>0&&q.covered/q.total>=.95&&q.missingOi===0&&q.oiCoverage!=null&&Number.isFinite(q.oiCoverage)&&q.oiCoverage>=95);
- const provisional=chainPartial&&!complete&&!strong;
+ // Scores are normalized against the global population, even at a complete local strike.
+ const provisional=chainPartial;
  const detail=local.length?local.map(q=>`${q.strike}: ${q.covered}/${q.total} series completas; cobertura OI ${q.oiCoverage==null?'desconocida':q.oiCoverage.toFixed(1)+'%'}; faltan OI ${q.missingOi}, volumen ${q.missingVolume}, gamma ${q.missingGamma}.`).join(' '):'Cobertura local no disponible.';
- return {provisional,detail:detail+(chainPartial?' Cadena parcial: fuerza estimada respecto al subconjunto disponible; no confirma defensa.':'')+(strong&&!complete?' Cobertura local alta, no completa.':'')};
+ return {provisional,localComplete:complete,localStrong:strong,detail:detail+(chainPartial?' Cadena parcial: fuerza estimada respecto al subconjunto disponible; no confirma defensa.':'')+(strong&&!complete?' Cobertura local alta, no completa.':'')};
 }

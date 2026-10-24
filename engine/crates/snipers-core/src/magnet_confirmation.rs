@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Copy, Debug, Deserialize)]
 pub struct OptionsMagnet {
     pub price: f64,
+    /// Points in [0,100], never an inferred 0–1 ratio.
     pub score: Option<f64>,
 }
 #[derive(Clone, Copy, Debug, Deserialize)]
@@ -62,7 +63,7 @@ pub fn calculate(
     };
     if !options.price.is_finite()
         || options.price <= 0.0
-        || options.score.is_some_and(|v| !v.is_finite())
+        || options.score.is_some_and(|v| !v.is_finite() || !(0.0..=100.0).contains(&v))
     {
         return Err("Imán de opciones inválido");
     }
@@ -87,6 +88,14 @@ pub fn calculate(
         || spot.is_some_and(|v| !v.is_finite() || v <= 0.0)
     {
         return Err("Evidencia de imán inválida");
+    }
+    let Some(options_score) = options.score else {
+        return Ok(waiting(Some(options.price),"NO_OPTIONS_SCORE","Fuerza del imán de opciones no disponible"));
+    };
+    // Concentration is a percentage of the same notional population, rounded to 2 decimals.
+    if off.concentration_pct > 100.0 || off.total_notional <= 0.0 || off.total_prints == 0
+        || off.concentration_pct > 0.0 && (off.concentration_pct-100.0*off.notional/off.total_notional).abs()>0.0050001 {
+        return Err("Porcentaje de concentración o población fuera de bolsa inconsistente");
     }
     let reference = spot.unwrap_or(options.price / 2.0 + off.price / 2.0);
     let distance = (options.price - off.price).abs();
@@ -121,11 +130,6 @@ pub fn calculate(
             * 100.0,
         100.0,
     );
-    let mut options_score = options.score.unwrap_or(50.0);
-    if (0.0..=1.0).contains(&options_score) {
-        options_score *= 100.0;
-    }
-    options_score = options_score.clamp(0.0, 100.0);
     let mut final_score =
         round(score.clamp(0.0, 100.0), 100.0) * 0.45 + options_score * 0.30 + dark_score * 0.25;
     let status = if alignment == "DIVERGENCIA" {
@@ -225,7 +229,17 @@ mod tests {
             let options: Option<OptionsMagnet> =
                 serde_json::from_value(case["options"].clone()).unwrap();
             let off = serde_json::from_value(case["off"].clone()).unwrap();
+            if case["name"]=="case_8" {
+                // Original fixture claims 10% concentration for 20% of the notional.
+                assert!(calculate(options,off,case["spot"].as_f64()).is_err());
+                continue;
+            }
             let result = calculate(options, off, case["spot"].as_f64()).unwrap();
+            if case["name"]=="case_9" {
+                assert_eq!(result.status,"NO_OPTIONS_SCORE");
+                assert!(result.options_score.is_none());
+                continue; // Missing strength may not become an invented 50/100.
+            }
             let e = &case["expected"];
             assert_eq!(
                 result.status,

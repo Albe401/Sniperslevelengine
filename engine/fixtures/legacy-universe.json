@@ -1,0 +1,1689 @@
+{
+  "source": "multi_asset_config.py",
+  "sha256": "0a039176746f238ba0ad474e0133a1c9a21b49a9972476b84fecc2e95960165a",
+  "assets": {
+    "SPCX": {
+      "name": "SpaceX - Space Exploration Technologies Corp. Class A",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": null,
+      "role": "STOCK"
+    },
+    "AAL": {
+      "name": "American Airlines Group, Inc. - Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "INDUSTRIAL",
+      "role": "STOCK"
+    },
+    "AAPL": {
+      "name": "Apple",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "TECNOLOGIA",
+      "role": "STOCK"
+    },
+    "ABBV": {
+      "name": "AbbVie",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "SALUD",
+      "role": "STOCK"
+    },
+    "ABNB": {
+      "name": "Airbnb, Inc. - Class A Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "CONSUMO_DISCRECIONAL",
+      "role": "STOCK"
+    },
+    "ABT": {
+      "name": "Abbott Laboratories Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "SALUD",
+      "role": "STOCK"
+    },
+    "ADBE": {
+      "name": "Adobe Inc. - Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "TECNOLOGIA",
+      "role": "STOCK"
+    },
+    "ADI": {
+      "name": "Analog Devices, Inc. - Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "TECNOLOGIA",
+      "role": "STOCK"
+    },
+    "ADSK": {
+      "name": "Autodesk, Inc. - Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "TECNOLOGIA",
+      "role": "STOCK"
+    },
+    "AMAT": {
+      "name": "Applied Materials, Inc. - Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "TECNOLOGIA",
+      "role": "STOCK"
+    },
+    "AMD": {
+      "name": "Advanced Micro Devices",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "TECNOLOGIA",
+      "role": "STOCK"
+    },
+    "AMGN": {
+      "name": "Amgen Inc. - Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "SALUD",
+      "role": "STOCK"
+    },
+    "AMT": {
+      "name": "American Tower",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "INMOBILIARIO",
+      "role": "STOCK"
+    },
+    "AMZN": {
+      "name": "Amazon",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "CONSUMO_DISCRECIONAL",
+      "role": "STOCK"
+    },
+    "ANET": {
+      "name": "Arista Networks, Inc. Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "TECNOLOGIA",
+      "role": "STOCK"
+    },
+    "APP": {
+      "name": "Applovin Corporation - Class A Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "TECNOLOGIA",
+      "role": "STOCK"
+    },
+    "ASML": {
+      "name": "ASML ADR",
+      "kind": "STOCK",
+      "level_range": 40,
+      "quick_range": 60,
+      "live_range": 10,
+      "sector": "TECNOLOGIA",
+      "role": "STOCK"
+    },
+    "AVGO": {
+      "name": "Broadcom",
+      "kind": "STOCK",
+      "level_range": 30,
+      "quick_range": 40,
+      "live_range": 5,
+      "sector": "TECNOLOGIA",
+      "role": "STOCK"
+    },
+    "AXP": {
+      "name": "American Express Company Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "FINANCIERO",
+      "role": "STOCK"
+    },
+    "BA": {
+      "name": "Boeing",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "INDUSTRIAL",
+      "role": "STOCK"
+    },
+    "BABA": {
+      "name": "Alibaba Group Holding Limited American Depositary Shares each representing eight Ordinary share",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "CONSUMO_DISCRECIONAL",
+      "role": "STOCK"
+    },
+    "BAC": {
+      "name": "Bank of America",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "FINANCIERO",
+      "role": "STOCK"
+    },
+    "BBY": {
+      "name": "Best Buy Co., Inc.",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "CONSUMO_DISCRECIONAL",
+      "role": "STOCK"
+    },
+    "BKNG": {
+      "name": "Booking Holdings Inc. - Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "CONSUMO_DISCRECIONAL",
+      "role": "STOCK"
+    },
+    "BKR": {
+      "name": "Baker Hughes Company - Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "ENERGIA",
+      "role": "STOCK"
+    },
+    "BRK.B": {
+      "name": "Berkshire Hathaway Inc. New Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "FINANCIERO",
+      "role": "STOCK"
+    },
+    "BSX": {
+      "name": "Boston Scientific Corporation Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "SALUD",
+      "role": "STOCK"
+    },
+    "C": {
+      "name": "Citigroup, Inc. Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "FINANCIERO",
+      "role": "STOCK"
+    },
+    "CAT": {
+      "name": "Caterpillar",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "INDUSTRIAL",
+      "role": "STOCK"
+    },
+    "CBOE": {
+      "name": "Cboe Global Markets, Inc. Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "FINANCIERO",
+      "role": "STOCK"
+    },
+    "CCL": {
+      "name": "Carnival Corporation Ltd. Common Shares",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "CONSUMO_DISCRECIONAL",
+      "role": "STOCK"
+    },
+    "CDNS": {
+      "name": "Cadence Design Systems, Inc. - Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "TECNOLOGIA",
+      "role": "STOCK"
+    },
+    "CEG": {
+      "name": "Constellation Energy",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "SERVICIOS_PUBLICOS",
+      "role": "STOCK"
+    },
+    "CMG": {
+      "name": "Chipotle Mexican Grill, Inc. Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "CONSUMO_DISCRECIONAL",
+      "role": "STOCK"
+    },
+    "COIN": {
+      "name": "Coinbase Global, Inc. - Class A Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "FINANCIERO",
+      "role": "STOCK"
+    },
+    "COP": {
+      "name": "ConocoPhillips",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "ENERGIA",
+      "role": "STOCK"
+    },
+    "COST": {
+      "name": "Costco Wholesale",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "CONSUMO_BASICO",
+      "role": "STOCK"
+    },
+    "CRM": {
+      "name": "Salesforce",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "TECNOLOGIA",
+      "role": "STOCK"
+    },
+    "CRWD": {
+      "name": "CrowdStrike Holdings, Inc. - Class A Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "TECNOLOGIA",
+      "role": "STOCK"
+    },
+    "CRWV": {
+      "name": "CoreWeave, Inc. - Class A Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "TECNOLOGIA",
+      "role": "STOCK"
+    },
+    "CSCO": {
+      "name": "Cisco Systems, Inc. - Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "TECNOLOGIA",
+      "role": "STOCK"
+    },
+    "CSX": {
+      "name": "CSX Corporation - Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "INDUSTRIAL",
+      "role": "STOCK"
+    },
+    "CVS": {
+      "name": "CVS Health Corporation Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "SALUD",
+      "role": "STOCK"
+    },
+    "CVX": {
+      "name": "Chevron",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "ENERGIA",
+      "role": "STOCK"
+    },
+    "DAL": {
+      "name": "Delta Air Lines, Inc. Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "INDUSTRIAL",
+      "role": "STOCK"
+    },
+    "DASH": {
+      "name": "DoorDash, Inc. - Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "CONSUMO_DISCRECIONAL",
+      "role": "STOCK"
+    },
+    "DDOG": {
+      "name": "Datadog, Inc. - Class A Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "TECNOLOGIA",
+      "role": "STOCK"
+    },
+    "DE": {
+      "name": "Deere & Company",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "INDUSTRIAL",
+      "role": "STOCK"
+    },
+    "DELL": {
+      "name": "Dell Technologies Inc. Class C Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "TECNOLOGIA",
+      "role": "STOCK"
+    },
+    "DG": {
+      "name": "Dollar General Corporation Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "CONSUMO_BASICO",
+      "role": "STOCK"
+    },
+    "DHR": {
+      "name": "Danaher Corporation Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "SALUD",
+      "role": "STOCK"
+    },
+    "DIA": {
+      "name": "SPDR Dow Jones Industrial ETF",
+      "kind": "ETF",
+      "level_range": 30,
+      "quick_range": 40,
+      "live_range": 5,
+      "sector": "MULTISECTOR",
+      "role": "BENCHMARK"
+    },
+    "DIS": {
+      "name": "Walt Disney",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "COMUNICACION",
+      "role": "STOCK"
+    },
+    "DUK": {
+      "name": "Duke Energy Corporation (Holding Company) Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "SERVICIOS_PUBLICOS",
+      "role": "STOCK"
+    },
+    "DVN": {
+      "name": "Devon Energy Corporation Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "ENERGIA",
+      "role": "STOCK"
+    },
+    "EBAY": {
+      "name": "eBay Inc. - Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "CONSUMO_DISCRECIONAL",
+      "role": "STOCK"
+    },
+    "EMR": {
+      "name": "Emerson Electric Company Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "INDUSTRIAL",
+      "role": "STOCK"
+    },
+    "EQIX": {
+      "name": "Equinix",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "INMOBILIARIO",
+      "role": "STOCK"
+    },
+    "ETN": {
+      "name": "Eaton Corporation, PLC Ordinary Shares",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "INDUSTRIAL",
+      "role": "STOCK"
+    },
+    "EXC": {
+      "name": "Exelon Corporation - Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "SERVICIOS_PUBLICOS",
+      "role": "STOCK"
+    },
+    "F": {
+      "name": "Ford Motor Company Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "CONSUMO_DISCRECIONAL",
+      "role": "STOCK"
+    },
+    "FCX": {
+      "name": "Freeport-McMoRan",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "MATERIALES",
+      "role": "STOCK"
+    },
+    "FDX": {
+      "name": "FedEx Corporation Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "INDUSTRIAL",
+      "role": "STOCK"
+    },
+    "GE": {
+      "name": "GE Aerospace",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "INDUSTRIAL",
+      "role": "STOCK"
+    },
+    "GEV": {
+      "name": "GE Vernova Inc. Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "INDUSTRIAL",
+      "role": "STOCK"
+    },
+    "GILD": {
+      "name": "Gilead Sciences, Inc. - Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "SALUD",
+      "role": "STOCK"
+    },
+    "GOOG": {
+      "name": "Alphabet Inc. - Class C Capital Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "COMUNICACION",
+      "role": "STOCK"
+    },
+    "GOOGL": {
+      "name": "Alphabet",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "COMUNICACION",
+      "role": "STOCK"
+    },
+    "GS": {
+      "name": "Goldman Sachs",
+      "kind": "STOCK",
+      "level_range": 35,
+      "quick_range": 50,
+      "live_range": 5,
+      "sector": "FINANCIERO",
+      "role": "STOCK"
+    },
+    "HAL": {
+      "name": "Halliburton Company Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "ENERGIA",
+      "role": "STOCK"
+    },
+    "HD": {
+      "name": "Home Depot",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "CONSUMO_DISCRECIONAL",
+      "role": "STOCK"
+    },
+    "HON": {
+      "name": "Honeywell International Inc. - Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "INDUSTRIAL",
+      "role": "STOCK"
+    },
+    "HOOD": {
+      "name": "Robinhood Markets, Inc. - Class A Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "FINANCIERO",
+      "role": "STOCK"
+    },
+    "HPE": {
+      "name": "Hewlett Packard Enterprise Company Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "TECNOLOGIA",
+      "role": "STOCK"
+    },
+    "HPQ": {
+      "name": "HP Inc. Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "TECNOLOGIA",
+      "role": "STOCK"
+    },
+    "IBM": {
+      "name": "International Business Machines Corporation Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "TECNOLOGIA",
+      "role": "STOCK"
+    },
+    "INTC": {
+      "name": "Intel",
+      "kind": "STOCK",
+      "level_range": 15,
+      "quick_range": 25,
+      "live_range": 5,
+      "sector": "TECNOLOGIA",
+      "role": "STOCK"
+    },
+    "INTU": {
+      "name": "Intuit Inc. - Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "TECNOLOGIA",
+      "role": "STOCK"
+    },
+    "ISRG": {
+      "name": "Intuitive Surgical, Inc. - Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "SALUD",
+      "role": "STOCK"
+    },
+    "IWM": {
+      "name": "iShares Russell 2000 ETF",
+      "kind": "ETF",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "MULTISECTOR",
+      "role": "BENCHMARK"
+    },
+    "JNJ": {
+      "name": "Johnson & Johnson",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "SALUD",
+      "role": "STOCK"
+    },
+    "JPM": {
+      "name": "JPMorgan Chase",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "FINANCIERO",
+      "role": "STOCK"
+    },
+    "KLAC": {
+      "name": "KLA Corporation  - Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "TECNOLOGIA",
+      "role": "STOCK"
+    },
+    "KO": {
+      "name": "Coca-Cola",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "CONSUMO_BASICO",
+      "role": "STOCK"
+    },
+    "LI": {
+      "name": "Li Auto Inc. - American Depositary Shares",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "CONSUMO_DISCRECIONAL",
+      "role": "STOCK"
+    },
+    "LIN": {
+      "name": "Linde",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "MATERIALES",
+      "role": "STOCK"
+    },
+    "LLY": {
+      "name": "Eli Lilly",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "SALUD",
+      "role": "STOCK"
+    },
+    "LOW": {
+      "name": "Lowe's Companies, Inc. Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "CONSUMO_DISCRECIONAL",
+      "role": "STOCK"
+    },
+    "LRCX": {
+      "name": "Lam Research Corporation - Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "TECNOLOGIA",
+      "role": "STOCK"
+    },
+    "LULU": {
+      "name": "lululemon athletica inc. - Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "CONSUMO_DISCRECIONAL",
+      "role": "STOCK"
+    },
+    "LYFT": {
+      "name": "Lyft, Inc. - Class A Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "INDUSTRIAL",
+      "role": "STOCK"
+    },
+    "M": {
+      "name": "Macy's Inc Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "CONSUMO_DISCRECIONAL",
+      "role": "STOCK"
+    },
+    "MA": {
+      "name": "Mastercard",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "FINANCIERO",
+      "role": "STOCK"
+    },
+    "MCD": {
+      "name": "McDonald's",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "CONSUMO_DISCRECIONAL",
+      "role": "STOCK"
+    },
+    "MDB": {
+      "name": "MongoDB, Inc. - Class A Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "TECNOLOGIA",
+      "role": "STOCK"
+    },
+    "MDT": {
+      "name": "Medtronic plc. Ordinary Shares",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "SALUD",
+      "role": "STOCK"
+    },
+    "MELI": {
+      "name": "MercadoLibre, Inc. - Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "CONSUMO_DISCRECIONAL",
+      "role": "STOCK"
+    },
+    "META": {
+      "name": "Meta Platforms",
+      "kind": "STOCK",
+      "level_range": 30,
+      "quick_range": 40,
+      "live_range": 5,
+      "sector": "COMUNICACION",
+      "role": "STOCK"
+    },
+    "MMM": {
+      "name": "3M Company Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "INDUSTRIAL",
+      "role": "STOCK"
+    },
+    "MPWR": {
+      "name": "Monolithic Power Systems, Inc. - Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "TECNOLOGIA",
+      "role": "STOCK"
+    },
+    "MRK": {
+      "name": "Merck & Company, Inc. Common Stock (new)",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "SALUD",
+      "role": "STOCK"
+    },
+    "MRNA": {
+      "name": "Moderna, Inc. - Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "SALUD",
+      "role": "STOCK"
+    },
+    "MRVL": {
+      "name": "Marvell Technology, Inc. - Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "TECNOLOGIA",
+      "role": "STOCK"
+    },
+    "MS": {
+      "name": "Morgan Stanley",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "FINANCIERO",
+      "role": "STOCK"
+    },
+    "MSFT": {
+      "name": "Microsoft",
+      "kind": "STOCK",
+      "level_range": 30,
+      "quick_range": 40,
+      "live_range": 5,
+      "sector": "TECNOLOGIA",
+      "role": "STOCK"
+    },
+    "MU": {
+      "name": "Micron Technology",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "TECNOLOGIA",
+      "role": "STOCK"
+    },
+    "NBIS": {
+      "name": "Nebius Group N.V.",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "TECNOLOGIA",
+      "role": "STOCK"
+    },
+    "NEE": {
+      "name": "NextEra Energy",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "SERVICIOS_PUBLICOS",
+      "role": "STOCK"
+    },
+    "NEM": {
+      "name": "Newmont",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "MATERIALES",
+      "role": "STOCK"
+    },
+    "NET": {
+      "name": "Cloudflare, Inc. Class A Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "TECNOLOGIA",
+      "role": "STOCK"
+    },
+    "NFLX": {
+      "name": "Netflix",
+      "kind": "STOCK",
+      "level_range": 35,
+      "quick_range": 50,
+      "live_range": 5,
+      "sector": "COMUNICACION",
+      "role": "STOCK"
+    },
+    "NIO": {
+      "name": "NIO Inc. American depositary shares, each  representing one Class A ordinary share",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "CONSUMO_DISCRECIONAL",
+      "role": "STOCK"
+    },
+    "NKE": {
+      "name": "Nike",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "CONSUMO_DISCRECIONAL",
+      "role": "STOCK"
+    },
+    "NOW": {
+      "name": "ServiceNow, Inc. Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "TECNOLOGIA",
+      "role": "STOCK"
+    },
+    "NTAP": {
+      "name": "NetApp, Inc. - Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "TECNOLOGIA",
+      "role": "STOCK"
+    },
+    "NVDA": {
+      "name": "NVIDIA",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "TECNOLOGIA",
+      "role": "STOCK"
+    },
+    "NXPI": {
+      "name": "NXP Semiconductors N.V. - Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "TECNOLOGIA",
+      "role": "STOCK"
+    },
+    "O": {
+      "name": "Realty Income",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "INMOBILIARIO",
+      "role": "STOCK"
+    },
+    "ON": {
+      "name": "ON Semiconductor Corporation - Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "TECNOLOGIA",
+      "role": "STOCK"
+    },
+    "ORCL": {
+      "name": "Oracle",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "TECNOLOGIA",
+      "role": "STOCK"
+    },
+    "OXY": {
+      "name": "Occidental Petroleum Corporation Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "ENERGIA",
+      "role": "STOCK"
+    },
+    "PANW": {
+      "name": "Palo Alto Networks, Inc. - Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "TECNOLOGIA",
+      "role": "STOCK"
+    },
+    "PEP": {
+      "name": "PepsiCo, Inc. - Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "CONSUMO_BASICO",
+      "role": "STOCK"
+    },
+    "PFE": {
+      "name": "Pfizer, Inc. Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "SALUD",
+      "role": "STOCK"
+    },
+    "PG": {
+      "name": "Procter & Gamble",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "CONSUMO_BASICO",
+      "role": "STOCK"
+    },
+    "PINS": {
+      "name": "Pinterest, Inc. Class A Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "COMUNICACION",
+      "role": "STOCK"
+    },
+    "PLD": {
+      "name": "Prologis",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "INMOBILIARIO",
+      "role": "STOCK"
+    },
+    "PLTR": {
+      "name": "Palantir",
+      "kind": "STOCK",
+      "level_range": 20,
+      "quick_range": 30,
+      "live_range": 5,
+      "sector": "TECNOLOGIA",
+      "role": "STOCK"
+    },
+    "PYPL": {
+      "name": "PayPal Holdings, Inc. - Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "FINANCIERO",
+      "role": "STOCK"
+    },
+    "QCOM": {
+      "name": "Qualcomm",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "TECNOLOGIA",
+      "role": "STOCK"
+    },
+    "QQQ": {
+      "name": "Invesco QQQ Trust",
+      "kind": "ETF",
+      "level_range": 60,
+      "quick_range": 40,
+      "live_range": 5,
+      "sector": "MULTISECTOR",
+      "role": "BENCHMARK"
+    },
+    "RBLX": {
+      "name": "Roblox Corporation Class A Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "COMUNICACION",
+      "role": "STOCK"
+    },
+    "RCL": {
+      "name": "Royal Caribbean Cruises Ltd. Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "CONSUMO_DISCRECIONAL",
+      "role": "STOCK"
+    },
+    "ROST": {
+      "name": "Ross Stores, Inc. - Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "CONSUMO_DISCRECIONAL",
+      "role": "STOCK"
+    },
+    "RTX": {
+      "name": "RTX",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "INDUSTRIAL",
+      "role": "STOCK"
+    },
+    "SBUX": {
+      "name": "Starbucks Corporation - Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "CONSUMO_DISCRECIONAL",
+      "role": "STOCK"
+    },
+    "SHEL": {
+      "name": "Shell PLC American Depositary Shares (each representing two (2) Ordinary Shares)",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "ENERGIA",
+      "role": "STOCK"
+    },
+    "SHOP": {
+      "name": "Shopify",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "TECNOLOGIA",
+      "role": "STOCK"
+    },
+    "SHW": {
+      "name": "Sherwin-Williams",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "MATERIALES",
+      "role": "STOCK"
+    },
+    "SLB": {
+      "name": "SLB",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "ENERGIA",
+      "role": "STOCK"
+    },
+    "SMH": {
+      "name": "VanEck Semiconductor ETF",
+      "kind": "ETF",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "TECNOLOGIA",
+      "role": "INDUSTRY_ETF"
+    },
+    "SNOW": {
+      "name": "Snowflake Inc. Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "TECNOLOGIA",
+      "role": "STOCK"
+    },
+    "SNPS": {
+      "name": "Synopsys, Inc. - Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "TECNOLOGIA",
+      "role": "STOCK"
+    },
+    "SO": {
+      "name": "Southern Company",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "SERVICIOS_PUBLICOS",
+      "role": "STOCK"
+    },
+    "SOFI": {
+      "name": "SoFi Technologies, Inc.  - Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "FINANCIERO",
+      "role": "STOCK"
+    },
+    "SPG": {
+      "name": "Simon Property Group, Inc. Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "INMOBILIARIO",
+      "role": "STOCK"
+    },
+    "SPGI": {
+      "name": "S&P Global Inc. Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "FINANCIERO",
+      "role": "STOCK"
+    },
+    "SPOT": {
+      "name": "Spotify Technology S.A. Ordinary Shares",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "COMUNICACION",
+      "role": "STOCK"
+    },
+    "SPX": {
+      "name": "S&P 500 Index",
+      "kind": "INDEX",
+      "level_range": 50,
+      "quick_range": 75,
+      "live_range": 10,
+      "sector": "MULTISECTOR",
+      "role": "INDEX"
+    },
+    "SPY": {
+      "name": "SPDR S&P 500 ETF Trust",
+      "kind": "ETF",
+      "level_range": 30,
+      "quick_range": 40,
+      "live_range": 5,
+      "sector": "MULTISECTOR",
+      "role": "BENCHMARK"
+    },
+    "STX": {
+      "name": "Seagate Technology Holdings PLC - Ordinary Shares (Ireland)",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "TECNOLOGIA",
+      "role": "STOCK"
+    },
+    "T": {
+      "name": "AT&T Inc.",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "COMUNICACION",
+      "role": "STOCK"
+    },
+    "TEAM": {
+      "name": "Atlassian Corporation  - Class A Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "TECNOLOGIA",
+      "role": "STOCK"
+    },
+    "TFC": {
+      "name": "Truist Financial Corporation Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "FINANCIERO",
+      "role": "STOCK"
+    },
+    "TGT": {
+      "name": "Target Corporation Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "CONSUMO_BASICO",
+      "role": "STOCK"
+    },
+    "TJX": {
+      "name": "TJX Companies, Inc. (The) Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "CONSUMO_DISCRECIONAL",
+      "role": "STOCK"
+    },
+    "TMO": {
+      "name": "Thermo Fisher Scientific Inc Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "SALUD",
+      "role": "STOCK"
+    },
+    "TMUS": {
+      "name": "T-Mobile US",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "COMUNICACION",
+      "role": "STOCK"
+    },
+    "TSLA": {
+      "name": "Tesla",
+      "kind": "STOCK",
+      "level_range": 30,
+      "quick_range": 40,
+      "live_range": 5,
+      "sector": "CONSUMO_DISCRECIONAL",
+      "role": "STOCK"
+    },
+    "TSM": {
+      "name": "Taiwan Semiconductor ADR",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "TECNOLOGIA",
+      "role": "STOCK"
+    },
+    "TT": {
+      "name": "Trane Technologies plc",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "INDUSTRIAL",
+      "role": "STOCK"
+    },
+    "TXN": {
+      "name": "Texas Instruments Incorporated - Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "TECNOLOGIA",
+      "role": "STOCK"
+    },
+    "U": {
+      "name": "Unity Software Inc. Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "TECNOLOGIA",
+      "role": "STOCK"
+    },
+    "UAL": {
+      "name": "United Airlines Holdings, Inc. - Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "INDUSTRIAL",
+      "role": "STOCK"
+    },
+    "UBER": {
+      "name": "Uber Technologies, Inc. Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "INDUSTRIAL",
+      "role": "STOCK"
+    },
+    "ULTA": {
+      "name": "Ulta Beauty, Inc. - Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "CONSUMO_DISCRECIONAL",
+      "role": "STOCK"
+    },
+    "UNH": {
+      "name": "UnitedHealth Group",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "SALUD",
+      "role": "STOCK"
+    },
+    "UPS": {
+      "name": "United Parcel Service, Inc. Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "INDUSTRIAL",
+      "role": "STOCK"
+    },
+    "USB": {
+      "name": "U.S. Bancorp Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "FINANCIERO",
+      "role": "STOCK"
+    },
+    "V": {
+      "name": "Visa",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "FINANCIERO",
+      "role": "STOCK"
+    },
+    "VST": {
+      "name": "Vistra",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "SERVICIOS_PUBLICOS",
+      "role": "STOCK"
+    },
+    "WDC": {
+      "name": "Western Digital Corporation - Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "TECNOLOGIA",
+      "role": "STOCK"
+    },
+    "WFC": {
+      "name": "Wells Fargo & Company Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "FINANCIERO",
+      "role": "STOCK"
+    },
+    "WMT": {
+      "name": "Walmart",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "CONSUMO_BASICO",
+      "role": "STOCK"
+    },
+    "XLB": {
+      "name": "Materials Select Sector SPDR Fund",
+      "kind": "ETF",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "MATERIALES",
+      "role": "SECTOR_ETF"
+    },
+    "XLC": {
+      "name": "Communication Services Select Sector SPDR Fund",
+      "kind": "ETF",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "COMUNICACION",
+      "role": "SECTOR_ETF"
+    },
+    "XLE": {
+      "name": "Energy Select Sector SPDR Fund",
+      "kind": "ETF",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "ENERGIA",
+      "role": "SECTOR_ETF"
+    },
+    "XLF": {
+      "name": "Financial Select Sector SPDR Fund",
+      "kind": "ETF",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "FINANCIERO",
+      "role": "SECTOR_ETF"
+    },
+    "XLI": {
+      "name": "Industrial Select Sector SPDR Fund",
+      "kind": "ETF",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "INDUSTRIAL",
+      "role": "SECTOR_ETF"
+    },
+    "XLK": {
+      "name": "Technology Select Sector SPDR Fund",
+      "kind": "ETF",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "TECNOLOGIA",
+      "role": "SECTOR_ETF"
+    },
+    "XLP": {
+      "name": "Consumer Staples Select Sector SPDR Fund",
+      "kind": "ETF",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "CONSUMO_BASICO",
+      "role": "SECTOR_ETF"
+    },
+    "XLRE": {
+      "name": "Real Estate Select Sector SPDR Fund",
+      "kind": "ETF",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "INMOBILIARIO",
+      "role": "SECTOR_ETF"
+    },
+    "XLU": {
+      "name": "Utilities Select Sector SPDR Fund",
+      "kind": "ETF",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "SERVICIOS_PUBLICOS",
+      "role": "SECTOR_ETF"
+    },
+    "XLV": {
+      "name": "Health Care Select Sector SPDR Fund",
+      "kind": "ETF",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "SALUD",
+      "role": "SECTOR_ETF"
+    },
+    "XLY": {
+      "name": "Consumer Discretionary Select Sector SPDR Fund",
+      "kind": "ETF",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "CONSUMO_DISCRECIONAL",
+      "role": "SECTOR_ETF"
+    },
+    "XOM": {
+      "name": "Exxon Mobil",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "ENERGIA",
+      "role": "STOCK"
+    },
+    "ZS": {
+      "name": "Zscaler, Inc. - Common Stock",
+      "kind": "STOCK",
+      "level_range": 25,
+      "quick_range": 35,
+      "live_range": 5,
+      "sector": "TECNOLOGIA",
+      "role": "STOCK"
+    }
+  }
+}
