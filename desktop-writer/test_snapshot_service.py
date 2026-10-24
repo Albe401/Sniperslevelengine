@@ -4,6 +4,32 @@ import snapshot_service as service
 from snapshot_neon_http import Connection
 
 class SnapshotTests(unittest.TestCase):
+    def test_gexbot_dominants_ship_only_fresh_valid_levels(self):
+        captured=1792439995000
+        with tempfile.TemporaryDirectory() as folder,patch.object(service,'ROOT',pathlib.Path(folder)):
+            path=pathlib.Path(folder)/'data/gexbot-private/QQQ/gex_full/2026-10-19.live.jsonl'
+            path.parent.mkdir(parents=True)
+            row={'generatedMs':captured-2000,'positiveOi':718,'negativeOi':700,'positiveVolume':725,'negativeVolume':718,'zeroGamma':722.5,'apiKey':'private'}
+            path.write_text(json.dumps(row)+'\n',encoding='utf-8')
+            result=service.gexbot_dominants('QQQ',captured)
+            self.assertEqual(result['positiveVolume'],725)
+            self.assertNotIn('apiKey',result)
+            self.assertIsNone(service.gexbot_dominants('AAPL',captured))
+            self.assertIsNone(service.gexbot_dominants('QQQ',captured+600001))
+            path.write_text(json.dumps({**row,'negativeVolume':float('nan')})+'\n',encoding='utf-8')
+            self.assertIsNone(service.gexbot_dominants('QQQ',captured))
+    def test_partial_newest_gexbot_does_not_restore_old_missing_levels(self):
+        captured=1792439995000
+        with tempfile.TemporaryDirectory() as folder,patch.object(service,'ROOT',pathlib.Path(folder)):
+            p=pathlib.Path(folder)/'data/gexbot-private/QQQ/gex_full/2026-10-19.live.jsonl';p.parent.mkdir(parents=True)
+            old={'generatedMs':captured-20000,'positiveOi':718,'negativeOi':700,'positiveVolume':725,'negativeVolume':718,'zeroGamma':722.5}
+            newest={**old,'generatedMs':captured-1000,'negativeOi':None,'zeroGamma':None}
+            p.write_text(json.dumps(old)+'\n'+json.dumps(newest)+'\n',encoding='utf-8')
+            result=service.gexbot_dominants('QQQ',captured)
+            self.assertEqual(result['generatedMs'],newest['generatedMs']);self.assertIsNone(result['negativeOi']);self.assertEqual(result['positiveOi'],718)
+            p.write_text(json.dumps(newest)+'\n'+json.dumps(old)+'\n',encoding='utf-8')
+            self.assertEqual(service.gexbot_dominants('QQQ',captured)['generatedMs'],newest['generatedMs'])
+
     def test_cache_recovers_from_windows_replace_lock(self):
         original=service.os.replace
         with tempfile.TemporaryDirectory(dir=service.DATA) as folder,patch.object(service,'DATA',pathlib.Path(folder)),patch.object(service.STOP,'wait'):

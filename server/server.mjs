@@ -19,9 +19,9 @@ quickFields.add('priceStructureReading');
 export function publicGexbot(value,symbol,capturedMs){
  const keys=['positiveOi','negativeOi','positiveVolume','negativeVolume','zeroGamma'];
  if(!value||value.source!=='Gexbot Classic'||value.symbol!==symbol||value.category!=='gex_full'
-  ||!Number.isSafeInteger(value.generatedMs)||value.generatedMs>capturedMs||capturedMs-value.generatedMs>600000
-  ||keys.some(key=>typeof value[key]!=='number'||!Number.isFinite(value[key])||value[key]<=0))return undefined;
- return {source:value.source,symbol,category:'gex_full',generatedMs:value.generatedMs,...Object.fromEntries(keys.map(key=>[key,value[key]]))};
+  ||!Number.isSafeInteger(capturedMs)||capturedMs<=0||!Number.isSafeInteger(value.generatedMs)||value.generatedMs<=0||value.generatedMs>capturedMs||capturedMs-value.generatedMs>600000
+  ||keys.every(key=>value[key]==null)||keys.some(key=>value[key]!=null&&(typeof value[key]!=='number'||!Number.isFinite(value[key])||value[key]<=0)))return undefined;
+ return {source:value.source,symbol,category:'gex_full',generatedMs:value.generatedMs,...Object.fromEntries(keys.map(key=>[key,value[key]??null]))};
 }
 const root=resolve(fileURLToPath(new URL('..',import.meta.url)));
 const caches=new Map();

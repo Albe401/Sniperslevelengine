@@ -38,3 +38,5 @@
 .gl-web-gexbot-mark.positive{color:#28e8b5}.gl-web-gexbot-mark.negative{color:#ff678a}
 .gl-web-gexbot-mark.oi{right:202px;opacity:.7}.gl-web-gexbot-mark.oi i{width:22px;border-top-width:2px;border-top-style:dashed}
 .gl-web-gexbot-status{position:absolute;top:7px;left:11px;padding:3px 6px;border:1px solid #275065;border-radius:3px;background:#071524e8;color:#b6d9e3;font-size:9px}
+
+.gl-web-gexbot-mark.zero{color:#ffeb3b}

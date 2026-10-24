@@ -11,3 +11,5 @@ test('publishes only licensed reference prices, never private fields',()=>{
  assert.equal(publicGexbot({...sample,generatedMs:captured-600001},'QQQ',captured),undefined);
  assert.equal(publicGexbot({...sample,negativeOi:NaN},'QQQ',captured),undefined);
 });
+
+test('preserves genuine missing references without hiding other supplied dominants',()=>{const r=publicGexbot({...sample,negativeOi:null,zeroGamma:null},'QQQ',captured);assert.equal(r.positiveOi,718);assert.equal(r.negativeOi,null);assert.equal(r.zeroGamma,null);assert.equal(publicGexbot({...sample,positiveOi:null,negativeOi:null,positiveVolume:null,negativeVolume:null,zeroGamma:null},'QQQ',captured),undefined);assert.equal(publicGexbot(sample,'QQQ',NaN),undefined);});

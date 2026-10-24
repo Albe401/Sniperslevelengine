@@ -1,6 +1,7 @@
 """Five-minute durable outbox -> Neon. No provider sockets or order execution."""
-import argparse, hashlib, hmac, json, os, pathlib, secrets, socket, sqlite3, struct
+import argparse, datetime, hashlib, hmac, json, math, os, pathlib, secrets, socket, sqlite3, struct
 import subprocess, sys, threading, time, uuid, ctypes, gzip, base64
+from zoneinfo import ZoneInfo
 from snapshot_price_structure import enrich_frames
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
@@ -130,6 +131,33 @@ def decode_frame(value):
     if hashlib.sha256(raw).hexdigest()!=value['sha256']:raise ValueError('database_frame_integrity')
     return json.loads(raw)
 
+def gexbot_dominants(symbol, captured):
+    """Only licensed reference prices; newest causal observation, including explicit absences."""
+    if not isinstance(symbol,str) or not symbol.isascii() or not symbol.isalnum() or isinstance(captured,bool) or not isinstance(captured,int):return None
+    try:
+        date=datetime.datetime.fromtimestamp(captured/1000,datetime.timezone.utc).astimezone(ZoneInfo('America/New_York')).date().isoformat()
+        path=ROOT/'data/gexbot-private'/symbol/'gex_full'/f'{date}.live.jsonl'
+        with path.open('rb') as file:
+            file.seek(0,2);file.seek(max(0,file.tell()-65536));raw_rows=file.read().splitlines()
+        candidates=[]
+        for raw in raw_rows:
+            try:
+                value=json.loads(raw);observed=value['generatedMs']
+                if isinstance(observed,bool) or not isinstance(observed,int) or not 0<=captured-observed<=600000:continue
+                candidates.append(value)
+            except (ValueError,TypeError,KeyError):continue
+        if not candidates:return None
+        latest=max(value['generatedMs'] for value in candidates);keys=('positiveOi','negativeOi','positiveVolume','negativeVolume','zeroGamma');canonical=None
+        for value in candidates:
+            if value['generatedMs']!=latest:continue
+            levels={key:value.get(key) for key in keys}
+            if any(v is not None and (not isinstance(v,(int,float)) or isinstance(v,bool) or not math.isfinite(v) or v<=0) for v in levels.values()):return None
+            if canonical is not None and canonical!=levels:return None
+            canonical=levels
+        if canonical is None or all(v is None for v in canonical.values()):return None
+        return {'source':'Gexbot Classic','symbol':symbol,'category':'gex_full','generatedMs':latest,**canonical}
+    except (OSError,OverflowError,ValueError):return None
+
 def storage_layout(payload):
     # Large contract inventories belong to the lossless per-asset archive,
     # rather than an uncompressed JSONB batch-wide extras field.
@@ -157,7 +185,13 @@ def stage(db,value,source):
     captured=value['capturedMs']; slot=captured//INTERVAL*INTERVAL
     allowed={'symbol','publishedMs','startedMs','stocks','options','ticks','bars','minutes','chartHistory','history','metrics','optionSnapshotStatus','selection','flow','flowExpiry','cvd','offExchange','dailyAtr','dailyRange','positionMaps','wallPull','wallFlow','adjustedReadings','adjustedAlignment','levelDeltas','magnetConfirmations','optionBaselineRecords','gapReport','priceAlerts','qqq_report','treasury','auctionMap','structuralPaths','directionOi','rawOptions','levelDynamics','intradayAtr','priceNow','snapshotUnavailable'}
     allowed.update({'rangeContext','localVolume','greekSupport','thetaVega','optionLiquidity','swingReport','neuroContext','qqqReport','optionTiming','etfBlocks','etfCvd','etfFlow','dataService'})
-    frames=enrich_frames({symbol:{k:v for k,v in frame.items() if k in allowed} for symbol,frame in value['frames'].items()},captured)
+    frames={}
+    for symbol,frame in value['frames'].items():
+        saved={k:v for k,v in frame.items() if k in allowed and k!='gexbotDominants'}
+        reading=gexbot_dominants(symbol,captured)
+        if reading:saved['gexbotDominants']=reading
+        frames[symbol]=saved
+    frames=enrich_frames(frames,captured)
     value={**value,'frames':frames,'webSections':['quick','detailed','contract-chain'],'coverage':{**value.get('coverage',{}),'webSections':['quick','detailed','contract-chain'],'format':'json','photosEnabled':False}}
     with LOCK: extras=json.loads(encode({k:v for k,v in EXTRAS.items() if v['observedMs']<=captured and v['command'] in {'get_contract_inventory','get_iv_history','get_fmp_targets','preview_route_4h'}}))
     # Capture existing IV evidence without starting reconstruction jobs or market calls.
