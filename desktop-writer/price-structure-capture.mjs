@@ -1,5 +1,5 @@
 // desktop-writer/price-structure-capture.ts
-import { readFileSync } from "node:fs";
+import { readFileSync, statSync } from "node:fs";
 import { createHash } from "node:crypto";
 
 // frontend/src/price-structure-long.ts
@@ -209,7 +209,10 @@ var result = {};
 for (const [symbol, frame] of Object.entries(input.frames)) {
   let history, sha = null;
   try {
-    const bytes = readFileSync(input.histories[symbol]);
+    const file = input.histories[symbol], before = statSync(file, { bigint: true });
+    if (before.mtimeNs > BigInt(input.capturedMs) * 1000000n) throw Error("Later acquisition");
+    const bytes = readFileSync(file), after = statSync(file, { bigint: true });
+    if (before.mtimeNs !== after.mtimeNs || before.ino !== after.ino || before.size !== after.size) throw Error("Changed cache");
     history = JSON.parse(bytes.toString("utf8"));
     sha = createHash("sha256").update(bytes).digest("hex");
   } catch {
