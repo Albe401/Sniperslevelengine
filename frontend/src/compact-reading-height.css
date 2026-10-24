@@ -33,8 +33,8 @@
 [data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed .levels-route-design .day-map.day-map-constellation{height:100%;min-height:0;max-height:100%;align-self:stretch}
 [data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed .flow-column{height:100%;min-height:0;max-height:100%}
 [data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed>.auction-map-stack{height:100%;min-height:0;max-height:100%;align-self:stretch;overflow:hidden}
-[data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed>.auction-map-stack>.auction-map-panel,[data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed>.auction-map-stack>.quant-fall-panel{flex:1;min-height:0;overflow-y:auto}
-[data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed>.auction-map-stack>.structural-map-preview:not(.auction-map-panel):not(.quant-fall-panel){flex:none}
+[data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed>.auction-map-stack>.auction-map-panel,[data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed>.auction-map-stack>:is(.quant-fall-panel,.massive-exposure-standalone){flex:1;min-height:0;overflow-y:auto}
+[data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed>.auction-map-stack>.structural-map-preview:not(.auction-map-panel):not(.quant-fall-panel):not(.massive-exposure-standalone){flex:none}
 @media(max-width:1150px){[data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed{height:auto;min-height:0;max-height:none;grid-template-rows:var(--level-overview-height) var(--level-overview-height)}}
 
 /* Content-sized cards: no blank padding below their readings. */
