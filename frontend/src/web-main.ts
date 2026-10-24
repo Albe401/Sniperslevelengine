@@ -1,3 +1,4 @@
+import {captureReadingScroll} from './reading-scroll';
 import {bindMassiveExposurePanel} from './massive-exposure-panel';
 import {savedWeeklyRanges} from './saved-weekly-ranges';
 import {webAutoRefreshAllowed,webRefreshLabel} from './web-refresh-policy';
@@ -38,6 +39,7 @@ searchInput.oninput=()=>{const q=searchInput.value.trim().toUpperCase(),rows=wat
 const selectTicker=(symbol:string)=>{selected=symbol;searchInput.value='';tickerSelect.innerHTML=watchlist.map(a=>`<option value="${esc(a.symbol)}" ${a.symbol===selected?'selected':''}>${esc(a.symbol)} · ${esc(a.name)}</option>`).join('');document.querySelector('#ticker-results')!.textContent=`${watchlist.length} tickers`;saved=undefined;expiry='',horizon='SIX_MONTHS',blockQuery='',blockSide='all';content.innerHTML='<section class="panel">Cargando datos guardados…</section>';void pull();};
 tickerSelect.onchange=()=>selectTicker(tickerSelect.value);searchInput.onkeydown=e=>{if(e.key==='Enter'&&tickerSelect.value)selectTicker(tickerSelect.value)};
 function paint(){
+ const restoreReadingScroll=captureReadingScroll();
  if(!saved?.available)return;
  document.querySelectorAll<HTMLButtonElement>('[data-symbol]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.symbol===selected)));
  document.querySelectorAll<HTMLButtonElement>('[data-view]').forEach(b=>b.setAttribute('aria-current',b.dataset.view===view?'page':'false'));
@@ -56,7 +58,7 @@ function paint(){
  if(view==='detailed'){
   if(!display.valid){content.innerHTML=savedReadingNotice(frame,selected,now,clock);return;}
   content.innerHTML=savedReadingNotice(frame,selected,now,clock)+`<section id="live-workspace" class="visual-reading" data-live-view="detailed" data-saved-reading="true">${capturedReadingMarkup(quickReadingPanels(frame,selected,true,buildIntradayControl(frame,selected,true,now),now,true))}</section><p class="web-note">Lectura detallada del lote guardado en Neon. Actualización lunes a viernes · cada cinco minutos ET; sin consultas al mercado desde la web.</p>`;
-  bindLevelCardSpacing();bindGammaLive(frame,selected,true,paint,now);bindMassiveExposurePanel(paint);
+  bindLevelCardSpacing();bindGammaLive(frame,selected,true,paint,now);bindMassiveExposurePanel(paint);restoreReadingScroll();
  }else if(view==='maps'){
   if(!display.valid){content.innerHTML=savedReadingNotice(frame,selected,now,clock);return;}
   const spot=frame.ticks?.[selected]?.price;

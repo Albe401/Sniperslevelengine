@@ -1,3 +1,4 @@
+import {captureReadingScroll} from './reading-scroll';
 let observer:ResizeObserver|undefined;
 let frame=0;
 /** Preserve the measured map height after the CVD card was removed from the web layout. */
@@ -56,6 +57,7 @@ export function bindLevelCardSpacing():void {
  };
  const cards=Array.from(track.querySelectorAll<HTMLElement>(':scope > .day-map-node'));
  const place=()=>{
+  const restoreScroll=captureReadingScroll();
   fitOverview();
   cards.forEach(card=>card.style.removeProperty('min-height'));
   levelCardPositions(cards.map(card=>card.offsetHeight),track.clientHeight).forEach((position,i)=>{
@@ -63,6 +65,7 @@ export function bindLevelCardSpacing():void {
    cards[i].style.minHeight=`${position.height}px`;
    cards[i].dataset.levelColumn=String(position.column);
   });
+  restoreScroll();
  };
  track.style.removeProperty('height');track.classList.add('level-cards-close');
  track.tabIndex=0;track.setAttribute('aria-label','Niveles importantes; distribución adaptable dentro del mapa');
