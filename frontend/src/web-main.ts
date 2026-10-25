@@ -39,6 +39,7 @@ searchInput.oninput=()=>{const q=searchInput.value.trim().toUpperCase(),rows=wat
 const selectTicker=(symbol:string)=>{selected=symbol;searchInput.value='';tickerSelect.innerHTML=watchlist.map(a=>`<option value="${esc(a.symbol)}" ${a.symbol===selected?'selected':''}>${esc(a.symbol)} · ${esc(a.name)}</option>`).join('');document.querySelector('#ticker-results')!.textContent=`${watchlist.length} tickers`;saved=undefined;expiry='',horizon='SIX_MONTHS',blockQuery='',blockSide='all';content.innerHTML='<section class="panel">Cargando datos guardados…</section>';void pull();};
 tickerSelect.onchange=()=>selectTicker(tickerSelect.value);searchInput.onkeydown=e=>{if(e.key==='Enter'&&tickerSelect.value)selectTicker(tickerSelect.value)};
 function paint(){
+ if(document.activeElement?.hasAttribute('data-massive-gex-window'))return;
  const restoreReadingScroll=captureReadingScroll();
  if(!saved?.available)return;
  document.querySelectorAll<HTMLButtonElement>('[data-symbol]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.symbol===selected)));

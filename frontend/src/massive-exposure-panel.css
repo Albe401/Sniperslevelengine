@@ -5,3 +5,14 @@
 .massive-exposure-standalone>header,.massive-exposure-standalone>p,.massive-exposure-standalone>.massive-exposure-summary,.massive-exposure-standalone>.massive-exposure-pages,.massive-exposure-standalone>.massive-exposure-method{flex-shrink:0}
 .massive-exposure-standalone>header strong{color:#e8bd63;font-size:12px;letter-spacing:.045em}
 .massive-exposure-standalone>.massive-exposure-table{flex:1 1 auto;min-height:96px;height:auto}
+
+.massive-exposure-net{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}
+.massive-exposure-net b{font-size:12px;font-variant-numeric:tabular-nums}
+.massive-gex-window{width:78px;max-width:100%;height:23px;padding:1px 3px;border:1px solid #34647b;border-radius:4px;background:#092033;color:#d8f2ff;font-size:10px;font-family:inherit;cursor:pointer;color-scheme:dark}
+.massive-gex-window:focus-visible{outline:2px solid #56dcf5;outline-offset:2px}
+.massive-exposure-table th,.massive-exposure-table td{padding:5px 4px;font-size:12px}
+.massive-exposure-table th:first-child{width:13%}
+.massive-exposure-table th:nth-child(2),.massive-exposure-table th:nth-child(3),.massive-exposure-table th:nth-child(4){width:16%}
+.massive-exposure-table th:last-child{width:39%}
+.massive-exposure-bar{height:12px}
+@container (max-width:430px){.massive-exposure-table th,.massive-exposure-table td{font-size:10px;padding:5px 2px}.massive-exposure-net b{font-size:11px}.massive-exposure-summary{gap:4px}.massive-exposure-table thead th{font-size:8px}}

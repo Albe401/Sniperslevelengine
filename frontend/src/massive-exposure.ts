@@ -1,13 +1,14 @@
 import type {LiveState} from './live';
+import {readGexWindow,hasGexWindows,selectedGexWindow,type GexWindowMode} from './gex-windows';
 export interface MassiveExposureRow {strike:number;netGex:number;callGex?:number;putGex?:number}
-export interface MassiveExposureView {symbol:string;mode:string;expiry:string;at:number;complete:boolean;historical:boolean;gammaUsed:number;eligible:number;net:number;rows:MassiveExposureRow[];reason:string}
+export interface MassiveExposureView {label?:string;spot?:number;expirations?:readonly string[];start?:string;end?:string;expected?:number;missingContracts?:number;unexpectedContracts?:number;symbol:string;mode:string;expiry:string;at:number;complete:boolean;historical:boolean;gammaUsed:number;eligible:number;net:number;rows:MassiveExposureRow[];reason:string}
 /** A shared capture identity, not an independent direction vote for each consumer. */
 export const massiveExposureIdentity=(v:MassiveExposureView)=>JSON.stringify(['Massive-OI',v.symbol,v.mode,v.expiry,v.at]);
 const dateFormat=new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York'});
 const validDate=(v:unknown):v is string=>typeof v==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(v)&&Number.isFinite(Date.parse(v+'T12:00:00Z'))&&new Date(v+'T12:00:00Z').toISOString().slice(0,10)===v;
 const finite=(v:unknown):v is number=>typeof v==='number'&&Number.isFinite(v),clock=(v:unknown):v is number=>finite(v)&&Number.isSafeInteger(v)&&v>0&&v<=8640000000000000;
 /** Read already-calculated Massive OI exposure. No Gexbot state, new Greeks, or provider request. */
-export function readMassiveExposure(s:LiveState|undefined,symbol:string,active:boolean,now:number):MassiveExposureView {
+function readLegacyExposure(s:LiveState|undefined,symbol:string,active:boolean,now:number):MassiveExposureView {
  const empty:MassiveExposureView={symbol,mode:'',expiry:'',at:0,complete:false,historical:true,gammaUsed:0,eligible:0,net:0,rows:[],reason:'Sin captura de exposición Massive del activo'};
  const fail=(reason:string)=>({...empty,reason});
  if(!clock(now)||s?.symbol!==symbol||!clock(s.publishedMs)||s.publishedMs>now)return empty;
@@ -33,4 +34,10 @@ export function readMassiveExposure(s:LiveState|undefined,symbol:string,active:b
  }
  if(!finite(sum)||!finite(absolute)||Math.abs(sum-e.netGex)>Math.max(.01,64*Number.EPSILON*rows.length*absolute))return fail('El subtotal no coincide con los strikes de esta captura');
  return {symbol,mode:h.mode,expiry,at:h.observedMs,complete:e.gexComplete===true&&e.gammaUsed===e.eligible&&(e.unknownOi??0)===0&&(e.unsupported??0)===0,historical:!active||now-s.publishedMs>15000||now-h.observedMs>300000||dateFormat.format(now)!==sourceDay,gammaUsed:e.gammaUsed,eligible:e.eligible,net:e.netGex,rows:[...rows].sort((a,b)=>a.strike-b.strike),reason:''};
+}
+
+/** Range changes are local: all windows share a single provider inventory. */
+export function readMassiveExposure(s:LiveState|undefined,symbol:string,active:boolean,now:number,mode?:GexWindowMode):MassiveExposureView {
+ const chosen=mode??selectedGexWindow(symbol);
+ return mode||chosen!=='DAY'||hasGexWindows(s,symbol,active,now)?readGexWindow(s,symbol,active,now,chosen):readLegacyExposure(s,symbol,active,now);
 }

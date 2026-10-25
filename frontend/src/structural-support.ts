@@ -6,7 +6,8 @@ import {escapeContextHtml as esc} from './structural-context-html';
 export interface StructuralActivityWindow {source:'stock'|'options';interval:number;startMs:number;endMs:number;buy:number;sell:number;unknown:number;net:number;events:number;observedMinutes:number;expectedMinutes:number;classifiedPct:number|null;conflicts:number;gaps:number;uncertain:boolean;direction:string;receptionCoveragePct:null;temporalCoverage:'not-certified';deltaGreekFlow:null;observedConnectionMs:number;expectedMs:number;connectionCoveragePct:number;connectionWindowComplete:boolean}
 export interface StructuralActivityReport {version:'structural-activity-v1';symbol:string;at:number;storageError:string|null;windows:StructuralActivityWindow[]}
 const n=(x:unknown):x is number=>typeof x==='number'&&Number.isFinite(x);
-const fmt=(x:number|null|undefined,d=2)=>x==null||!n(x)?'—':new Intl.NumberFormat('es',{maximumFractionDigits:d,notation:Math.abs(x)>=100000?'compact':'standard'}).format(x);
+const numberFormats=new Map<string,Intl.NumberFormat>();
+const fmt=(x:number|null|undefined,d=2)=>{if(x==null||!n(x))return '—';const notation=Math.abs(x)>=100000?'compact':'standard',key=d+notation;let f=numberFormats.get(key);if(!f){f=new Intl.NumberFormat('es',{maximumFractionDigits:d,notation});numberFormats.set(key,f);}return f.format(x);};
 export function activityForCard(s:LiveState|undefined,c:PriceStructureCard,source:'stock'|'options',symbol:string,now:number):StructuralActivityWindow|undefined {
  const r=s?.structuralActivity;if(!r||r.version!=='structural-activity-v1'||r.symbol!==symbol||s?.symbol!==symbol||!n(r.at)||r.at>now||r.at>s.publishedMs||s.publishedMs-r.at>3000||r.storageError||!Array.isArray(r.windows)||r.windows.length>10||c.side==='SIN DATOS')return;
  const matches=r.windows.filter(w=>w.source===source&&w.interval===c.interval);if(matches.length!==1)return;
@@ -43,16 +44,27 @@ export function gammaForCard(c:PriceStructureCard,context:StructuralMapContext):
  }
  return {above,below,positive,negative};
 }
+const comparisonCache=new WeakMap<NonNullable<StructuralMapContext['gexWindows']>,string>();
+function gexComparisonTable(context:StructuralMapContext):string {
+ const key=context.gexWindows;if(!key?.length)return '';const previous=comparisonCache.get(key);if(previous!==undefined)return previous;
+ const html=context.gexWindows?.length?`<div class="structural-gex-windows"><b>GEX Massive · comparación de plazos acumulados</b><table><thead><tr><th>Plazo</th><th>Neto USD/1%</th><th>Mayor + / − · strike</th><th>Cobertura</th></tr></thead><tbody>${context.gexWindows.map(v=>{
+  let positive:typeof v.rows[number]|undefined,negative:typeof v.rows[number]|undefined;
+  for(const r of v.rows){if(r.netGex>0&&(!positive||r.netGex>positive.netGex))positive=r;if(r.netGex<0&&(!negative||r.netGex<negative.netGex))negative=r;}
+  return `<tr><th title="${esc((v.start??'')+' → '+(v.end??'')+' · '+(v.expirations?.length??0)+' vencimientos')}">${esc(v.label??v.mode)}</th><td>${v.reason?'—':fmt(v.net)}</td><td>${positive?'$'+fmt(positive.strike):'—'} / ${negative?'$'+fmt(negative.strike):'—'}</td><td>${esc(v.reason||(v.complete?'Recibida':'Parcial')+' · '+v.gammaUsed+'/'+v.eligible+(v.historical?' · histórica':''))}</td></tr>`;
+ }).join('')}</tbody></table><p>Los plazos comparten contratos; no se suman ni se cuentan como votos. La gamma neta positiva/negativa describe exposición convencional CALL menos PUT, no dirección alcista/bajista. Las concentraciones y distancias del perfil seleccionado aportan contexto a esta estructura de precio. La ausencia de contratos 0 DTE no se reemplaza por otra fecha.</p></div>`:'';
+ comparisonCache.set(key,html);return html;
+}
 export function structuralSupportDetail(c:PriceStructureCard,s:LiveState|undefined,context:StructuralMapContext,now:number):string {
  const i=validStructuralIndicators(c.indicators,c.endMs,c.bars)?c.indicators:undefined;
  const indicators=!i?'<p>Indicadores pendientes: esta captura conserva la estructura anterior y no contiene estos cálculos nuevos.</p>':`<p><b>${esc(supportLabel(c))}.</b> EMA21 $${fmt(i.ema21)}; cierre menos EMA21 ${fmt(i.distanceAtr,4)} ATR; pendiente de 3 velas ${fmt(i.slope3Atr,4)} ATR. +DI ${fmt(i.plusDi)}; −DI ${fmt(i.minusDi)}; ADX14 ${fmt(i.adx)} (${esc(i.strength.toLowerCase())}). EMA9 $${fmt(i.ema9)} y EMA20 $${fmt(i.ema20)} se conservan como referencias.</p><p>Volumen relativo: ${i.rvol.value==null?'pendiente':fmt(i.rvol.value)+'×'}; ${i.rvol.references}/20 referencias. ${esc(i.rvol.method)}. Media de referencia ${fmt(i.rvol.mean)}. No compara media sesión con una sesión completa. ${esc(i.reason)} Sensibilidad EMA21 ${fmt(i.emaSeedAtr,6)} ATR y ADX ${fmt(i.adxSeedPoints,6)} puntos al retirar 14 velas.</p>`;
  const g=gammaForCard(c,context),level=(x:GammaLevel|null)=>x?'$'+fmt(x.strike)+' · '+fmt(x.net)+' USD/1% · '+fmt(x.distanceAtr,3)+' ATR desde este cierre':'sin nivel recibido';
- const gamma=g?`<p><b>GEX Massive · ${esc(context.options.expiry??'')}:</b> nivel recibido cercano por arriba ${esc(level(g.above))}; por abajo ${esc(level(g.below))}. Mayor concentración positiva ${esc(level(g.positive))}; negativa ${esc(level(g.negative))}. ${context.options.status==='partial'?'Perfil parcial: un strike ausente puede cambiar estas referencias.':''} Distancias calculadas contra el cierre y ATR de esta tarjeta; no contra un trade simultáneo a gamma.</p>`:'<p>GEX: sin población Massive asociada verificable.</p>';
+ const gamma=g?`<p><b>GEX Massive · ${esc(context.options.profile?.label??'')} ${esc(context.options.expiry??'')}:</b> nivel recibido cercano por arriba ${esc(level(g.above))}; por abajo ${esc(level(g.below))}. Mayor concentración positiva ${esc(level(g.positive))}; negativa ${esc(level(g.negative))}. ${context.options.status==='partial'?'Perfil parcial: un strike ausente puede cambiar estas referencias.':''} Distancias calculadas contra el cierre y ATR de esta tarjeta; no contra un trade simultáneo a gamma.</p>`:'<p>GEX: sin población Massive asociada verificable.</p>';
+ const comparisons=gexComparisonTable(context);
  const activity=(['stock','options'] as const).map(source=>{
   const w=activityForCard(s,c,source,context.symbol,now),label=source==='stock'?'CVD de acciones':'Flujo de opciones';
   return w&&w.events?`<p><b>${label} · misma vela cerrada · muestra parcial:</b> ${esc(w.direction.toLowerCase())}; neto ${fmt(w.net)} ${source==='stock'?'acciones':'contratos clasificados por exposición alcista/bajista inferida'}. Componentes ${fmt(w.buy)} / ${fmt(w.sell)} / ${fmt(w.unknown)} sin clasificar; clasificación ${fmt(w.classifiedPct,1)}%. Conexión del canal observada en ${fmt(w.connectionCoveragePct,2)}% de la ventana (${w.connectionWindowComplete?'muestreo completo':'muestreo parcial'}); no es cobertura de ticks. ${w.observedMinutes}/${w.expectedMinutes} minutos contienen operaciones observadas; esto no mide minutos conectados ni recepción total. ${w.gaps} reconexiones/huecos del registro; ${w.conflicts} minutos solapados excluidos; ${w.uncertain?'correcciones o identidad sin resolver':'sin incidencias declaradas en los incrementos recibidos'}. No certifica presión de todo el mercado.</p>`:`<p><b>${label}:</b> pendiente de incrementos verificables de esta temporalidad. No se sustituye por la lectura de 5 minutos.</p>`;
  }).join('');
- return `<div data-structural-support="${c.interval}">${indicators}${gamma}${activity}</div>`;
+ return `<div data-structural-support="${c.interval}">${indicators}${gamma}${comparisons}${activity}</div>`;
 }
 export function structuralGroups(cards:PriceStructureCard[]):{name:string;side:string;detail:string}[]{
  return [{name:'CORTO',scales:[15,60]},{name:'MEDIO',scales:[240,1440]},{name:'MAYOR',scales:[10080]}].map(g=>{

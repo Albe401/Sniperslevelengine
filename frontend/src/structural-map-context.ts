@@ -1,4 +1,5 @@
 import type {LiveState} from './live';
+import {gexWindowComparisons} from './gex-windows';
 import type {MarketEvidence,PressureEvidence} from './market-evidence';
 import type {PriceInterval,PriceStructureCard} from './price-structure';
 import {readMassiveExposure,massiveExposureIdentity,type MassiveExposureView} from './massive-exposure';
@@ -33,7 +34,7 @@ export interface ActivityContext extends SourceState {
 }
 export interface StructuralMapContext {
  version:'structural-map-context-v1';symbol:string;atMs:number;framePublishedMs:number|null;frame:SourceState;
- price:StructureLane[];options:OptionsContext;optionScopes:OptionScope[];activity:{flow:ActivityContext;cvd:ActivityContext};
+ price:StructureLane[];options:OptionsContext;gexWindows?:MassiveExposureView[];optionScopes:OptionScope[];activity:{flow:ActivityContext;cvd:ActivityContext};
  strikeFlow:{status:Status;reason:string;observedMs:number|null;cells:number|null;receptionCoveragePct:null;directionSupportAllowed:false};
  /** One shared context reference, not five independent votes. */
  links:{interval:PriceInterval;contextId:string;role:'context-only';freshness:Freshness}[];
@@ -67,9 +68,10 @@ function readOptions(s:LiveState|undefined,symbol:string,active:boolean,now:numb
  const v=readMassiveExposure(s,symbol,active,now);
  if(v.reason)return {...empty,reason:v.reason};
  if(!validDate(v.expiry))return {...empty,status:'rejected',reason:'Fecha de vencimiento inválida'};
- const h=s!.optionSnapshotStatus.horizons.find(h=>h?.mode===v.mode)!;
+ const h=s!.optionSnapshotStatus?.horizons?.find(h=>h?.mode===v.mode);
+ const spot=v.spot??h?.exposure.spot;
  return {...empty,id:massiveExposureIdentity(v),mode:v.mode,expiry:v.expiry,observedMs:v.at,
-  spot:finite(h.exposure.spot)&&h.exposure.spot>0?h.exposure.spot:null,net:v.net,gammaUsed:v.gammaUsed,eligible:v.eligible,countCoveragePct:100*v.gammaUsed/v.eligible,
+  spot:finite(spot)&&spot>0?spot:null,net:v.net,gammaUsed:v.gammaUsed,eligible:v.eligible,countCoveragePct:100*v.gammaUsed/v.eligible,
   profile:v,status:v.complete?'available':'partial',freshness:v.historical?'historical':'current',reason:v.complete?'Población recibida; signo CALL-PUT convencional, no inventario dealer':'Subtotal parcial; cobertura de contratos no equivale a cobertura de riesgo'};
 }
 
@@ -107,6 +109,6 @@ export function buildStructuralMapContext(s:LiveState|undefined,symbol:string,ac
  const heat=frame.status!=='rejected'?s?.flow?.heatmap:undefined;
  const heatValid=heat?.method==='option-execution-heatmap-v1'&&heat.symbol===symbol&&clock(heat.asofMs)&&heat.asofMs<=now&&heat.asofMs<=published!&&Array.isArray(heat.cells);
  const strikeFlow:StructuralMapContext['strikeFlow']={status:!heat?'pending':!heatValid?'rejected':heat.cells.length?'partial':'pending',reason:!heat?'Sin captura de flujo por strike':!heatValid?'Flujo por strike de otro activo, método o reloj':heat.cells.length?'Celdas observadas; falta validar población, ventana y categorías antes de aportar dirección':'Sin ejecuciones observadas; no equivale a flujo cero',observedMs:heatValid?heat.asofMs:null,cells:heatValid?heat.cells.length:null,receptionCoveragePct:null,directionSupportAllowed:false};
- return {version:'structural-map-context-v1',symbol,atMs:now,framePublishedMs:published,frame,price,options,optionScopes:scopes(s,frame),activity:{flow:activity('flow',s,evidence,symbol,now,frame),cvd:activity('cvd',s,evidence,symbol,now,frame)},strikeFlow,
+ return {version:'structural-map-context-v1',symbol,atMs:now,framePublishedMs:published,frame,price,options,gexWindows:frame.status==='rejected'?[]:gexWindowComparisons(s,symbol,active,now),optionScopes:scopes(s,frame),activity:{flow:activity('flow',s,evidence,symbol,now,frame),cvd:activity('cvd',s,evidence,symbol,now,frame)},strikeFlow,
   links:options.id?price.filter(p=>p.status==='available').map(p=>({interval:p.interval,contextId:options.id!,role:'context-only',freshness:options.freshness})):[],probability:null,directionScore:null};
 }

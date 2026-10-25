@@ -1,10 +1,12 @@
 import {invoke as nativeInvoke,isTauri,type InvokeArgs,type InvokeOptions} from '@tauri-apps/api/core';
+import {rememberGexInventory} from './gex-windows';
 import {snapshotCommandAllowed,snapshotSymbols} from './snapshot-model';
 export * from '@tauri-apps/api/core';
 const last=new Map<string,number>();
 let observationsEnabled=false;
 export async function invoke<T>(command:string,args?:InvokeArgs,options?:InvokeOptions):Promise<T>{
  const value=await (arguments.length===1?nativeInvoke<T>(command):arguments.length===2?nativeInvoke<T>(command,args):nativeInvoke<T>(command,args,options));
+ if(command==='get_contract_inventory')rememberGexInventory(value);
  if(observationsEnabled&&typeof window!=='undefined'&&'__TAURI_INTERNALS__' in window&&snapshotCommandAllowed(command)){
   const key=JSON.stringify([command,args]);const now=Date.now();
   if(now-(last.get(key)??0)>=300000){
