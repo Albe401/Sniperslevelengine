@@ -1,11 +1,12 @@
 import {scopeContractReport} from './contract-profile';
-import {readMarketEvidence} from './market-evidence';
+import {readMarketEvidence,type MarketEvidence} from './market-evidence';
 import {sharedLevelDetail} from './shared-level-detail';
 import type {LiveState} from './live';
 import type {StructuralCard} from './structural-map-preview';
 import type {EtfReport,EtfSide} from './etf-dealers';
 import {rankStrikes,enrichmentPanel,etfFlowPanel,type EtfFlow} from './etf-enrichment';
 import {blockPressurePanel} from './block-pressure';
+
 import {escapeHtml as esc} from './model';
 import './structural-enrichment.css';
 const fmt=(n:number|null|undefined)=>n==null||!Number.isFinite(n)?'—':new Intl.NumberFormat('es',{notation:'compact',maximumFractionDigits:2}).format(n);
@@ -30,8 +31,9 @@ function evidenceBody(key:string,r:EtfReport):string {
  selections.set(key,selected);
  return `<label>Vencimiento <select data-structural-expiry><option value="">Todos de este horizonte</option>${r.expirations.map(d=>`<option value="${esc(d)}" ${selected.expiry===d?'selected':''}>${esc(d)}</option>`).join('')}</select></label><div class="structural-rankings">${rankings.map(group=>`<div><strong>${group.label} · CALL + PUT</strong>${group.rows.map(row=>`<button data-structural-strike="${row.strike}">${row.strike.toFixed(2)} · ${fmt(row.value)}</button>`).join('')||'<small>Sin cantidades completas</small>'}</div>`).join('')}</div><label>Strike <select data-structural-strike-select><option value="">Seleccionar nivel</option>${view.rows.map(row=>`<option value="${row.strike}" ${selected.strike===row.strike?'selected':''}>${row.strike.toFixed(2)}</option>`).join('')}</select></label>${enrichmentPanel(view,selected.strike,selected.expiry)}<p class="structural-evidence-method">GEX en USD por movimiento del 1%; delta en acciones equivalentes. Rankings de concentración, sin identificación de inventario dealer. Se incluyen todos los strikes de la cadena consultada, dentro de su banda de precios y vencimientos.</p>`;
 }
-export function structuralEnrichmentPanel(symbol:string,s:LiveState|undefined,active:boolean,now:number,cards:StructuralCard[],legend=""):string {
- const common=readMarketEvidence(s,symbol,active,now);
+export function structuralEnrichmentPanel(symbol:string,s:LiveState|undefined,active:boolean,now:number,cards:StructuralCard[],legend="",evidence?:MarketEvidence):string {
+ const session=`${symbol}:${new Date(now).toLocaleDateString('en-CA',{timeZone:'America/New_York'})}:${s?.startedMs??0}`;
+ const common=evidence?.symbol===symbol&&evidence.at===now&&evidence.session===session?evidence:readMarketEvidence(s,symbol,active,now);
  const own=active&&s?.symbol===symbol&&s.publishedMs<=now&&now-s.publishedMs<=3000;
  const flow=s?.flow;
  const tracked=new Set(flow?.contract_windows?.map(c=>c.ticker)??[]).size;
