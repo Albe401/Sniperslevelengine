@@ -59,6 +59,7 @@ export function structuralIndicators(bars:readonly PriceBar[],interval:PriceInte
 export function validStructuralIndicators(x:StructuralIndicators|undefined,at:number|null,bars:number):boolean {
  if(!x||x.version!==STRUCTURAL_INDICATOR_VERSION||x.at!==at||x.bars!==bars||typeof x.ready!=='boolean'||typeof x.reason!=='string')return false;
  if([x.ema9,x.ema20,x.ema21,x.distanceAtr,x.slope3Atr,x.plusDi,x.minusDi,x.adx,x.emaSeedAtr,x.adxSeedPoints].some(v=>v!==null&&!finite(v)))return false;
+ if([x.emaSeedAtr,x.adxSeedPoints].some(v=>v!==null&&v<0))return false;
  if([x.ema9,x.ema20,x.ema21].some(v=>v!==null&&v<=0)||[x.plusDi,x.minusDi,x.adx].some(v=>v!==null&&(v<0||v>100+1e-9)))return false;
  if(!['CALL','PUT','MIXTA','PENDIENTE'].includes(x.trend)||!['FUERTE','TRANSICIÓN','DÉBIL','PENDIENTE'].includes(x.strength)||!x.rvol||!Number.isInteger(x.rvol.references)||x.rvol.references<0||x.rvol.references>20||x.rvol.required!==20||typeof x.rvol.method!=='string')return false;
  if([x.rvol.mean,x.rvol.value].some(v=>v!==null&&(!finite(v)||v<0))||x.rvol.value!==null&&(x.rvol.references!==20||!(x.rvol.mean!>0)))return false;
