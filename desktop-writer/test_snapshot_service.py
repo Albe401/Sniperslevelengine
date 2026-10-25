@@ -4,6 +4,17 @@ import snapshot_service as service
 from snapshot_neon_http import Connection
 
 class SnapshotTests(unittest.TestCase):
+    def test_structural_activity_survives_durable_staging_without_private_fields(self):
+        with tempfile.TemporaryDirectory(dir=service.DATA) as folder,patch.object(service,'DATA',pathlib.Path(folder)),patch.object(service,'enrich_frames',side_effect=lambda frames,captured:frames),patch.object(service,'gexbot_dominants',return_value=None):
+            db=service.local_db();b=self.bundle()
+            activity={'version':'structural-activity-v1','symbol':'QQQ','at':b['capturedMs'],'storageError':None,'windows':[{'source':'stock','interval':15,'net':0,'direction':'PENDIENTE','receptionCoveragePct':None,'connectionCoveragePct':0,'deltaGreekFlow':None}]}
+            b['frames']['QQQ']['structuralActivity']=activity
+            b['frames']['QQQ']['apiKey']='must-not-ship'
+            service.stage(db,b,'structural-regression')
+            stored=json.loads(db.execute('SELECT payload FROM outbox').fetchone()[0])['bundle']['frames']['QQQ'];db.close()
+            self.assertEqual(stored['structuralActivity'],activity)
+            self.assertNotIn('apiKey',stored)
+
     def test_gexbot_dominants_ship_only_fresh_valid_levels(self):
         captured=1792439995000
         with tempfile.TemporaryDirectory() as folder,patch.object(service,'ROOT',pathlib.Path(folder)):

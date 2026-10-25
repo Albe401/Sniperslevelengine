@@ -185,6 +185,7 @@ def stage(db,value,source):
     captured=value['capturedMs']; slot=captured//INTERVAL*INTERVAL
     allowed={'symbol','publishedMs','startedMs','stocks','options','ticks','bars','minutes','chartHistory','history','metrics','optionSnapshotStatus','selection','flow','flowExpiry','cvd','offExchange','dailyAtr','dailyRange','positionMaps','wallPull','wallFlow','adjustedReadings','adjustedAlignment','levelDeltas','magnetConfirmations','optionBaselineRecords','gapReport','priceAlerts','qqq_report','treasury','auctionMap','structuralPaths','directionOi','rawOptions','levelDynamics','intradayAtr','priceNow','snapshotUnavailable'}
     allowed.update({'rangeContext','localVolume','greekSupport','thetaVega','optionLiquidity','swingReport','neuroContext','qqqReport','optionTiming','etfBlocks','etfCvd','etfFlow','dataService'})
+    allowed.add('structuralActivity')
     frames={}
     for symbol,frame in value['frames'].items():
         saved={k:v for k,v in frame.items() if k in allowed and k!='gexbotDominants'}
