@@ -1,6 +1,13 @@
 import {describe,it,expect,vi} from 'vitest';
 const mocks=vi.hoisted(()=>({invoke:vi.fn()}));
 vi.mock('@tauri-apps/api/core',()=>({invoke:mocks.invoke,isTauri:()=>true}));
+// This handler test owns its catalog; a previously restored ten-asset snapshot
+// must not determine this unit's expected inputs or mutate the product catalog.
+vi.mock('./asset-watchlist',async(importOriginal)=>{
+ const actual=await importOriginal<typeof import('./asset-watchlist')>();
+ const symbols=['BRK.B',...Array.from({length:185},(_,i)=>'TEST'+i)];
+ return {...actual,bundledAssets:Object.fromEntries(symbols.map(symbol=>[symbol,{name:symbol,kind:'STOCK',sector:null,live_range:1}]))};
+});
 import {wireStructureStudy,structureStudyPanel} from './structure-study';
 describe('study queue start',()=>{
  it('sends the complete catalog including dotted symbols from the real start handler',async()=>{

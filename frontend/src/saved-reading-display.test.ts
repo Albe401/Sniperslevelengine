@@ -27,7 +27,7 @@ it.skipIf(!process.env.SNIPERS_WEB_REAL_FRAME)('preserves levels from the real p
  const d=JSON.parse(readFileSync(process.env.SNIPERS_WEB_REAL_FRAME!,'utf8'));
  const result=savedReadingDisplay(d.frame,'QQQ',d.capturedMs,d.capturedMs+7200000);
  expect(result.valid).toBe(true);expect(result.current).toBe(false);expect(result.partial).toBe(true);
- const original=d.frame.optionSnapshotStatus.horizons.find((h:{mode:string})=>h.mode==='DAY').structure.provisional;
+ const original=d.frame.optionSnapshotStatus.horizons.find((h:{mode:string})=>h.mode==='NEXT_SESSION').structure.provisional;
  const rendered=displayStructure(currentMapHorizon(d.frame.optionSnapshotStatus,result.renderAt),true);
  expect(rendered?.callWall?.strike).toBe(original.callWall.strike);expect(rendered?.putWall?.strike).toBe(original.putWall.strike);expect(rendered?.magnet).toBe(original.magnet);
 });

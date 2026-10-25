@@ -1,3 +1,4 @@
+import {resolve} from 'node:path';
 import {it,expect} from 'vitest';
 import {readFileSync} from 'node:fs';
 import {buildOiHeatmap,type Contract} from './option-oi-heatmap';
@@ -17,7 +18,7 @@ it('duplicates do not add and conflicts cannot become totals',()=>{
  expect(oiStrikeRows(buildOiHeatmap({...input,observations:[...input.observations,{...a,oi:99}]}))[0].call).toBeNull();
 });
 it('reconciles every real strike independently across all 23 expirations and a single expiry',()=>{
- const raw=JSON.parse(readFileSync(new URL('../../../docs/audits/2026-10-14-oi-heatmap/integration-v5/real-live-report.json',import.meta.url),'utf8')) as EtfReport;
+ const raw=JSON.parse(readFileSync((process.env.SNIPERS_AUDIT_FIXTURE_ROOT?resolve(process.env.SNIPERS_AUDIT_FIXTURE_ROOT,'2026-10-14-oi-heatmap/integration-v5/real-live-report.json'):new URL('../../../docs/audits/2026-10-14-oi-heatmap/integration-v5/real-live-report.json',import.meta.url)),'utf8')) as EtfReport;
  for(const dates of [raw.expirations,[raw.expirations[0]]]){
   const report={...raw,expirations:dates};const {map,rows}=reportOiProfile(report);
   const refs=new Map((raw.heatmap!.reference as any[]).filter(r=>dates.includes(r.expiration_date)&&r.shares_per_contract===100&&(!r.additional_underlyings||r.additional_underlyings.length===0)).map(r=>[r.ticker,r]));

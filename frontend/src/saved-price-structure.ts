@@ -1,3 +1,4 @@
+import {validStructuralIndicators} from './structural-indicators';
 import type {LiveState} from './live';
 import type {PriceStructureHistory} from './price-structure-history';
 import {PRICE_INTERVALS,PRICE_STRUCTURE_RULE,priceStructureCards,type PriceStructureCard} from './price-structure';
@@ -39,6 +40,8 @@ export function savedPriceStructure(frame:LiveState|undefined,symbol:string,capt
     ||!finite(p.at)||!finite(p.confirmedMs)||p.at>=p.confirmedMs||c.endMs===null||p.confirmedMs>c.endMs
     ||j>0&&(p.at<=pivots[j-1].at||p.index<=pivots[j-1].index)))return;
   }
+  if(c.indicators!==undefined&&!validStructuralIndicators(c.indicators,c.endMs,c.bars))return;
+  if(c.indicators?.ready&&(c.lastClose===null||c.atr===null||Math.abs((c.lastClose-c.indicators.ema21!)/c.atr-c.indicators.distanceAtr!)>1e-9))return;
   if(c.side==='SIN DATOS')continue;
   if(c.bars<PRICE_STRUCTURE_RULE.minimumBars||c.atr===null||c.atr<=0||c.seedDifference===null||c.seedDifference<0||c.seedDifference>PRICE_STRUCTURE_RULE.seedTolerance
    ||c.highs.length!==2||c.lows.length!==2||c.highChange===null||c.lowChange===null||c.endMs===null||c.lastClose===null||c.lastClose<=0

@@ -9,7 +9,7 @@ export function cvdConfluence(s:LiveState|undefined,d:DirectionScore,symbol:stri
  const minute=Number(parts.find(p=>p.type==='hour')?.value)*60+Number(parts.find(p=>p.type==='minute')?.value);
  const period=minute<570?'premarket':'regular',phase=period==='premarket'?'Premarket':'Sesión';
  const c=s?.cvd,p=c?.[period];
- if(!active||s?.symbol!==symbol||s.stocks.phase!=='streaming'||s.metrics.session!==today||!['Esperando primera vela RTH completa','Sesión RTH'].includes(s.metrics.phase)||minute<240||minute>=960||!Number.isFinite(s.publishedMs)||s.publishedMs>now||now-s.publishedMs>3000)return pending('Sesión o conexión sin vigencia.');
+ if(!active||s?.symbol!==symbol||s.stocks?.phase!=='streaming'||s.metrics?.session!==today||!['Esperando primera vela RTH completa','Sesión RTH'].includes(s.metrics?.phase)||minute<240||minute>=960||!Number.isFinite(s.publishedMs)||s.publishedMs>now||now-s.publishedMs>3000)return pending('Sesión o conexión sin vigencia.');
  if(!c||c.symbol!==symbol||c.date!==today||!c.available||!Number.isFinite(c.at)||c.at>now||now-c.at>3000||!p||p.lastMs==null||!Number.isFinite(p.lastMs)||p.lastMs>now+1000||now-p.lastMs>15000)return pending(`${phase}: esperando operaciones CVD vigentes del activo.`);
  const total=p.buy+p.sell+p.unknown,coverage=100*(p.buy+p.sell)/total;
  if(![p.buy,p.sell,p.unknown,p.delta,total].every(Number.isFinite)||Math.min(p.buy,p.sell,p.unknown)<0||total<=0||Math.abs(p.delta-(p.buy-p.sell))>Math.max(1e-6,Math.abs(p.delta)*1e-9)||!Number.isFinite(p.coveragePct)||Math.abs(coverage-p.coveragePct!)>.01||coverage<70)return pending(`${phase}: cobertura o integridad CVD insuficiente.`);

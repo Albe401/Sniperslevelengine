@@ -1,9 +1,11 @@
+import {resolve} from 'node:path';
+import {pathToFileURL} from 'node:url';
 import {it,expect} from 'vitest';
 import {readFileSync,writeFileSync} from 'node:fs';
 import {newsSections,newsToday} from './investment-news';
 import type {RadarNews} from './investment-news';
-const dir=new URL('../../../docs/audits/2026-10-13-news-performance/',import.meta.url);
-const capture=JSON.parse(readFileSync(new URL('../../../docs/audits/2026-10-13-news-v2/live-news-input.json',import.meta.url),'utf8').replace(/^\uFEFF/,''));
+const dir=process.env.SNIPERS_AUDIT_OUTPUT_ROOT?pathToFileURL(resolve(process.env.SNIPERS_AUDIT_OUTPUT_ROOT)+'/'):new URL('../../../docs/audits/2026-10-13-news-performance/',import.meta.url);
+const capture=JSON.parse(readFileSync((process.env.SNIPERS_AUDIT_FIXTURE_ROOT?resolve(process.env.SNIPERS_AUDIT_FIXTURE_ROOT,'2026-10-13-news-v2/live-news-input.json'):new URL('../../../docs/audits/2026-10-13-news-v2/live-news-input.json',import.meta.url)),'utf8').replace(/^\uFEFF/,''));
 it('measures actual news HTML and New York filtering on the dated real capture',()=>{
  const rows=capture.report.items as RadarNews[];const samples:number[]=[];const dateSamples:number[]=[];let rendered=0;
  for(let i=0;i<8;i++){let start=performance.now();newsToday(rows,capture.capturedMs);dateSamples.push(performance.now()-start);start=performance.now();const html=newsSections(rows);samples.push(performance.now()-start);rendered=(html.match(/class="ir-news-card /g)??[]).length;expect(html).toContain('Noticias');}

@@ -16,6 +16,7 @@ quickFields.add('weeklyRangeSnapshot');
 quickFields.add('weeklyRangeSnapshots');
 quickFields.add('gexbotDominants');
 quickFields.add('priceStructureReading');
+quickFields.add('structuralActivity');
 export function publicGexbot(value,symbol,capturedMs){
  const keys=['positiveOi','negativeOi','positiveVolume','negativeVolume','zeroGamma'];
  if(!value||value.source!=='Gexbot Classic'||value.symbol!==symbol||value.category!=='gex_full'

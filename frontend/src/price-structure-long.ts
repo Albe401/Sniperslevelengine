@@ -16,7 +16,7 @@ export function longStructureBars(h:PriceStructureHistory|undefined,symbol:strin
  for(const b of h.days){
   const s=calendar.get(b.date);
   if(!s||s.closeMs>now||rows.has(b.date)||![b.open,b.high,b.low,b.close,b.volume].every(finite)||Math.min(b.open,b.low,b.close)<=0||b.high<Math.max(b.open,b.low,b.close)||b.low>Math.min(b.open,b.close)||b.volume<0)return fail('Velas diarias inválidas, duplicadas o abiertas.');
-  rows.set(b.date,{...b,timestampMs:s.openMs,endMs:s.closeMs,sessionDate:s.date});
+  rows.set(b.date,{...b,timestampMs:s.openMs,endMs:s.closeMs,sessionDate:s.date,tradingMinutes:(s.closeMs-s.openMs)/60000});
  }
  const first=[...rows.keys()].sort()[0];if(!first)return fail('Sin velas diarias cerradas.');
  let bars:PriceBar[]=[],gaps=0;
@@ -30,7 +30,7 @@ export function longStructureBars(h:PriceStructureHistory|undefined,symbol:strin
    const complete=group.map(s=>rows.get(s.date));
    if(complete.some(b=>!b)){bars=[];gaps++;continue;}
    const bs=complete as PriceBar[],last=bs.at(-1)!;
-   bars.push({timestampMs:bs[0].timestampMs,endMs:last.endMs,sessionDate:last.sessionDate,open:bs[0].open,high:Math.max(...bs.map(b=>b.high)),low:Math.min(...bs.map(b=>b.low)),close:last.close,volume:bs.reduce((n,b)=>n+b.volume,0)});
+   bars.push({timestampMs:bs[0].timestampMs,endMs:last.endMs,sessionDate:last.sessionDate,open:bs[0].open,high:Math.max(...bs.map(b=>b.high)),low:Math.min(...bs.map(b=>b.low)),close:last.close,volume:bs.reduce((n,b)=>n+b.volume,0),tradingMinutes:bs.reduce((n,b)=>n+(b.tradingMinutes??0),0)});
   }
  }
  return {bars,gaps,reason:bars.length?'':gaps?'Faltan sesiones en la última secuencia.':'Sin semanas completas cerradas.'};

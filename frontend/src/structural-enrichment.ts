@@ -55,18 +55,18 @@ if(typeof document!=='undefined'){
   const card=target.closest<HTMLElement>('[data-structural-open]'),options=target.closest<HTMLElement>('[data-structural-options]');
   const owner=(card??options)?.closest('.structural-map-preview');
   const panel=owner?.querySelector<HTMLDetailsElement>('.structural-enrichment');
-  if(!panel)return;panel.open=true;
+  if(!panel)return;panel.dataset.structuralReturn=card?.dataset.structuralOpen??'options';panel.open=true;
   const priceKey=card?'structural-price-'+card.dataset.structuralOpen:'structural-options-summary';
   const hasPrice=!!owner?.hasAttribute('data-price-structure');
   panel.querySelectorAll<HTMLDetailsElement>('[data-horizon-details^="structural-price-"], [data-horizon-details^="structural-evidence-"], [data-horizon-details="structural-options-summary"]').forEach(d=>{
    d.open=hasPrice?d.dataset.horizonDetails===priceKey:d.dataset.horizonDetails==='structural-evidence-'+card?.dataset.structuralOpen;
   });
-  panel.querySelector<HTMLElement>('summary')?.focus();
+  panel.querySelector<HTMLElement>('summary')?.focus({preventScroll:true});
  };
  document.addEventListener('click',event=>{const target=event.target;if(target instanceof Element)open(target);});
  document.addEventListener('keydown',event=>{const target=event.target;if(!(target instanceof Element))return;
   if((event.key==='Enter'||event.key===' ')&&target.matches('[data-structural-open]')){event.preventDefault();open(target);}
-  if(event.key==='Escape'){const panel=document.querySelector<HTMLDetailsElement>('.structural-enrichment[open]');if(panel){panel.open=false;panel.closest('.structural-map-preview')?.querySelector<HTMLElement>('[data-structural-open]')?.focus();}}
+  if(event.key==='Escape'){const panel=document.querySelector<HTMLDetailsElement>('.structural-enrichment[open]');if(panel){const key=panel.dataset.structuralReturn,selector=key==='options'?'[data-structural-options]':`[data-structural-open="${key&&/^[0-5]$/.test(key)?key:'0'}"]`;panel.open=false;panel.closest('.structural-map-preview')?.querySelector<HTMLElement>(selector)?.focus({preventScroll:true});}}
  });
  document.addEventListener('click',event=>{const button=(event.target as Element|null)?.closest<HTMLElement>('[data-structural-strike]');if(button)update(button,Number(button.dataset.structuralStrike));});
  document.addEventListener('change',event=>{const target=event.target;if(!(target instanceof HTMLSelectElement))return;if(target.matches('[data-structural-expiry]'))update(target,undefined,target.value);if(target.matches('[data-structural-strike-select]'))update(target,target.value?Number(target.value):undefined);});

@@ -1,29 +1,24 @@
 import {describe,it,expect} from 'vitest';
-import selection from '../../fixtures/curated-universe.json';
+import registry from '../../fixtures/legacy-universe.json';
 import {bundledAssets,searchAssets,assetResults} from './asset-watchlist';
-describe('complete asset watchlist',()=>{
- it('ships the same full catalog as the engine, excluding unsupported index feeds',()=>{
-  expect(Object.keys(bundledAssets).sort()).toEqual([...selection.activeSymbols].sort());
-  expect(Object.keys(bundledAssets).length).toBeGreaterThan(76);
-  expect(Object.keys(bundledAssets).length).toBeLessThan(500);
-  for(const symbol of [...selection.originalSymbols,...selection.personalSymbols]) expect(bundledAssets[symbol]).toBeDefined();
-  expect(searchAssets(bundledAssets)).toHaveLength(Object.values(bundledAssets).filter(a=>a.kind!=='INDEX').length);
+describe('configured snapshot asset watchlist',()=>{
+ it('ships exactly the configured web catalog',()=>{
+  expect(bundledAssets).toEqual(registry.assets);
+  expect(Object.keys(bundledAssets).sort()).toEqual(['AAPL','AMZN','GOOGL','IWM','META','MSFT','NVDA','QQQ','SPY','TSLA']);
+  expect(searchAssets(bundledAssets)).toHaveLength(10);
   expect(searchAssets(bundledAssets).some(([s])=>s==='SPX')).toBe(false);
  });
- it('finds assets outside the five favorites by ticker and company name',()=>{
-  expect(searchAssets(bundledAssets,' msft ').map(([s])=>s)).toContain('MSFT');
-  expect(searchAssets(bundledAssets,'microsoft').map(([s])=>s)).toContain('MSFT');
-  expect(searchAssets(bundledAssets,'amd').map(([s])=>s)).toContain('AMD');
-  expect(searchAssets(bundledAssets,'hood').map(([s])=>s)).toContain('HOOD');
-  expect(searchAssets(bundledAssets,'berkshire').map(([s])=>s)).toContain('BRK.B');
-  expect(searchAssets(bundledAssets,'costco').map(([s])=>s)).toContain('COST');
+ it('searches the configured ticker and supplied company name without adding unsupported assets',()=>{
+  expect(searchAssets(bundledAssets,' msft ').map(([s])=>s)).toEqual(['MSFT']);
+  expect(searchAssets({...bundledAssets,MSFT:{...bundledAssets.MSFT,name:'Microsoft'}},'microsoft').map(([s])=>s)).toEqual(['MSFT']);
+  expect(searchAssets(bundledAssets,'nvda').map(([s])=>s)).toEqual(['NVDA']);
   expect(searchAssets(bundledAssets,'aaon')).toHaveLength(0);
-  for(const s of ['QQQ','SPY','GOOGL','NVDA','AAPL']) expect(bundledAssets[s]).toBeDefined();
+  for(const s of ['QQQ','SPY','GOOGL','NVDA','AAPL'])expect(bundledAssets[s]).toBeDefined();
  });
- it('filters sectors and handles no matches without dropping the catalog',()=>{
-  const sector=bundledAssets.MSFT.sector!;
-  expect(searchAssets(bundledAssets,sector).every(([,a])=>a.sector===sector)).toBe(true);
+ it('filters supplied sectors and handles no matches without dropping the catalog',()=>{
+  const assets={...bundledAssets,MSFT:{...bundledAssets.MSFT,sector:'Technology'}};
+  expect(searchAssets(assets,'Technology').map(([s])=>s)).toEqual(['MSFT']);
   expect(assetResults(bundledAssets,'zzzzzz')).toContain('Sin coincidencias');
-  expect(searchAssets(bundledAssets,'')).toHaveLength(Object.values(bundledAssets).filter(a=>a.kind!=='INDEX').length);
+  expect(searchAssets(bundledAssets,'')).toHaveLength(10);
  });
 });

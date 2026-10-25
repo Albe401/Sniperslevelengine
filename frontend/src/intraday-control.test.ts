@@ -1,5 +1,7 @@
 import {describe,it,expect} from 'vitest';
-import parity from '../../fixtures/intraday-strategy.json';
+import {readFileSync} from 'node:fs';
+import {resolve} from 'node:path';
+const parity=JSON.parse(readFileSync(process.env.SNIPERS_AUDIT_FIXTURE_ROOT?resolve(process.env.SNIPERS_AUDIT_FIXTURE_ROOT,'../../fixtures/intraday-strategy.json'):new URL('../../fixtures/intraday-strategy.json',import.meta.url),'utf8'));
 import {buildIntradayControl,ControlTracker,controlPanel,levelInteraction,priceSignal,ratioSignal} from './intraday-control';
 import type {LiveState,Horizon} from './live';
 const now=Date.parse('2026-09-25T15:00:00Z');

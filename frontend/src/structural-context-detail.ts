@@ -9,7 +9,7 @@ export function connectedStructureCards(cards:PriceStructureCard[],context:Struc
  return cards.map(card=>{
   const lane=context.price.find(c=>c.interval===card.interval);
   const accepted=lane?.status==='available'&&lane.side===card.side&&lane.closedAtMs===card.endMs||lane?.status==='pending'&&card.side==='SIN DATOS';
-  return accepted?card:{...card,side:'SIN DATOS',reason:card.side==='SIN DATOS'&&card.reason?card.reason:lane?.reason??'Sin asociación verificable para esta temporalidad',highs:[],lows:[],highChange:null,lowChange:null,atr:null,lastClose:null,endMs:null};
+  return accepted?card:{...card,side:'SIN DATOS',reason:card.side==='SIN DATOS'&&card.reason?card.reason:lane?.reason??'Sin asociación verificable para esta temporalidad',indicators:undefined,highs:[],lows:[],highChange:null,lowChange:null,atr:null,lastClose:null,endMs:null};
  });
 }
 

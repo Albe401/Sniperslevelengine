@@ -35,7 +35,7 @@ export function structuralCards(s:LiveState|undefined,symbol:string,active:boole
  const usable=active&&s?.symbol===symbol&&snapshot?.phase==='ready'&&rangeFresh(snapshot,now);
  const today=etFormatter.format(now);
  return ['DAY','WEEK','NEXT4'].map((mode,i)=>{
-  const candidates=usable?snapshot.horizons.filter(x=>x.mode===mode||(mode==='DAY'&&x.mode==='NEXT_SESSION')):[];
+  const candidates=usable&&Array.isArray(snapshot.horizons)?snapshot.horizons.filter(x=>x.mode===mode||(mode==='DAY'&&x.mode==='NEXT_SESSION')):[];
   const h=candidates.length===1?candidates[0]:undefined;
   const e=h?.exposure;
   const gross=e&&finite(e.callDex)&&finite(e.putDex)?Math.abs(e.callDex)+Math.abs(e.putDex):0;

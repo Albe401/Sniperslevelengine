@@ -1,7 +1,9 @@
 import {it,expect} from 'vitest';
 import {replayRoutePrice,historicalPriceState} from './route-replay';
 import type {ChartHistory} from './candle-series';
-import real from '../../fixtures/aapl-2026-09-30-bars.json';
+import {readFileSync} from 'node:fs';
+import {resolve} from 'node:path';
+const real=JSON.parse(readFileSync(process.env.SNIPERS_AUDIT_FIXTURE_ROOT?resolve(process.env.SNIPERS_AUDIT_FIXTURE_ROOT,'../../fixtures/aapl-2026-09-30-bars.json'):new URL('../../fixtures/aapl-2026-09-30-bars.json',import.meta.url),'utf8'));
 import {SessionIntradayRoute,sessionRouteLevels} from './session-intraday-route';
 import {readMarketEvidence} from './market-evidence';
 const open=Date.parse('2026-09-30T13:30:00Z'),close=Date.parse('2026-09-30T20:00:00Z');

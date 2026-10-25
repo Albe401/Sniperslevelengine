@@ -1,3 +1,4 @@
+import {structuralIndicators,type StructuralIndicators} from './structural-indicators';
 import {longStructureBars} from './price-structure-long';
 import {mergeStructureMinutes,type PriceStructureHistory} from './price-structure-history';
 import type {Candle} from './model';
@@ -10,9 +11,10 @@ export type PriceInterval=15|60|240|1440|10080;
 export const PRICE_INTERVALS=[15,60,240,1440,10080] as const;
 const names:Record<PriceInterval,[string,string]>={15:['15 MINUTOS','CERCANA'],60:['1 HORA','INTERMEDIA'],240:['4 HORAS','AMPLIA'],1440:['DIARIO','PRINCIPAL'],10080:['SEMANAL','MAYOR']};
 export type PriceStructureSide = 'CALL'|'PUT'|'MIXTA'|'SIN DATOS';
-export interface PriceBar extends Candle {endMs:number;sessionDate:string}
+export interface PriceBar extends Candle {endMs:number;sessionDate:string;tradingMinutes?:number}
 export interface PricePivot {kind:'high'|'low';price:number;index:number;at:number;confirmedMs:number}
 export interface PriceStructureCard {
+ indicators?:StructuralIndicators;
  interval:PriceInterval;name:string;role:string;side:PriceStructureSide;reason:string;
  bars:number;atr:number|null;highChange:number|null;lowChange:number|null;
  highs:PricePivot[];lows:PricePivot[];lastClose:number|null;endMs:number|null;
@@ -117,6 +119,7 @@ export function priceStructureCards(s:LiveState|undefined,symbol:string,active:b
    card.seedDifference=alternative==null?null:Math.abs(alternative/card.atr-1);
    if(card.seedDifference==null||card.seedDifference>PRICE_STRUCTURE_RULE.seedTolerance){card.side='SIN DATOS';card.reason='ATR sensible a su inicio; esperando más historial.';}
   }
+  if(series.bars.length)card.indicators=structuralIndicators(series.bars,interval,card.atr,symbol+':'+interval);
   return card;
  });
 }
