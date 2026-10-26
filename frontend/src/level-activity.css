@@ -5,6 +5,8 @@
 .activity-acceptance-key{color:#4adaf0}.activity-stock-key{color:#ff6478}.activity-options-key{color:#ffb454}
 .level-activity-legend>small{flex-basis:100%;font-size:7.5px;color:#8fa6bf}
 .day-map.day-map-constellation .day-map-node.level-activity-card>.day-map-level {
+ container-type:inline-size;
+ container-name:level-activity-card;
  --activity-acceptance-fill:0;
  --activity-acceptance-edge:0;
  --activity-stock-fill:0;
@@ -116,6 +118,57 @@
  .day-map.day-map-constellation .level-activity-value {font-size:9px}
  .day-map.day-map-constellation .level-activity-chip {padding-inline:3px;gap:3px}
  .day-map.day-map-constellation .level-activity-quantity {flex-direction:column;align-items:flex-end;gap:0}
+}
+/* Three compact columns use about 32 px (+3 px top margin). The named parent
+   queries the available INNER width; a container cannot query its own size.
+   Short source names keep a 120 px inner panel legible without cutting data. */
+@container level-activity-card (min-width:120px) {
+ .level-activity-chips {grid-template-columns:repeat(3,minmax(0,1fr));gap:3px}
+ .day-map.day-map-constellation .level-activity-chip {
+  grid-template-columns:minmax(0,1fr) 7px;
+  grid-template-rows:9px auto;
+  gap:0 2px;
+  min-height:32px;
+  padding:2px 3px;
+ }
+ .day-map.day-map-constellation .level-activity-label {
+  grid-column:1;
+  grid-row:1;
+  font-size:7.5px;
+  line-height:1;
+ }
+ .day-map.day-map-constellation .level-activity-label-long {display:none}
+ .day-map.day-map-constellation .level-activity-label-short {display:inline}
+ .day-map.day-map-constellation .level-activity-quantity {
+  grid-column:1/-1;
+  grid-row:2;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:0;
+ }
+ .day-map.day-map-constellation .level-activity-value {font-size:9.5px;line-height:1}
+ .day-map.day-map-constellation .level-activity-unit {font-size:7.5px;line-height:1}
+ .day-map.day-map-constellation .level-activity-max {
+  grid-column:2;
+  grid-row:1;
+  width:7px;
+  min-height:0;
+  font-size:7.5px;
+  line-height:1;
+ }
+}
+/* Narrow cards retain three short rows, with quantity and unit on one line. */
+@container level-activity-card (max-width:119px) {
+ .level-activity-chips {gap:2px;margin-top:2px}
+ .day-map.day-map-constellation .level-activity-chip {grid-template-columns:auto minmax(0,1fr) 6px;min-height:15px;padding:1px 2px;gap:1px;border-radius:4px}
+ .day-map.day-map-constellation .level-activity-label {font-size:7px}
+ .day-map.day-map-constellation .level-activity-label-long {display:none}
+ .day-map.day-map-constellation .level-activity-label-short {display:inline}
+ .day-map.day-map-constellation .level-activity-quantity {flex-direction:row;align-items:baseline;gap:1px}
+ .day-map.day-map-constellation .level-activity-value {font-size:8px;line-height:1.05}
+ .day-map.day-map-constellation .level-activity-unit {font-size:7px;line-height:1.05}
+ .day-map.day-map-constellation .level-activity-max {width:6px;min-height:0;font-size:7px;line-height:1}
 }
 .day-map.day-map-constellation .level-activity-chip.is-max {
  border-color:var(--activity-chip-color);
