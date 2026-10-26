@@ -7,10 +7,10 @@ export interface ExecutionAbsorptionCandidate {
 }
 export interface ExecutionEvidenceRead {
  version:string;status:string;observedSinceMs:number|null;
- windows:{seconds:number;startMs:number;endMs:number;complete:boolean}[];
+ windows:{seconds:number;startMs:number;endMs:number;complete:boolean;classifiedPct?:number;trades?:number;quoteUpdates?:number}[];
  absorption:{version:string;status:string;reason:string;candidates:ExecutionAbsorptionCandidate[]};
 }
-export interface ExecutionAbsorptionView {status:'pending'|'observing'|'possible';label:string;detail:string;candidates:ExecutionAbsorptionCandidate[]}
+export interface ExecutionAbsorptionView {status:'pending'|'observing'|'possible';label:string;detail:string;candidates:ExecutionAbsorptionCandidate[];capturedAtMs?:number}
 const dateET=new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit'});
 const qty=new Intl.NumberFormat('en-US',{maximumFractionDigits:0});
 const timeET=new Intl.DateTimeFormat('es',{timeZone:'America/New_York',hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'});
@@ -25,8 +25,14 @@ export function readExecutionAbsorption(read:CvdRead|undefined,symbol:string,act
  const pending=(detail:string):ExecutionAbsorptionView=>({status:'pending',label:'Absorción · pendiente',detail,candidates:[]});
  if(!Number.isFinite(now)||!active||!read||read.symbol!==symbol||read.date!==dateET.format(now)||!read.available||!Number.isFinite(read.at)||read.at>now||now-read.at>3000)return pending('Esperando operaciones y NBBO vigentes del activo.');
  const e=read.executionEvidence,a=e?.absorption,w=Array.isArray(e?.windows)?e.windows.find(w=>w?.seconds===30):undefined;
- if(!e||e.version!=='execution-evidence-v1'||e.status!=='observing'||!a||a.version!=='execution-absorption-v1'||!w||w.complete!==true||w.endMs!==read.at||w.startMs!==read.at-30000||e.observedSinceMs==null||!Number.isFinite(e.observedSinceMs)||e.observedSinceMs>w.startMs)return pending('Necesita 30 s observados sin interrupciones, operaciones clasificadas y tamaños bid/ask.');
- if(a.status==='pending')return pending('Cobertura o actividad insuficiente para estimar absorción; no equivale a ausencia de absorción.');
+ if(!e||e.version!=='execution-evidence-v1'||!a||a.version!=='execution-absorption-v1'||!w||w.complete!==true||w.endMs!==read.at||w.startMs!==read.at-30000||e.observedSinceMs==null||!Number.isFinite(e.observedSinceMs)||e.observedSinceMs>w.startMs)return pending('Necesita 30 s observados sin interrupciones, operaciones clasificadas y tamaños bid/ask.');
+ if(a.status==='pending'){
+  const coverage=w.classifiedPct;
+  const measured=coverage!=null&&Number.isFinite(coverage)&&coverage>=0&&coverage<=100?` Referencia de volumen clasificado en 30 s: ${coverage.toFixed(1)}% (distinta del filtro de absorción).`:'';
+  const cause=a.reason==='Insufficient classified volume with visible-size coverage (minimum 80%)'?' El detector informa cobertura insuficiente de volumen clasificado con tamaños bid/ask en los últimos 10 s (mínimo 80%).':' El detector todavía espera operaciones y NBBO recientes o actividad suficiente.';
+  return pending('Ventana de 30 s recibida.'+measured+cause+' Sin evidencia válida no se dibuja una zona.');
+ }
+ if(e.status!=='observing')return pending('El receptor todavía no confirma una secuencia causal reciente de operaciones. No se dibuja absorción con datos pendientes.');
  if(!['observing','possible-absorption'].includes(a.status)||!Array.isArray(a.candidates)||a.candidates.length>10||a.candidates.some(c=>!validCandidate(c,read.at))||(a.status==='observing'&&a.candidates.length)||(a.status==='possible-absorption'&&!a.candidates.length))return pending('Lectura incoherente; se descarta hasta recibir evidencia válida.');
  const candidates=[...a.candidates].sort((a,b)=>b.shares-a.shares);
  if(!candidates.length)return {status:'observing',label:'Absorción · sin indicio',detail:'Datos suficientes, sin presión retenida que cumpla el filtro provisional en los últimos 10 s.',candidates};

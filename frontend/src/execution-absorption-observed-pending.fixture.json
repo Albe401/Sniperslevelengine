@@ -1,0 +1,96 @@
+{
+  "symbol": "QQQ",
+  "date": "2026-10-26",
+  "at": 1793029148092,
+  "available": true,
+  "regular": {
+    "buy": 49756.15989700005,
+    "changeFive": 3543.421464999996,
+    "changeOne": -712.63515,
+    "coveragePct": 26.996972516598873,
+    "delta": -7299.346269999958,
+    "gaps": 0,
+    "history": [
+      {
+        "at": 1793028659999,
+        "value": -16966.637229000004
+      },
+      {
+        "at": 1793028719999,
+        "value": -17967.130773000004
+      },
+      {
+        "at": 1793028779999,
+        "value": -14661.432597000006
+      },
+      {
+        "at": 1793028839999,
+        "value": -17350.695344000007
+      },
+      {
+        "at": 1793028899999,
+        "value": -10842.767735000005
+      },
+      {
+        "at": 1793028959999,
+        "value": -14439.426639000005
+      },
+      {
+        "at": 1793029019999,
+        "value": -12903.492453000006
+      },
+      {
+        "at": 1793029079999,
+        "value": -9248.671789000007
+      },
+      {
+        "at": 1793029139999,
+        "value": -6586.711120000008
+      },
+      {
+        "at": 1793029148491,
+        "value": -7299.346270000008
+      }
+    ],
+    "lastMs": 1793029148491,
+    "sell": 57055.50616700001,
+    "sinceMs": 1793028618930,
+    "unknown": 288831.46020998404
+  },
+  "premarket": {
+    "buy": 0.0,
+    "changeFive": -0.0,
+    "changeOne": -0.0,
+    "coveragePct": null,
+    "delta": 0.0,
+    "gaps": 0,
+    "history": [],
+    "lastMs": null,
+    "sell": 0.0,
+    "sinceMs": null,
+    "unknown": 0.0
+  },
+  "rejected": 0,
+  "executionEvidence": {
+    "version": "execution-evidence-v1",
+    "status": "waiting-for-trades",
+    "observedSinceMs": 1793028618930,
+    "windows": [
+      {
+        "seconds": 30,
+        "startMs": 1793029118092,
+        "endMs": 1793029148092,
+        "complete": true,
+        "classifiedPct": 36.04311077971365,
+        "trades": 1242,
+        "quoteUpdates": 6570
+      }
+    ],
+    "absorption": {
+      "candidates": [],
+      "reason": "Insufficient classified volume with visible-size coverage (minimum 80%)",
+      "status": "pending",
+      "version": "execution-absorption-v1"
+    }
+  }
+}

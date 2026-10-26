@@ -5,7 +5,8 @@ import {capturedChartLevels} from './captured-chart-levels';
 import {auctionChartBarsSvg,chartAuctionProfile} from './auction-chart-bars';
 import {auctionDisplayMemory} from './auction-display-memory';
 import './auction-chart-bars.css';
-import {readExecutionAbsorption,absorptionCandidateDetail} from './execution-absorption-reading';
+import {absorptionCandidateDetail} from './execution-absorption-reading';
+import {chartAbsorptionView} from './absorption-chart-context';
 import {absorptionOverlaySvg} from './execution-absorption-overlay';
 import {inventoryProfile,requestInventory} from './contract-inventory';
 import {reportOiProfile} from './option-oi-profile';
@@ -76,7 +77,7 @@ function paintExecutionAbsorption(){
  let svg=host.querySelector<SVGSVGElement>('.gl-execution-absorption');
  if(!svg){svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.classList.add('gl-execution-absorption');svg.setAttribute('aria-label','Zonas de posible absorción del activo');host.appendChild(svg);}
  const width=host.clientWidth,height=chart.panes()[0].getHeight();svg.setAttribute('width',String(width));svg.setAttribute('height',String(height));
- const view=readExecutionAbsorption(executionAbsorptionRead,executionAbsorptionSymbol,executionAbsorptionActive,Date.now());
+ const view=chartAbsorptionView(executionAbsorptionRead,executionAbsorptionSymbol,executionAbsorptionActive,Date.now(),capturedProfileClock);
  const html=showExecutionAbsorption?absorptionOverlaySvg(view,c=>{
   let index=executionAbsorptionBars.length-1;while(index>=0&&executionAbsorptionBars[index]>c.lastMs)index--;
   const at=executionAbsorptionBars[index];if(at==null||c.lastMs-at>=interval*60000)return null;
@@ -217,7 +218,7 @@ export function bindGammaLive(s:LiveState|undefined,symbol:string,active:boolean
  const tools=root.querySelector<HTMLElement>('.gl-tools');
  const bigToggle=root.querySelector<HTMLButtonElement>('[data-big-trades]');if(bigToggle){bigToggle.textContent=showBigTrades?'Ocultar trades grandes':'Mostrar trades grandes';bigToggle.setAttribute('aria-pressed',String(showBigTrades));bigToggle.onclick=()=>{showBigTrades=!showBigTrades;refresh();};}
  const absorptionToggle=root.querySelector<HTMLButtonElement>('[data-execution-absorption]');
- const absorptionView=readExecutionAbsorption(s?.cvd,symbol,active,now);
+ const absorptionView=chartAbsorptionView(s?.cvd,symbol,active,now,capturedProfileClock);
  if(absorptionToggle){absorptionToggle.textContent=showExecutionAbsorption?absorptionView.label:'Mostrar absorción';absorptionToggle.setAttribute('aria-pressed',String(showExecutionAbsorption));absorptionToggle.title=[absorptionView.detail,...absorptionView.candidates.map(absorptionCandidateDetail),'Pulsa para ocultar o mostrar las marcas.'].join(' · ');absorptionToggle.onclick=()=>{showExecutionAbsorption=!showExecutionAbsorption;try{localStorage.setItem('snipers-show-execution-absorption',String(showExecutionAbsorption));}catch{/* Reading works without persisted preferences. */}refresh();};}
  const bigFilter=root.querySelector<HTMLSelectElement>('[data-big-trades-min]');if(bigFilter){bigFilter.value=String(bigTradeMinimum);bigFilter.onchange=()=>{bigTradeMinimum=[100000,250000,1000000].includes(Number(bigFilter.value))?Number(bigFilter.value):100000;refresh();};}
 
