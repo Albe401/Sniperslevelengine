@@ -2,7 +2,7 @@ import type {LiveState} from './live';
 import type {MassiveExposureView} from './massive-exposure';
 export const GEX_WINDOWS=[['DAY','0 DTE'],['WEEK_7D','1 sem'],['WEEKS_4','4 sem'],['MONTH_1','1 mes'],['MONTH_2','2 meses'],['MONTH_3','3 meses'],['MONTH_4','4 meses'],['MONTH_5','5 meses'],['MONTH_6','6 meses']] as const;
 export type GexWindowMode=typeof GEX_WINDOWS[number][0];
-export interface GexWindow {mode:GexWindowMode;start:string;end:string;expirations:string[];contracts:number;expected:number;missingContracts:number;unexpectedContracts:number;eligible:number;gammaUsed:number;unknownOi:number;unsupported:number;complete:boolean;callGex:number;putGex:number;netGex:number;rows:{strike:number;callGex:number;putGex:number;netGex:number}[]}
+export interface GexWindow {mode:GexWindowMode;start:string;end:string;expirations:string[];contracts:number;expected:number;missingContracts:number;unexpectedContracts:number;eligible:number;gammaUsed:number;unknownOi:number;unsupported:number;complete:boolean;callGex:number;putGex:number;netGex:number;rows:{strike:number;callGex:number;putGex:number;netGex:number;callComplete?:boolean;putComplete?:boolean}[]}
 export interface GexWindowReport {version:'massive-gex-windows-v1';symbol:string;at:number;spot:number;priceAt:number|null;start:string;end:string;referenceComplete:boolean;windows:GexWindow[]}
 const day=new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York'});
 const finite=(n:unknown):n is number=>typeof n==='number'&&Number.isFinite(n);
@@ -31,9 +31,16 @@ function validate(value:unknown):{report:GexWindowReport|null;reason:string}{
  for(const [mode] of GEX_WINDOWS){const hs=r.windows.filter(w=>w?.mode===mode);if(hs.length!==1)return fail('Ventanas GEX duplicadas o ausentes');const w=hs[0];
   if(w.start!==r.start||w.end!==gexWindowEnd(r.start,mode)||!Array.isArray(w.expirations)||w.expirations.length>200||!w.expirations.every(d=>validGexDate(d)&&d>=w.start&&d<=w.end)||w.expirations.some((d,i)=>i>0&&d<=w.expirations[i-1])||![w.contracts,w.expected,w.missingContracts,w.unexpectedContracts,w.eligible,w.gammaUsed,w.unknownOi,w.unsupported].every(count)||w.contracts!==w.expected-w.missingContracts+w.unexpectedContracts||w.missingContracts>w.expected||w.unexpectedContracts>w.contracts||w.gammaUsed>w.eligible||w.eligible+w.unknownOi+w.unsupported>w.contracts||typeof w.complete!=='boolean'||!Array.isArray(w.rows)||(totalRows+=w.rows.length)>100000)return fail('Cobertura o vencimientos GEX incompatibles');
   const complete=r.referenceComplete&&w.missingContracts===0&&w.unexpectedContracts===0&&w.unknownOi===0&&w.unsupported===0&&w.eligible>0&&w.gammaUsed===w.eligible;
-  if(w.complete!==complete||w.contracts>0&&!w.expirations.length||w.rows.length>w.eligible)return fail('Etiqueta de cobertura GEX contradictoria');
+  if(w.complete!==complete||w.contracts>0&&!w.expirations.length||w.rows.length>w.contracts)return fail('Etiqueta de cobertura GEX contradictoria');
+  // New zero/unknown-OI rows may outnumber positive-OI eligible contracts. Legacy rows
+  // stay compatible, but expanding that population requires explicit per-side metadata.
+  if(w.rows.length>w.eligible&&w.rows.some(row=>typeof row?.callComplete!=='boolean'||typeof row?.putComplete!=='boolean'))return fail('Filas sin cobertura de OI verificable');
+  if(w.gammaUsed===0&&w.rows.some(row=>row?.callGex!==0||row?.putGex!==0))return fail('Exposición no nula sin contratos con gamma usados');
   let call=0,put=0,last=0;
-  for(const row of w.rows){if(!row||!finite(row.strike)||row.strike<=last||![row.callGex,row.putGex,row.netGex].every(finite)||row.callGex<0||row.putGex<0||Math.abs(row.callGex-row.putGex-row.netGex)>Math.max(.01,16*Number.EPSILON*Math.max(row.callGex,row.putGex)))return fail('Perfil GEX por strike incompatible');last=row.strike;call+=row.callGex;put+=row.putGex;}
+  for(const row of w.rows){if(!row||!finite(row.strike)||row.strike<=last||![row.callGex,row.putGex,row.netGex].every(finite)||row.callGex<0||row.putGex<0||Math.abs(row.callGex-row.putGex-row.netGex)>Math.max(.01,16*Number.EPSILON*Math.max(row.callGex,row.putGex)))return fail('Perfil GEX por strike incompatible');
+   const flags=row.callComplete!==undefined||row.putComplete!==undefined;
+   if(flags&&(typeof row.callComplete!=='boolean'||typeof row.putComplete!=='boolean'||(row.callComplete===false||row.putComplete===false)&&(w.complete||w.unknownOi===0&&w.unsupported===0&&w.gammaUsed===w.eligible)))return fail('Cobertura GEX por strike contradictoria');
+   last=row.strike;call+=row.callGex;put+=row.putGex;}
   const tolerance=Math.max(.01,64*Number.EPSILON*Math.max(1,w.rows.length)*(call+put));
   if(![w.callGex,w.putGex,w.netGex,call,put].every(finite)||w.callGex<0||w.putGex<0||Math.abs(call-w.callGex)>tolerance||Math.abs(put-w.putGex)>tolerance||Math.abs(w.callGex-w.putGex-w.netGex)>tolerance)return fail('Los totales GEX no coinciden con los strikes');
  }
@@ -63,7 +70,8 @@ export function readGexWindow(s:LiveState|undefined,symbol:string,active:boolean
  const w=r.windows.find(w=>w.mode===mode)!;
  const view={...empty,expiry:w.end,at:r.at,spot:r.spot,expirations:w.expirations,start:w.start,end:w.end,expected:w.expected,missingContracts:w.missingContracts,unexpectedContracts:w.unexpectedContracts,complete:w.complete,historical:!active||now-s.publishedMs>15000||now-r.at>300000||day.format(now)!==r.start||r.priceAt==null||now-r.priceAt>120000||day.format(r.priceAt)!==r.start,gammaUsed:w.gammaUsed,eligible:w.eligible,net:w.netGex,rows:w.rows,reason:''};
  if(w.contracts===0)return {...view,reason:mode==='DAY'?'Sin contratos 0 DTE en esta captura; no se sustituye otro vencimiento':w.expected?'Faltan los contratos esperados de este plazo':'Sin vencimientos en este plazo'};
- if(w.gammaUsed===0)return {...view,reason:'Sin gamma/OI verificables para este plazo'};
+ // Received zero/unknown-OI strikes remain visible; row flags distinguish zero from missing data.
+ if(w.gammaUsed===0&&!w.rows.length)return {...view,reason:'Sin gamma/OI verificables para este plazo'};
  return view;
 }
 export function gexWindowComparisons(s:LiveState|undefined,symbol:string,active:boolean,now:number):MassiveExposureView[]{return hasGexWindows(s,symbol,active,now)?GEX_WINDOWS.map(([mode])=>readGexWindow(s,symbol,active,now,mode)):[];}

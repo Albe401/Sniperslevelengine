@@ -1,6 +1,7 @@
 import type {LiveState} from './live';
 import {readGexWindow,hasGexWindows,selectedGexWindow,type GexWindowMode} from './gex-windows';
-export interface MassiveExposureRow {strike:number;netGex:number;callGex?:number;putGex?:number}
+/** Optional flags describe known quantities among received contracts, not missing reference series. */
+export interface MassiveExposureRow {strike:number;netGex:number;callGex?:number;putGex?:number;callComplete?:boolean;putComplete?:boolean}
 export interface MassiveExposureView {label?:string;spot?:number;expirations?:readonly string[];start?:string;end?:string;expected?:number;missingContracts?:number;unexpectedContracts?:number;symbol:string;mode:string;expiry:string;at:number;complete:boolean;historical:boolean;gammaUsed:number;eligible:number;net:number;rows:MassiveExposureRow[];reason:string}
 /** A shared capture identity, not an independent direction vote for each consumer. */
 export const massiveExposureIdentity=(v:MassiveExposureView)=>JSON.stringify(['Massive-OI',v.symbol,v.mode,v.expiry,v.at]);
