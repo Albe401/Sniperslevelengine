@@ -72,6 +72,6 @@ describe('existing snapshot map boundary',()=>{
   vi.spyOn(connected,'connectedStructureCards').mockReturnValue(cards);
   const html=priceStructureMap('QQQ',s,true,real.source.atMs,[]);
   expect(html).toContain('REF. CALL · 15m');expect(html).toContain('data-intraday-direction-status="reference"');expect(html).toContain('data-price-structure-side="MIXTA"');
-  expect(html).toContain('Precio en vivo no disponible');expect(html).not.toContain('data-intraday-direction-status="current"');expect(html.match(/data-price-structure-side=/g)).toHaveLength(5);
+  expect(html).toContain('no acredita un precio actual');expect(html).not.toContain('data-intraday-direction-status="current"');expect(html.match(/data-price-structure-side=/g)).toHaveLength(5);
  });
 });

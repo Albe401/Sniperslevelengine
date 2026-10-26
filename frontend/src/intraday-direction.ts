@@ -21,7 +21,7 @@ export function buildIntradayDirection(input:Readonly<IntradayDirectionInput>):I
  if(!c||c.interval!==15||!['CALL','PUT','MIXTA'].includes(c.side)||!clock(input.asOfMs)||!clock(input.publishedMs)||input.publishedMs>input.asOfMs||!clock(c.endMs)||c.endMs>input.publishedMs||!validStructuralIndicators(c.indicators,c.endMs,c.bars)||!c.indicators!.ready)return out;
  out.availability='reference';out.side=c.indicators!.trend as 'CALL'|'PUT'|'MIXTA';out.closedAtMs=c.endMs;
  out.relation=c.side==='MIXTA'||out.side==='MIXTA'?'mixed':c.side===out.side?'aligned':'opposed';
- out.reason='Referencia técnica histórica del cierre guardado de 15m. Estructura '+c.side+'. Precio en vivo no disponible en esta captura. No confirma una entrada.';
+ out.reason='Referencia técnica histórica del cierre guardado de 15m. Estructura '+c.side+'. Lectura exclusiva del cierre guardado; no acredita un precio actual. No confirma una entrada.';
  return out;
 }
 
