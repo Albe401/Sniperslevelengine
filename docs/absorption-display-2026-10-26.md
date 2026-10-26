@@ -13,7 +13,9 @@ sizes. The displayed thirty-second classification percentage is explicitly a
 different measurement from the detector's ten-second coverage test. Detector
 formulas, thresholds, directions and input data are unchanged.
 
-Validation: 64 tests passed, one existing positive-real-replay case skipped;
+Validation: 64 tests passed; the existing optional saved-levels integration test
+was skipped because `SNIPERS_WEB_REAL_FRAME` was not supplied. This skipped case
+is not an absorption-positive replay.
 TypeScript check and production build passed. The usual Vite chunk-size warning
 remains. New positive renderer cases are synthetic, not market observations.
 
