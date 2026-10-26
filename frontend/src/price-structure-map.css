@@ -34,3 +34,7 @@
  .structural-map-preview.price-structure-map .price-summary h3{font-size:11px;white-space:nowrap}
  .price-structure-map .price-structure-status{height:12px;min-height:12px;max-height:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 }
+
+/* Reuse the existing heading space; saved direction remains a neutral reference. */
+.price-structure-map .section-head .intraday-direction{font-weight:700;font-size:10px;line-height:14px;white-space:normal;text-align:right}
+.price-structure-map .section-head .intraday-direction.neutral{color:#aab9c4}

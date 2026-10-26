@@ -1,0 +1,54 @@
+{
+  "scope": "Frozen original QQQ 15m technical reading; no real-time quote, reclassification or independent market sample.",
+  "source": {
+    "file": "C:\\Users\\zorte\\Documents\\Codex\\2026-10-24\\p\\work\\structural-direction-step1-20261026\\real-result.json",
+    "sha256": "698761410fe449a8a2b9ac0a27ca0ca95097d52154a23793cf0bf8984e417eff",
+    "selection": "cards[0]",
+    "atMs": 1793026802471,
+    "publishedMs": 1793026800281,
+    "capture": {
+      "file": "C:\\Users\\zorte\\Documents\\Codex\\2026-10-24\\p\\work\\structural-move-20261026\\latest-capture-1793026802471-35928.json",
+      "sha256": "c96ae8d841d2b345a76975c1113a0b01bae717c3a72a45d362c8e0d332eb17c3"
+    },
+    "history": {
+      "file": "C:\\Users\\zorte\\Documents\\Codex\\2026-10-24\\p\\work\\structural-direction-step1-20261026/../structural-move-20261026/QQQ-history.json",
+      "sha256": "4c1f949eb6cecc156958e997fda37126cff18965f383f921e47554586cee97f7"
+    },
+    "kernelHashes": {
+      "apps/desktop/src/price-structure.ts": "51062b8b1485f59d6c9b3e8f8b64a71fe958b58eb0dba67031c7827777f7653f",
+      "apps/desktop/src/structural-indicators.ts": "83e1c40ae81690be6c18db675bcb5fdcebb85e7aca3d8cc96681322493f0df46",
+      "apps/desktop/src/structural-technical-cache.ts": "7e79320377024cd0be6663e619e725dbb1cf17358ccb9925cb6d1a1dd274fb2e"
+    }
+  },
+  "card": {
+    "interval": 15,
+    "side": "MIXTA",
+    "endMs": 1793026800000,
+    "indicators": {
+      "version": "structural-indicators-v1",
+      "at": 1793026800000,
+      "bars": 1566,
+      "ready": true,
+      "reason": "Indicadores de las mismas velas cerradas.",
+      "ema9": 709.1433324650699,
+      "ema20": 707.6549408291754,
+      "ema21": 707.6075932425105,
+      "distanceAtr": 3.2014856064074277,
+      "slope3Atr": 0.7090442514978074,
+      "plusDi": 34.252238137499546,
+      "minusDi": 11.242990763556884,
+      "adx": 28.434004463022635,
+      "emaSeedAtr": 0,
+      "adxSeedPoints": 0,
+      "trend": "CALL",
+      "strength": "FUERTE",
+      "rvol": {
+        "value": 1.6237254531102432,
+        "references": 20,
+        "required": 20,
+        "mean": 1105002.3352464999,
+        "method": "20 sesiones previas, misma hora ET y duración RTH"
+      }
+    }
+  }
+}
