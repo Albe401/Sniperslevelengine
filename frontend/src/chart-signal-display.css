@@ -1,0 +1,5 @@
+.gl-call-put-signals{position:absolute;left:0;top:0;z-index:14;overflow:hidden;pointer-events:none}
+.gl-call-put-signals .gl-call-put-close{pointer-events:all;cursor:pointer;outline:none}
+.gl-call-put-signals .gl-call-put-close:focus rect{stroke:#fff;stroke-width:2}
+.gl-call-put-status{position:absolute;left:10px;top:8px;z-index:13;max-width:calc(100% - 100px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:4px 7px;border:1px solid #39718d;border-radius:4px;background:#071526e8;color:#bfe7fa;font-size:10px;pointer-events:none}
+.gl-call-put-status[hidden]{display:none}
