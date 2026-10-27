@@ -4,7 +4,7 @@ import type {RouteOpportunitySource,FrozenRouteOpportunity} from './route-opport
 import type {Candle} from './model';
 
 /** Versioned research policy, not an independent vote, trading order or probability model. */
-export const CHART_SIGNAL_COORDINATOR_POLICY=Object.freeze({version:'chart-signal-coordinator-v1',mode:'shadow',strategies:['important-level-route-v1','session-intraday-v1'] as const,legacyAdmission:'candidate-only',intradayAdmission:'existing-confirmed-source-only',geometryReference:'closed-trigger-underlying-not-fill',oneActiveEpisodePerStrategy:true,options:'existing-source-context-only',reversalAbsorption:'separate-hypothesis-no-vote',receptionCoverageRequired:false,maxHistoryPerEpisode:32,markersEnabled:false,executionEnabled:false} as const);
+export const CHART_SIGNAL_COORDINATOR_POLICY=Object.freeze({version:'chart-signal-coordinator-v1',mode:'shadow',strategies:['important-level-route-v1','session-intraday-v1'] as const,legacyAdmission:'candidate-only',intradayAdmission:'existing-confirmed-source-only',geometryReference:'closed-trigger-underlying-not-fill',oneActiveEpisodePerStrategy:true,retirement:"next-source-episode-after-fixed-deadline;unresolved-outcome-censored",options:'existing-source-context-only',reversalAbsorption:'separate-hypothesis-no-vote',receptionCoverageRequired:false,maxHistoryPerEpisode:32,markersEnabled:false,executionEnabled:false} as const);
 type Strategy=ChartSignalStrategy;
 type Audit={kind:string;disposition:string;reasonCode:string}|null;
 export interface CoordinatedChartSignal {
@@ -107,7 +107,7 @@ export class ChartSignalCoordinator {
      if(p.accepted&&p.signal)slot.record=p.signal;else reason.push(p.reasonCode);
     }
     if(source?.current.key&&slot.record.identity.sourceEventKey!==source.current.key){
-     if(slot.record.ticket&&!terminal(slot.record.state))reason.push('existing-episode-still-in-observation');else {this.slots.delete(strategy);slot=undefined;}
+     if(slot.record.ticket&&!terminal(slot.record.state)&&input.at<=slot.record.ticket.deadlineMs)reason.push('existing-episode-still-in-observation');else {if(slot.record.ticket&&!terminal(slot.record.state))reason.push('prior-episode-ended-with-unverified-close-coverage');this.slots.delete(strategy);slot=undefined;}
     }
    }
    const event=source?.event;

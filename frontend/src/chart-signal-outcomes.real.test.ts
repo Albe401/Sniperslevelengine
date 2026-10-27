@@ -1,0 +1,19 @@
+import {expect,it}from'vitest';import fs from'node:fs';import path from'node:path';import crypto from'node:crypto';
+import {createRouteReader}from'./route-live';import {ChartSignalOutcomeMonitor,measureChartSignalCloseExcursions,validChartSignalOutcomesReport}from'./chart-signal-outcomes';import type{LiveState}from'./live';
+const root=process.env.SNIPERS_STAGE4_REAL_ROOT,scope=process.env.SNIPERS_STAGE4_SCOPE??'native';
+it.skipIf(!root)('replays original current-market negative observations without inventing confirmed signals',()=>{
+ const r=root!,raw=fs.readFileSync(path.join(r,'native-before.frame.json')),meta=JSON.parse(fs.readFileSync(path.join(r,'input-provenance.json'),'utf8')),s=JSON.parse(raw.toString())as LiveState;expect(crypto.createHash('sha256').update(raw).digest('hex')).toBe(meta.sha256);
+ const reader=createRouteReader();reader.readRouteLive(s,s.symbol,true,meta.receivedMs);const live=reader.routeSignalOutcomesSnapshot(s.symbol,meta.receivedMs)!;expect(validChartSignalOutcomesReport(live)).toBe(true);expect(live.rows).toHaveLength(0);expect(live.markersEnabled).toBe(false);expect(live.pnl).toBeNull();
+ const ledger=JSON.parse(fs.readFileSync(path.join(r,'ledger-replay-input.json'),'utf8')),m=new ChartSignalOutcomeMonitor();let checked=0,associated=0,rows=0;
+ for(const event of ledger.events){const report=m.observe(event.common??undefined,event.bars,event.symbol,event.evaluatedMs,event.publishedMs);expect(validChartSignalOutcomesReport(report)).toBe(true);expect(report.rows).toHaveLength(0);checked++;associated+=report.status==='observed'?1:0;rows+=report.rows.length;}
+ expect(checked).toBe(ledger.events.length);expect(associated).toBeGreaterThan(0);expect(ledger.expectedTickets).toBe(0);
+ const samples:number[]=[];const common=reader.routeSignalCoordinatorSnapshot(s.symbol,meta.receivedMs)!;
+ for(let i=0;i<100;i++)m.observe(common,[],s.symbol,meta.receivedMs,s.publishedMs);
+ for(let i=0;i<1000;i++){const start=performance.now();m.observe(common,[],s.symbol,meta.receivedMs,s.publishedMs);samples.push(performance.now()-start);}samples.sort((a,b)=>a-b);
+ fs.writeFileSync(path.join(r,scope+'-real-replay-result.json'),JSON.stringify({scope:'Original real negative signal replay, no positive historical original ticket or predictive acceptance.',inputSha256:meta.sha256,sourcePhase:s.metrics.phase,ledgerSha256:ledger.originalSha256,checked,associated,outcomeRows:rows,live,passivePerformance:{iterations:1000,warmups:100,p50Ms:samples[499],p95Ms:samples[949],p99Ms:samples[989],maxMs:samples[999],scope:'Outcome monitor negative path only. No source-engine/IO/rendering or positive-path throughput claim.'}},null,2));
+});
+it.skipIf(!root)('recalculates signed excursion arithmetic on original closed prices against independent Decimal results',()=>{
+ const r=root!,raw=fs.readFileSync(path.join(r,'price-math-input.json')),f=JSON.parse(raw.toString()),independent=JSON.parse(fs.readFileSync(path.join(r,'price-math-independent.json'),'utf8'));expect(crypto.createHash('sha256').update(raw).digest('hex')).toBe(independent.inputSha256);
+ const results:Record<string,unknown>={};for(const side of ['CALL','PUT']as const){const result=measureChartSignalCloseExcursions(side,f.reference.price,f.reference.riskNormalizer,f.subsequentBars.map((b:{close:number})=>b.close));results[side]=result;expect(result.samples).toBe(10);for(const key of ['mfe','mae','mfeR','maeR']as const)expect(result[key]).toBeCloseTo(Number(independent.expected[side][key]),8);}
+ fs.writeFileSync(path.join(r,scope+'-real-math-result.json'),JSON.stringify({scope:f.scope,sourceSha256:f.sourceSha256,inputSha256:independent.inputSha256,sourceCapturedMs:f.sourceCapturedMs,results,units:'underlying-price-units and explicitly declared risk units',originalPositiveSignalAcceptance:false},null,2));
+});
