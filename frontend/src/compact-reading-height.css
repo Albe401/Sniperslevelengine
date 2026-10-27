@@ -1,4 +1,4 @@
-/* Preserve the map exterior and palette; compact only its internal cards. */
+/* Compact the complete levels, GEX and structure overview. */
 [data-live-view="detailed"] .quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation .day-map-track{flex:none;align-content:start;row-gap:2px}
 [data-live-view="detailed"] .quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation .day-map-node:not(:first-child){margin-top:-64px}
 /* Short placeholder cards need less staggering to stay separate. */
@@ -14,8 +14,8 @@
 [data-live-view="detailed"] .quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation{align-self:start}
 [data-live-view="detailed"] .levels-route-design .flow-column{align-self:start}
 
-/* The map's exterior is a layout constant, independent of market data/counts. */
-[data-live-view="detailed"] .quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation{height:800px;min-height:800px;max-height:800px;overflow:hidden}
+/* Keep the shared exterior short; long readings scroll inside their panels. */
+[data-live-view="detailed"] .quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation{height:calc(var(--level-overview-height,680px) - 24px);min-height:0;max-height:calc(var(--level-overview-height,680px) - 24px);overflow:hidden}
 [data-live-view="detailed"] .levels-route-design .day-map.day-map-constellation>header{flex-shrink:0}
 [data-live-view="detailed"] .quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation .day-map-track.level-cards-close{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;scrollbar-gutter:stable;scrollbar-width:thin;overscroll-behavior:contain}
 [data-live-view="detailed"] .quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation .day-map-track.level-cards-close>.day-map-node[data-level-column="0"]{left:10px;right:auto}
@@ -25,17 +25,43 @@
 [data-live-view="detailed"] .quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation .day-map-track.level-cards-close>.day-map-node[data-level-column="0"]:after{left:calc(100% + 12px);right:auto}
 [data-live-view="detailed"] .quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation .day-map-track.level-cards-close>.day-map-node[data-level-column="1"]:after{left:auto;right:calc(100% + 12px)}
 /* Keep the adjacent readings from increasing the enclosing map panel. */
-[data-live-view="detailed"] .quick-command-layout.route-command-layout>.levels-route-design{height:824px;min-height:824px;max-height:824px;overflow:hidden}
-[data-live-view="detailed"] .levels-route-design .flow-column{height:800px;min-height:0;max-height:800px;overflow-y:auto;overscroll-behavior:contain}
-/* All maps share the targets column's measured height, without a blank lower row. */
+[data-live-view="detailed"] .quick-command-layout.route-command-layout>.levels-route-design{height:var(--level-overview-height,680px);min-height:0;max-height:var(--level-overview-height,680px);overflow:hidden}
+[data-live-view="detailed"] .levels-route-design .flow-column{height:calc(var(--level-overview-height,680px) - 24px);min-height:0;max-height:calc(var(--level-overview-height,680px) - 24px);overflow-y:auto;overscroll-behavior:contain}
+/* No legacy CVD reservation or content-driven growth of the shared block. */
 [data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed{height:var(--level-overview-height);min-height:var(--level-overview-height);max-height:var(--level-overview-height);grid-template-rows:minmax(0,1fr);align-items:stretch}
 [data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed>.levels-route-design{height:100%;min-height:0;max-height:100%;grid-template-rows:minmax(0,1fr);align-self:stretch}
 [data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed .levels-route-design .day-map.day-map-constellation{height:100%;min-height:0;max-height:100%;align-self:stretch}
 [data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed .flow-column{height:100%;min-height:0;max-height:100%}
-[data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed>.auction-map-stack{height:100%;min-height:0;max-height:100%;align-self:stretch;overflow:hidden}
-[data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed>.auction-map-stack>.auction-map-panel,[data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed>.auction-map-stack>:is(.quant-fall-panel,.massive-exposure-standalone){flex:1;min-height:0;overflow-y:auto}
+[data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed>.auction-map-stack{height:100%;min-height:0;max-height:100%;align-self:stretch;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+[data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed>.auction-map-stack:focus-visible{outline:1px solid #56dcf5;outline-offset:2px}
+[data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed>.auction-map-stack>.auction-map-panel,[data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed>.auction-map-stack>:is(.quant-fall-panel,.massive-exposure-standalone){flex:1 0 240px;min-height:240px;overflow-y:auto}
+[data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed>.auction-map-stack>.massive-exposure-standalone{flex:1 0 auto;min-height:180px;overflow:visible}
+[data-live-view="detailed"] .auction-map-stack>.massive-exposure-standalone>.massive-exposure-table{flex:none;height:100px;min-height:96px}
 [data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed>.auction-map-stack>.structural-map-preview:not(.auction-map-panel):not(.quant-fall-panel):not(.massive-exposure-standalone){flex:none}
 @media(max-width:1150px){[data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed{height:auto;min-height:0;max-height:none;grid-template-rows:var(--level-overview-height) var(--level-overview-height)}}
+@media(max-width:700px){
+ [data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed>.levels-route-design{grid-template-rows:minmax(0,1.2fr) minmax(0,1fr)}
+ [data-live-view="detailed"] .levels-route-design .flow-column>*{flex-shrink:0}
+}
+
+/* Smaller structure cards leave usable space for GEX in the shorter block. */
+[data-live-view="detailed"] .auction-map-stack>.price-structure-map{padding:6px}
+[data-live-view="detailed"] .auction-map-stack>.price-structure-map .horizons{gap:6px}
+[data-live-view="detailed"] .auction-map-stack>.price-structure-map .horizon{height:auto;min-height:0;padding:5px;overflow:visible}
+[data-live-view="detailed"] .auction-map-stack>.price-structure-map .card-head{min-height:24px;margin-bottom:4px;gap:5px}
+[data-live-view="detailed"] .auction-map-stack>.price-structure-map .icon{width:24px;height:26px;flex-basis:24px}
+[data-live-view="detailed"] .auction-map-stack>.price-structure-map h3{font-size:12px}
+[data-live-view="detailed"] .auction-map-stack>.price-structure-map .subtitle{font-size:10px}
+[data-live-view="detailed"] .auction-map-stack>.price-structure-map .main{grid-template-columns:52px minmax(0,1fr);gap:5px}
+[data-live-view="detailed"] .auction-map-stack>.price-structure-map .ring{width:52px;height:52px;margin:0}
+[data-live-view="detailed"] .auction-map-stack>.price-structure-map .ring-core{width:44px;height:44px}
+[data-live-view="detailed"] .auction-map-stack>.price-structure-map .ring strong{font-size:14px}
+[data-live-view="detailed"] .auction-map-stack>.price-structure-map .ring span{font-size:7px}
+[data-live-view="detailed"] .auction-map-stack>.price-structure-map .deltas>div{padding:2px;min-height:17px;gap:2px}
+[data-live-view="detailed"] .auction-map-stack>.price-structure-map .deltas dt{font-size:9px}
+[data-live-view="detailed"] .auction-map-stack>.price-structure-map .deltas dd{font-size:11px}
+[data-live-view="detailed"] .auction-map-stack>.price-structure-map .bar-group{margin-top:4px;gap:3px}
+[data-live-view="detailed"] .auction-map-stack>.price-structure-map .price-structure-status{height:auto;min-height:22px;max-height:none;line-height:11px;white-space:normal;overflow:visible}
 
 /* Content-sized cards: no blank padding below their readings. */
 [data-live-view="detailed"] .quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation .day-map-node .day-map-level{padding:4px 7px;gap:2px;justify-content:flex-start}

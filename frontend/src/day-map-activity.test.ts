@@ -1,6 +1,7 @@
 import {describe,it,expect} from 'vitest';
-import {dayMap} from './day-map';
+import {dayMap,mapLevelReading,type MapOutlook} from './day-map';
 import {readLevelActivities,type LevelActivityInput} from './level-activity';
+import {activityStyle} from './level-activity-view';
 import {strikeKey} from './strike-key';
 import type {Horizon} from './live';
 import type {CvdRead} from './cvd';
@@ -35,6 +36,39 @@ function innerStyle(html:string){const tag=html.match(/<div class="panel day-map
 const meterValues=(html:string)=>[...html.matchAll(/class="level-strength-track"[^>]*aria-valuenow="([^"]+)"/g)].map(match=>match[1]);
 
 describe('day map activity integration',()=>{
+ it('keeps the activity strip and source legend behind the existing closed reading toggle',()=>{
+  const html=render(fixture());
+  expect(html).not.toContain('level-activity-legend');
+  for(const label of ['PUT WALL','IMÁN PRINCIPAL','CALL WALL']){
+   const body=card(html,label).html,details=body.match(/<details class="map-level-reading"[^>]*>/g)??[];
+   expect(details).toHaveLength(1);expect(details[0]).not.toMatch(/\bopen(?:\s|=|>)/);
+   const beforeDetails=body.slice(0,body.indexOf('<details class="map-level-reading"'));
+   expect(beforeDetails).not.toContain('level-activity-chips');expect(beforeDetails).not.toContain('level-activity-evidence');
+   const detailBody=body.match(/<div class="map-reading-detail">([\s\S]*?)<\/details>/)?.[1]??'';
+   expect(detailBody).toContain('level-activity-chips');expect(detailBody).toContain('Iluminación del cuadro');
+   expect(detailBody).toContain('Ventas de acciones · 60 s · acciones');expect(detailBody).toContain('Ventas de opciones · 5 min · contratos');
+   expect(detailBody).toContain('Aceptación AMT · perfil del subyacente');
+  }
+ });
+ it('keeps every activity color identical while changing only where evidence is displayed',()=>{
+  const f=fixture(),html=render(f),prices=[720,715,710];
+  const observed=readLevelActivities(prices,{symbol:'QQQ',active:true,publishedMs:at,cvd:f.cvd,auction:f.auction,optionRows:f.optionRows,expirations:[date],optionFresh:true,optionAtMs:at},at);
+  for(const [label,price] of [['CALL WALL',720],['IMÁN PRINCIPAL',715],['PUT WALL',710]] as const){
+   expect(innerStyle(card(html,label).html).trim()).toBe(activityStyle(observed.get(strikeKey(price)!)));
+  }
+ });
+ it('preserves the same summary and escaped evidence with or without an outlook',()=>{
+  const f=fixture(),observed=readLevelActivities([710],{symbol:'QQQ',active:true,publishedMs:at,cvd:f.cvd,auction:f.auction,optionRows:f.optionRows,expirations:[date],optionFresh:true,optionAtMs:at},at).get(strikeKey(710)!)!;
+  observed.stockSales.detail='<script>unsafe</script> & quantities';
+  const outlook={rows:[],level:'Nivel',levelDetail:'',change:'Cambio',changeDetail:'',route:'Ruta',routeDetail:'',invalidate:'Condición',invalidateDetail:''} as unknown as MapOutlook;
+  for(const context of [undefined,outlook]){
+   const html=mapLevelReading(['PUT WALL'],710,context,'Composición','Lectura +','Evidencia existente',observed);
+   expect(html).toContain('<summary><span>Composición</span><b>Lectura +</b></summary>');
+   expect(html).toContain('<div class="map-reading-detail"><div class="level-activity-evidence">');
+   expect(html).toContain('Evidencia existente');expect(html).toContain('&lt;script&gt;unsafe&lt;/script&gt; &amp; quantities');
+   expect(html).not.toContain('<script>');
+  }
+ });
  it('places independent activity styles inside cards while preserving one outer grid style',()=>{
   const html=render(fixture()),visible=cards(html);
   expect(visible.filter(item=>item.outer.includes('level-activity-card'))).toHaveLength(3);
