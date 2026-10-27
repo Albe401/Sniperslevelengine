@@ -15,9 +15,9 @@
 [data-live-view="detailed"] .levels-route-design .flow-column{align-self:start}
 
 /* Keep the shared exterior short; long readings scroll inside their panels. */
-[data-live-view="detailed"] .quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation{height:calc(var(--level-overview-height,760px) - 24px);min-height:0;max-height:calc(var(--level-overview-height,760px) - 24px);overflow:hidden}
+[data-live-view="detailed"] .quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation{height:calc(var(--level-overview-height,824px) - 24px);min-height:0;max-height:none;overflow:visible}
 [data-live-view="detailed"] .levels-route-design .day-map.day-map-constellation>header{flex-shrink:0}
-[data-live-view="detailed"] .quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation .day-map-track.level-cards-close{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;scrollbar-gutter:stable;scrollbar-width:thin;overscroll-behavior:contain}
+[data-live-view="detailed"] .quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation .day-map-track.level-cards-close{flex:1;min-height:0;overflow:visible}
 [data-live-view="detailed"] .quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation .day-map-track.level-cards-close>.day-map-node[data-level-column="0"]{left:10px;right:auto}
 [data-live-view="detailed"] .quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation .day-map-track.level-cards-close>.day-map-node[data-level-column="1"]{left:auto;right:10px}
 [data-live-view="detailed"] .quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation .day-map-track.level-cards-close>.day-map-node[data-level-column="0"]:before{left:100%;right:auto}
@@ -25,18 +25,18 @@
 [data-live-view="detailed"] .quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation .day-map-track.level-cards-close>.day-map-node[data-level-column="0"]:after{left:calc(100% + 12px);right:auto}
 [data-live-view="detailed"] .quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation .day-map-track.level-cards-close>.day-map-node[data-level-column="1"]:after{left:auto;right:calc(100% + 12px)}
 /* Keep the adjacent readings from increasing the enclosing map panel. */
-[data-live-view="detailed"] .quick-command-layout.route-command-layout>.levels-route-design{height:var(--level-overview-height,760px);min-height:0;max-height:var(--level-overview-height,760px);overflow:hidden}
-[data-live-view="detailed"] .levels-route-design .flow-column{height:calc(var(--level-overview-height,760px) - 24px);min-height:0;max-height:calc(var(--level-overview-height,760px) - 24px);overflow-y:auto;overscroll-behavior:contain}
+[data-live-view="detailed"] .quick-command-layout.route-command-layout>.levels-route-design{height:var(--level-overview-height,824px);min-height:0;max-height:none;overflow:visible}
+[data-live-view="detailed"] .levels-route-design .flow-column{height:calc(var(--level-overview-height,824px) - 24px);min-height:0;max-height:none;overflow:visible}
 /* No legacy CVD reservation or content-driven growth of the shared block. */
 [data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed{height:var(--level-overview-height);min-height:var(--level-overview-height);max-height:var(--level-overview-height);grid-template-rows:minmax(0,1fr);align-items:stretch}
 [data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed>.levels-route-design{height:100%;min-height:0;max-height:100%;grid-template-rows:minmax(0,1fr);align-self:stretch}
-[data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed .levels-route-design .day-map.day-map-constellation{height:100%;min-height:0;max-height:100%;align-self:stretch}
-[data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed .flow-column{height:100%;min-height:0;max-height:100%}
-[data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed>.auction-map-stack{height:100%;min-height:0;max-height:100%;align-self:stretch;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+[data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed .levels-route-design .day-map.day-map-constellation{height:100%;min-height:0;max-height:none;align-self:stretch}
+[data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed .flow-column{height:100%;min-height:0;max-height:none;overflow:visible}
+[data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed>.auction-map-stack{height:100%;min-height:0;max-height:none;align-self:stretch;overflow:visible}
 [data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed>.auction-map-stack:focus-visible{outline:1px solid #56dcf5;outline-offset:2px}
 [data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed>.auction-map-stack>.auction-map-panel,[data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed>.auction-map-stack>:is(.quant-fall-panel,.massive-exposure-standalone){flex:1 0 240px;min-height:240px;overflow-y:auto}
 [data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed>.auction-map-stack>.massive-exposure-standalone{flex:1 0 auto;min-height:180px;overflow:visible}
-[data-live-view="detailed"] .auction-map-stack>.massive-exposure-standalone>.massive-exposure-table{flex:none;height:180px;min-height:96px}
+[data-live-view="detailed"] .auction-map-stack>.massive-exposure-standalone>.massive-exposure-table{flex:1 1 180px;height:180px;min-height:180px}
 [data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed>.auction-map-stack>.structural-map-preview:not(.auction-map-panel):not(.quant-fall-panel):not(.massive-exposure-standalone){flex:none}
 @media(max-width:1150px){[data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed{height:auto;min-height:0;max-height:none;grid-template-rows:var(--level-overview-height) var(--level-overview-height)}}
 @media(max-width:700px){
@@ -72,4 +72,17 @@
 [data-live-view="detailed"] .levels-route-design .day-map.day-map-constellation .day-map-node .map-level-reading summary>b{line-height:1.2}
 [data-live-view="detailed"] .levels-route-design .day-map.day-map-constellation .day-map-node .level-strength-track{margin-top:3px;margin-bottom:0}
 [data-live-view="detailed"] .levels-route-design .day-map.day-map-constellation .day-map-node .route-wall-pull{padding-top:3px}
+
+/* Existing readings float above the map without changing card height. */
+[data-live-view="detailed"] .levels-route-design .day-map.day-map-constellation .map-level-reading{position:relative}
+[data-live-view="detailed"] .levels-route-design .day-map.day-map-constellation .map-level-reading>.map-reading-detail{
+ position:absolute;top:100%;bottom:auto;left:0;right:auto;width:min(360px,70vw);
+ max-height:var(--reading-detail-height,300px);overflow:auto;overscroll-behavior:contain;
+ padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--panel);background-color:Canvas;box-shadow:0 12px 30px #0006;
+}
+[data-live-view="detailed"] .levels-route-design .day-map.day-map-constellation .day-map-node[data-level-column="0"] .map-reading-detail{left:0;right:auto}
+[data-live-view="detailed"] .levels-route-design .day-map.day-map-constellation .day-map-node[data-level-column="1"] .map-reading-detail{left:auto;right:0}
+[data-live-view="detailed"] .levels-route-design .day-map.day-map-constellation .map-level-reading[data-reading-side="up"]>.map-reading-detail{top:auto;bottom:100%}
+[data-live-view="detailed"] .levels-route-design .day-map.day-map-constellation .day-map-node:has(.map-level-reading[open]){z-index:20}
+[data-live-view="detailed"] .levels-route-design .day-map.day-map-constellation .day-map-node:has(.map-level-reading[open])>.day-map-level{overflow:visible}
 
