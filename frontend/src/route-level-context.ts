@@ -6,7 +6,7 @@ import {displayStructure,mapHorizon} from './reading-display';
 import type {RouteLevel} from './route-engine';
 export type LevelRole='call-wall'|'put-wall'|'magnet'|'barrier'|'pull'|'vacuum-edge';
 export interface LevelAssessment {name:string;price:number;role:LevelRole|undefined;strength:number|null;grade:string;change:number|null;provisional:boolean;evidence?:import('./level-evidence').LevelEvidence}
-export interface RouteStructure {quality:'limited'|'unverified'|'supported';requiresAdditionalTest:boolean;backing:LevelAssessment|null;anchor:LevelAssessment|null;ahead:LevelAssessment[];levels:LevelAssessment[];reason:string}
+export interface RouteStructure {quality:'limited'|'unverified'|'supported';requiresAdditionalTest:boolean;confirmationBlocked?:boolean;backing:LevelAssessment|null;anchor:LevelAssessment|null;ahead:LevelAssessment[];levels:LevelAssessment[];reason:string}
 const score=(n:unknown):number|null=>typeof n==='number'&&Number.isFinite(n)&&n>=0&&n<=100?n:null;
 const change=(n:unknown):number|null=>typeof n==='number'&&Number.isFinite(n)?n:null;
 /** Same snapshot scores as the important-level map; dynamics stays a separate source. */
@@ -51,7 +51,7 @@ export function assessRouteStructure(levels:RouteLevel[],spot:number,direction:n
  const relevant=[anchor,backing].filter((l):l is LevelAssessment=>l!=null&&['call-wall','put-wall','barrier'].includes(l.role??''));
  const limited=relevant.some(l=>l.evidence?.quality==='partial'||l.strength!=null&&l.strength<60||l.change!=null&&l.change<=-5);
  const supported=relevant.length>0&&relevant.every(l=>l.strength!=null&&l.strength>=60&&!l.provisional&&(l.change==null||l.change>-5));
- return {quality:limited?'limited':supported?'supported':'unverified',requiresAdditionalTest:limited,
+ return {quality:limited?'limited':supported?'supported':'unverified',requiresAdditionalTest:limited,confirmationBlocked:limited,
   backing,anchor,ahead:direction===0?[]:all.filter(l=>(l.price-spot)*direction>spot*.0003).sort((a,b)=>Math.abs(a.price-spot)-Math.abs(b.price-spot)),levels:all,
-  reason:limited?'Respaldo estructural limitado o perdiendo fuerza; exigir una continuación adicional':supported?'Niveles de respaldo fuertes en el modelo; la reacción del precio sigue siendo necesaria':'Fuerza del respaldo pendiente o provisional; no asumir soporte confirmado'};
+  reason:limited?'Respaldo estructural limitado o perdiendo fuerza; otra vela no verifica el respaldo del nivel':supported?'Niveles de respaldo fuertes en el modelo; la reacción del precio sigue siendo necesaria':'Fuerza del respaldo pendiente o provisional; no asumir soporte confirmado'};
 }

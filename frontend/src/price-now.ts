@@ -1,3 +1,4 @@
+import {publicationCandleClock} from './publication-candle-clock';
 import type {LiveState} from './live';
 import {currentSessionCandles,sessionCandles} from './candle-series';
 import {premarketDirection} from './premarket-direction';
@@ -22,12 +23,13 @@ export function readPriceNow(s:LiveState|undefined,symbol:string,active:boolean,
  const metrics=s.metrics;
  if(metrics.session===today&&metrics.phase==='Sesión RTH'&&recent(metrics.asofMs,now,180000)&&positive(metrics.vwap))out.vwap=`${spot<metrics.vwap?'BAJO':spot>metrics.vwap?'SOBRE':'EN'} VWAP $${price(metrics.vwap)} · ${spot-metrics.vwap>=0?'+':''}${price(spot-metrics.vwap)} puntos`;
  // Canonical closed one-minute bars only; gaps break the comparison window.
- let bars=currentSessionCandles(s.chartHistory,1,now).filter(b=>b.complete&&b.sessionDate===today);
+ const candleNow=publicationCandleClock(s.publishedMs,now);
+ let bars=currentSessionCandles(s.chartHistory,1,candleNow).filter(b=>b.complete&&b.sessionDate===today);
  if(premarketDirection(s,symbol,active,now)){
   const session=s.chartHistory!.sessions.find(v=>v.date===today)!;
-  const end=Math.floor(now/60000)*60000-60000;
+  const end=Math.floor(candleNow/60000)*60000-60000;
   const minutes=(s.minutes?Object.values(s.minutes):s.chartHistory!.minutes).filter(b=>b.timestampMs>=end-300000&&b.timestampMs<=end);
-  bars=sessionCandles({sessions:[{...session,openMs:session.openMs-19800000,closeMs:session.openMs}],minutes},[],1,now);
+  bars=sessionCandles({sessions:[{...session,openMs:session.openMs-19800000,closeMs:session.openMs}],minutes},[],1,candleNow);
   out.premarket=true;out.vwap='Premarket · VWAP RTH todavía no disponible';out.flow='Premarket · flujo de opciones todavía no disponible';
  }
  if(!recent(bars.at(-1)?.timestampMs,now,150000)){out.headline='PRECIO VIGENTE · HISTORIAL PENDIENTE';return out;}

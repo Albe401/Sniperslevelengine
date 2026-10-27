@@ -49,3 +49,48 @@ it.each([45,85])('uses the existing backing score %s without inventing a new one
 it.each(['expired','foreign','stale'])('ignores %s important levels',kind=>{const {engine,s}=run();const m=market(s);m.levels=[{name:'CALL WALL',role:'call-wall',price:101,strength:90,observed:s.publishedMs,asof:kind==='stale'?s.publishedMs-300001:s.publishedMs,expiration:kind==='expired'?'2026-10-09':date,provisional:false}];if(kind==='foreign')m.symbol='SPY';expect(engine.read(s,s.symbol,true,m,s.publishedMs).state).toBe('confirmed');});
 it('adds ATR magnitude to the actual route without moving the structural destination',()=>{const {engine,s}=run();const atr={value:.5,percent:.5,lastRangeRatio:1,endMs:s.publishedMs,reason:'test'};const r=engine.read(s,s.symbol,true,market(s),s.publishedMs,atr);expect(r.state).toBe('confirmed');expect(r.target).toBe(102);expect(r.atr!.targetAtr).toBeCloseTo(2.8);expect(intradayRoutePanel(r)).toContain('hasta llegada');});
 it('shows missing ATR explicitly without fabricating a measurement',()=>{const {result}=run();expect(result.atr!.value).toBeNull();expect(intradayRoutePanel(result)).toContain('ATR 5 min pendiente');});
+
+it.each([45,85])('extra closes preserve the existing backing score %s policy and source sequence',strength=>{
+ const engine=new SessionIntradayRoute();let bars=base.slice(),s=frame(bars);
+ const evidence=()=>{const m=market(s);m.levels=[{name:'PUT WALL',role:'put-wall',price:100,strength,dynamicStrength:99,change:0,observed:start,asof:s.publishedMs,expiration:date,provisional:false}];return m;};
+ engine.read(s,s.symbol,true,evidence(),s.publishedMs);
+ const reads=[];
+ for(const b of [...sequence,bar(11,100.6,100.75,100.5,100.65,150),bar(12,100.65,100.76,100.55,100.66,150)]){
+  bars=[...bars,b];s=frame(bars);const m=evidence(),saved=JSON.stringify(m.levels);
+  reads.push(engine.read(s,s.symbol,true,m,s.publishedMs));expect(JSON.stringify(m.levels)).toBe(saved);
+ }
+ const final=reads.at(-1)!;
+ expect(final.result.state).toBe('sustained');
+ expect(final.levelReading).toContain(`${strength.toFixed(1)}/100`);expect(final.target).toBe(102);expect(final.executionEnabled).toBe(false);
+ if(strength<60){
+  expect(reads[2].result.state).toBe('test');expect(reads[3].result.state).toBe('sustained');
+  for(const r of reads.slice(3)){expect(r.state).toBe('blocked');expect(r.reason).toContain('otra vela no verifica el respaldo');expect(r.signals).toEqual([]);}
+
+ }else{
+  expect(reads[2].state).toBe('confirmed');expect(final.state).toBe('confirmed');expect(final.signals).toHaveLength(1);
+expect(final.signals[0].id).toBe(reads[2].signals[0].id);
+ }
+
+});
+it('extra closes do not repair partial important-level evidence even with a strong score',()=>{
+ const engine=new SessionIntradayRoute();let bars=base.slice(),s=frame(bars);
+ const evidence=()=>{const m=market(s);m.levels=[{name:'PUT WALL',role:'put-wall',price:100,strength:85,change:0,observed:start,asof:s.publishedMs,expiration:date,provisional:false,evidence:{quality:'partial'} as NonNullable<import('./route-engine').RouteLevel['evidence']>}];return m;};
+ engine.read(s,s.symbol,true,evidence(),s.publishedMs);let result;
+ for(const b of [...sequence,bar(11,100.6,100.75,100.5,100.65,150),bar(12,100.65,100.76,100.55,100.66,150)]){
+  bars=[...bars,b];s=frame(bars);result=engine.read(s,s.symbol,true,evidence(),s.publishedMs);
+ }
+ expect(result!.result.state).toBe('sustained');expect(result!.state).toBe('blocked');expect(result!.signals).toEqual([]);
+ expect(result!.reason).toContain('otra vela no verifica el respaldo');expect(result!.levelReading).toContain('85.0/100');
+});
+
+it('records actual Stage2 veto codes without adding an options availability veto',()=>{
+ const ok=run();expect(ok.result.blockCodes).toEqual([]);expect(ok.result.state).toBe('confirmed');
+ const missing=run(1,s=>{s.cvd=undefined;});expect(missing.result.state).toBe('blocked');expect(missing.result.blockCodes).toContain('cvd-unconfirmed');expect(missing.result.blockCodes).not.toContain('option-flow-opposed');
+ const contrary=run(1,s=>{Object.assign(s.cvd!.recentFive!,{buy:100,sell:800,delta:-700});});expect(contrary.result.blockCodes).toContain('cvd-opposed');
+ const m=market(ok.s);m.flow={signal:-.5,coverage:90,at:ok.s.publishedMs,reason:'test'};const blocked=ok.engine.read(ok.s,ok.s.symbol,true,m,ok.s.publishedMs);expect(blocked.blockCodes).toContain('option-flow-opposed');expect(blocked.target).toBe(ok.result.target);
+});
+it('records remaining geometry and session blockers rather than manufacturing a new signal',()=>{
+ const {engine,s,result}=run();s.ticks.AMZN.price=101.9;const near=engine.read(s,s.symbol,true,market(s),s.publishedMs);expect(near.blockCodes).toContain('reward-risk-below-minimum');expect(near.target).toBe(result.target);
+ const off=engine.read(s,s.symbol,false,market(s),s.publishedMs);expect(off.blockCodes).toContain('price-unready');expect(off.state).toBe('waiting');expect(off.signals).toEqual([]);
+ const late=engine.read(s,s.symbol,true,market(s),s.chartHistory!.sessions[0].closeMs);expect(late.blockCodes).toContain('outside-session');expect(late.blockCodes).toContain('price-unready');expect(late.state).toBe('waiting');
+});

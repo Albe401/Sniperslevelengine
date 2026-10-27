@@ -22,3 +22,28 @@ it('vacuum intensity never supplies wall backing',()=>{const r=assessRouteStruct
 it('a put wall above price is not lower backing',()=>{expect(assessRouteStructure([level('put-wall',745,20)],740,1,null,now).backing).toBeNull();});
 it('provisional strong walls do not certify strong backing',()=>{expect(assessRouteStructure([{...level('put-wall',730,90),provisional:true}],740,1,null,now).quality).toBe('unverified');});
 it.each([NaN,101,-1])('rejects malformed scores %s',n=>{expect(assessRouteStructure([level('put-wall',730,n)],740,1,null,now).backing?.strength).toBeNull();});
+
+it.each([
+ {strength:59.999,change:0,blocked:true},
+ {strength:60,change:0,blocked:false},
+ {strength:85,change:-5,blocked:true},
+ {strength:85,change:-4.999,blocked:false},
+])('separates price continuation from the unchanged backing policy: %o',({strength,change,blocked})=>{
+ const wall={...level('put-wall',730,strength),change},saved=JSON.stringify(wall);
+ const r=assessRouteStructure([wall],740,1,null,now);
+ expect(r.confirmationBlocked).toBe(blocked);expect(r.requiresAdditionalTest).toBe(blocked);
+ expect(r.backing?.strength).toBe(strength);expect(JSON.stringify(wall)).toBe(saved);
+ if(blocked)expect(r.reason).toContain('otra vela no verifica el respaldo');
+});
+it('partial evidence still blocks a strong score without inventing new strength or votes',()=>{
+ const wall={...level('put-wall',730,85),dynamicStrength:99,evidence:{quality:'partial'} as NonNullable<RouteLevel['evidence']>};
+ const r=assessRouteStructure([wall],740,1,null,now);
+ expect(r.quality).toBe('limited');expect(r.confirmationBlocked).toBe(true);expect(r.requiresAdditionalTest).toBe(true);
+ expect(r.backing?.strength).toBe(85);expect(r.levels).toHaveLength(1);
+});
+it('keeps unavailable and provisional backing distinct from the existing limited-quality veto',()=>{
+ for(const wall of [level('put-wall',730,null),{...level('put-wall',730,85),provisional:true}]){
+  const r=assessRouteStructure([wall],740,1,null,now);
+  expect(r.quality).toBe('unverified');expect(r.confirmationBlocked).toBe(false);expect(r.requiresAdditionalTest).toBe(false);
+ }
+});

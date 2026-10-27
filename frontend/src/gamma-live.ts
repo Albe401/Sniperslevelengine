@@ -1,3 +1,4 @@
+import {CHART_SIGNAL_VISIBILITY_POLICY} from './chart-signal-visibility';
 import {massiveGammaPanel,massiveChartContext,MassiveGammaLayer,type MassiveChartContext} from './massive-chart-gamma';
 import {ownDominantHistory} from './own-dominant-history';
 import './massive-chart-gamma.css';
@@ -145,9 +146,9 @@ function technicalOverlay(prepared:ReturnType<typeof gammaChartData>,symbol:stri
  if(!enabled){routeSvg?.remove();routeSvg=undefined;}
  const key=JSON.stringify([symbol,interval,enabled,showStructure,prepared.closedBars,routeCurrent,routeChartReading(symbol,now)?.signals,routeChartReading(symbol,now)?.intraday.signals,routeChartReading(symbol,now)?.quant.signals]);
  if(key!==technicalKey){technicalKey=key;technical=enabled?chartTechnical(prepared.closedBars,interval,now):undefined;
-  if(enabled&&!markers)markers=createSeriesMarkers(candles!,[],{autoScale:false});
+  if(enabled&&CHART_SIGNAL_VISIBILITY_POLICY.legacyCallPutOverlays&&!markers)markers=createSeriesMarkers(candles!,[],{autoScale:false});
   const observed=chartMarketSignals([...(routeChartReading(symbol,now)?.signals??[]),...(routeChartReading(symbol,now)?.intraday.signals??[]),...(routeChartReading(symbol,now)?.quant.signals??[])],prepared.bars,symbol,now,routeCurrent,interval*60000);
-  const chartMarks=observed;
+  const chartMarks=CHART_SIGNAL_VISIBILITY_POLICY.legacyCallPutOverlays?observed:[];
   markers?.setMarkers(chartMarks.map(p=>({time:p.timestampMs/1000 as import('lightweight-charts').UTCTimestamp,position:p.above?'aboveBar' as const:'belowBar' as const,color:p.color,shape:p.shape,text:p.text})).sort((a,b)=>Number(a.time)-Number(b.time)));
  }
  const status=document.getElementById('route-chart-stats'),r=routeChartReading(symbol,now),n=(v:number|null|undefined)=>v!=null&&Number.isFinite(v)?v.toFixed(2):'—';
@@ -157,9 +158,6 @@ function technicalOverlay(prepared:ReturnType<typeof gammaChartData>,symbol:stri
 }
 function drawRoute(){
  if(!host||!chart||!candles||!document.querySelector('.gl-route-chart'))return;
- if(!routeSvg){routeSvg=document.createElementNS('http://www.w3.org/2000/svg','svg');routeSvg.classList.add('route-chart-path');host.appendChild(routeSvg);}
- routeSvg.style.clipPath=`inset(0 0 ${Math.max(0,host.clientHeight-chart.panes()[0].getHeight())}px 0)`;
- routeSvg.setAttribute('viewBox',`0 0 ${host.clientWidth} ${host.clientHeight}`);
  const now=Date.now(),last=routeChartBarMs,cached=routeChartReading(routeSymbol,now),current=routeCurrent&&now>=routeNow&&now-routeNow<=3000;
  const signalPanel=document.getElementById('route-intraday-status');if(signalPanel){const html=intradayRoutePanel(current?cached?.intraday:undefined);if(signalPanel.innerHTML!==html)signalPanel.innerHTML=html;}
  const status=document.getElementById('route-chart-stats');if(status){const text=`${routeStatsPrefix} · CVD ${current?cached?.cvd??'Pendiente':'Pendiente'} · ${routeChartStatus(cached?.result,current,cached?.market,now)} · ${cached?.intraday.label??'INTRADÍA · esperando prueba'} · ${currentFourHour(routeSymbol,now).summary}`;if(status.textContent!==text)status.textContent=text;}
@@ -169,6 +167,16 @@ function drawRoute(){
  const directional=cached?.directional;
  const highest=current&&cached?highestArrivalProbability(cached.evaluation.probabilities,now):undefined;
  const valid=r&&last!=null&&(!highest||highest.side===r.direction&&highest.target===r.target)&&(confirmed||latest?.fresh&&assessment?.quality!=='pending'&&directional&&['conditional','supported','opposed','reference-test'].includes(directional.state));
+ const fallbackReferences=!valid&&current&&cached&&last!=null&&routeSpot!=null?routeLevelDestinations(cached.market,now):[];
+ const fallbackDestinations=highest?fallbackReferences.filter(d=>d.direction===highest.side&&d.target===highest.target):fallbackReferences.length===1?fallbackReferences:[];
+  if(status){const labels=fallbackDestinations.map(d=>`${d.label} · distancia $${d.distance.toFixed(2)} · fuerza ${d.strength==null?'pendiente':d.strength.toFixed(0)+'/100'}`).join(' | ');if(labels)status.textContent+=' · Lectura anticipada: '+labels+' · escenarios alternativos, falta confirmación';}
+ if(current&&cached&&status){const probability=highest?`${highest.side>0?'CALL':'PUT'} ${(highest.probability!*100).toFixed(1)}% → $${highest.target.toFixed(2)}`:'pendiente de probabilidades comparables';status.textContent+=' · '+cached.emaContext.label+' · '+cached.evaluation.label+' · Mayor prob. llegada hoy '+probability+' · modelo experimental';}
+ const swing=currentFourHour(routeSymbol,now),ss=swing.scenario;
+ const details=document.getElementById('route-4h-details');if(details)details.textContent=`${swing.text}. Proyección empírica del mismo activo, señal, estructura y duración de bloque; riesgo relativo entre la mitad y el doble. Zona P25–P75 de excursiones, mediana central, retroceso y minutos RTH hasta el máximo favorable observado antes de invalidarse. Se mide hasta cierre de sesión o dos sesiones RTH, sin cortar al alcanzar el objetivo anterior. Mínimo operativo: 20 casos completos sin solaparse y terminados antes de la señal. El tiempo hasta el pico no es hora de llegada. Los cuartiles no son una cobertura garantizada ni una probabilidad de éxito. Precio histórico solamente; flujo/CVD actuales se usan para confirmación, no se inventa su historial. Referencia estructural separada si falta muestra. Sin descargas automáticas ni nuevos indicadores.`;
+ if(!CHART_SIGNAL_VISIBILITY_POLICY.legacyCallPutOverlays){markers?.detach();markers=undefined;routeSvg?.remove();routeSvg=undefined;return;}
+ if(!routeSvg){routeSvg=document.createElementNS('http://www.w3.org/2000/svg','svg');routeSvg.classList.add('route-chart-path');host.appendChild(routeSvg);}
+ routeSvg.style.clipPath=`inset(0 0 ${Math.max(0,host.clientHeight-chart.panes()[0].getHeight())}px 0)`;
+ routeSvg.setAttribute('viewBox',`0 0 ${host.clientWidth} ${host.clientHeight}`);
  let html='';if(valid){const x=chart.timeScale().timeToCoordinate(last!/1000 as import('lightweight-charts').UTCTimestamp),y=candles.priceToCoordinate(routeSpot!),target=candles.priceToCoordinate(r.target!),stop=candles.priceToCoordinate(r.stop!);const edge=host.clientWidth-85;
   if(x!=null&&y!=null&&target!=null&&x>0&&x<edge-20&&y>0&&y<host.clientHeight-30&&target>20&&target<host.clientHeight-30){
    const end=Math.min(edge,x+110),color=confirmed?(r.direction===1?'#25edac':'#ff6282'):'#ffb564';
@@ -180,7 +188,7 @@ function drawRoute(){
   }
  }
  if(!valid&&current&&cached&&last!=null&&routeSpot!=null){
-  const references=routeLevelDestinations(cached.market,now),destinations=highest?references.filter(d=>d.direction===highest.side&&d.target===highest.target):references.length===1?references:[],x=chart.timeScale().timeToCoordinate(last/1000 as import('lightweight-charts').UTCTimestamp),y=candles.priceToCoordinate(routeSpot),edge=host.clientWidth-85;
+   const destinations=fallbackDestinations,x=chart.timeScale().timeToCoordinate(last/1000 as import('lightweight-charts').UTCTimestamp),y=candles.priceToCoordinate(routeSpot),edge=host.clientWidth-85;
   if(x!=null&&y!=null&&x>0&&x<edge-20){
    for(const d of destinations){const target=candles.priceToCoordinate(d.target),end=Math.min(edge,x+130),color=d.direction>0?'#25edac':'#ff6282';
     if(target==null||target<20||target>chart.panes()[0].getHeight()-25)continue;
@@ -188,11 +196,7 @@ function drawRoute(){
     html+=`<path d="M ${x} ${y} L ${end} ${target}" fill="none" stroke="${color}" stroke-width="2" stroke-dasharray="3 5"/><circle cx="${end}" cy="${target}" r="3" fill="${color}"/><text x="${end-4}" y="${target+(d.direction>0?-9:14)}" text-anchor="end" fill="${color}" font-size="10">Posible ${d.direction>0?'CALL ↑':'PUT ↓'} $${d.target.toFixed(2)} · ${d.provisional?'provisional · ':''}${pct}</text>`;
    }
   }
-  if(status){const labels=destinations.map(d=>`${d.label} · distancia $${d.distance.toFixed(2)} · fuerza ${d.strength==null?'pendiente':d.strength.toFixed(0)+'/100'}`).join(' | ');if(labels)status.textContent+=' · Lectura anticipada: '+labels+' · escenarios alternativos, falta confirmación';}
  }
- if(current&&cached&&status){const probability=highest?`${highest.side>0?'CALL':'PUT'} ${(highest.probability!*100).toFixed(1)}% → $${highest.target.toFixed(2)}`:'pendiente de probabilidades comparables';status.textContent+=' · '+cached.emaContext.label+' · '+cached.evaluation.label+' · Mayor prob. llegada hoy '+probability+' · modelo experimental';}
- const swing=currentFourHour(routeSymbol,now),ss=swing.scenario;
- const details=document.getElementById('route-4h-details');if(details)details.textContent=`${swing.text}. Proyección empírica del mismo activo, señal, estructura y duración de bloque; riesgo relativo entre la mitad y el doble. Zona P25–P75 de excursiones, mediana central, retroceso y minutos RTH hasta el máximo favorable observado antes de invalidarse. Se mide hasta cierre de sesión o dos sesiones RTH, sin cortar al alcanzar el objetivo anterior. Mínimo operativo: 20 casos completos sin solaparse y terminados antes de la señal. El tiempo hasta el pico no es hora de llegada. Los cuartiles no son una cobertura garantizada ni una probabilidad de éxito. Precio histórico solamente; flujo/CVD actuales se usan para confirmación, no se inventa su historial. Referencia estructural separada si falta muestra. Sin descargas automáticas ni nuevos indicadores.`;
  if(showSwing&&ss&&current&&routeSpot!=null&&last!=null&&(ss.target-routeSpot)*ss.side>0&&(routeSpot-ss.invalidation)*ss.side>0){
   const x=chart.timeScale().timeToCoordinate(last/1000 as import('lightweight-charts').UTCTimestamp),y=candles.priceToCoordinate(routeSpot),ty=candles.priceToCoordinate(ss.target),sy=candles.priceToCoordinate(ss.invalidation),edge=host.clientWidth-85;
   if(x!=null&&y!=null&&ty!=null&&x>0&&x<edge-35&&y>20&&y<host.clientHeight-30&&ty>20&&ty<host.clientHeight-30){

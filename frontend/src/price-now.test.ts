@@ -24,3 +24,11 @@ it('reports conflicting options without overriding the stock direction',()=>{con
 
 it('shows real premarket price control from raw minutes while the chart history is RTH-only',()=>{const pre=Date.parse('2026-09-28T12:00:20Z'),s=fixture();s.publishedMs=pre;s.ticks.QQQ.tradeMs=pre;s.metrics.phase='Esperando primera vela RTH completa';s.chartHistory!.minutes.forEach((b,i)=>b.timestampMs=pre-20000-360000+i*60000);s.minutes=Object.fromEntries(s.chartHistory!.minutes.map(b=>[b.timestampMs,b]));s.chartHistory!.minutes=[];const p=readPriceNow(s,'QQQ',true,pre);expect(p.ready).toBe(true);expect(p.premarket).toBe(true);expect(p.headline).toBe('PRECIO CAYENDO');expect(p.flow).toContain('Premarket');const html=controlPanel(buildIntradayControl(s,'QQQ',true,pre),true);expect(html).toContain('ESPERANDO DATOS');expect(html).not.toContain('PRECIO EN ESTE MOMENTO');s.minutes={};expect(readPriceNow(s,'QQQ',true,pre).ready).toBe(false);});
 
+
+it('does not close a raw minute after its source publication merely because the evaluator crossed the boundary',()=>{
+ const boundary=now-20000,s=fixture();s.publishedMs=boundary-1;s.ticks.QQQ.tradeMs=boundary-1;s.metrics.asofMs=boundary-1;
+ Object.assign(s.chartHistory!.minutes.at(-1)!,{open:733,high:1001,low:732.9,close:1000});
+ const original=readPriceNow(s,'QQQ',true,s.publishedMs),delayed=readPriceNow(s,'QQQ',true,boundary+1);
+ expect(original.ready).toBe(true);expect(delayed).toEqual(original);
+ s.publishedMs=boundary+1;expect(readPriceNow(s,'QQQ',true,boundary+2)).not.toEqual(original);
+});

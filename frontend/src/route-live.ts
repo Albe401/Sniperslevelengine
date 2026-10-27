@@ -1,3 +1,6 @@
+import {readChartSignalCoverage} from './chart-signal-coverage';
+import {buildChartSignalDiagnostics,type ChartSignalDiagnosticsReport} from './chart-signal-diagnostics';
+import {publicationCandleClock} from './publication-candle-clock';
 import {SessionIntradayRoute,type IntradayRouteRead} from './session-intraday-route';
 import {routeLevelDestinations} from './route-level-destinations';
 import {EarlyRouteEvaluation} from './early-route-evaluation';
@@ -33,8 +36,12 @@ const signalTracker=new MarketSignalTracker();
 let lastObserved=0;
 let identity='',known=new Map<string,RouteLevel>(),lastJournal='',storageFailed=false;
 let chartReading:{symbol:string;at:number;result:RouteResult;cvd:string;market:MarketEvidence;signals:MarketSignal[];probability:ProbabilityReading;directional:DirectionalRoute;intraday:IntradayRouteRead;quant:ReturnType<QuantRouteMonitor['read']>;evaluation:ReturnType<EarlyRouteEvaluation['read']>;emaContext:ReturnType<typeof routeEmaContext>}|undefined;
+let signalDiagnostics:Readonly<ChartSignalDiagnosticsReport>|undefined;
+let signalDiagnosticsFailedAt:{symbol:string;at:number}|undefined;
 /** Read-only view of the route already evaluated by the panel; never advances the engine. */
-function routeChartReading(symbol:string,now=Date.now()){return chartReading?.symbol===symbol&&chartReading.at<=now&&now-chartReading.at<=3000?{...chartReading,result:{...chartReading.result},quant:{...chartReading.quant,probabilities:chartReading.quant.probabilities?.slice()??null,signals:chartReading.quant.signals.map(v=>({...v}))},intraday:{...chartReading.intraday,atr:chartReading.intraday.atr?{...chartReading.intraday.atr}:undefined,result:{...chartReading.intraday.result},signals:chartReading.intraday.signals.map(v=>({...v}))},signals:chartReading.signals.map(s=>({...s})),directional:{...chartReading.directional,checks:{...chartReading.directional.checks}}}:undefined;}
+function routeChartReading(symbol:string,now=Date.now()){return chartReading?.symbol===symbol&&chartReading.at<=now&&now-chartReading.at<=3000?{...chartReading,result:{...chartReading.result},quant:{...chartReading.quant,probabilities:chartReading.quant.probabilities?.slice()??null,signals:chartReading.quant.signals.map(v=>({...v}))},intraday:{...chartReading.intraday,blockCodes:chartReading.intraday.blockCodes?.slice(),atr:chartReading.intraday.atr?{...chartReading.intraday.atr}:undefined,result:{...chartReading.intraday.result},signals:chartReading.intraday.signals.map(v=>({...v}))},signals:chartReading.signals.map(s=>({...s})),directional:{...chartReading.directional,checks:{...chartReading.directional.checks}}}:undefined;}
+/** Read-only diagnostic at its render clock; web exports remain snapshot references, never live signals. */
+function routeSignalDiagnosticsSnapshot(symbol:string,now=Date.now()){if(signalDiagnosticsFailedAt?.symbol===symbol&&signalDiagnosticsFailedAt.at===now)return null;const d=signalDiagnostics;return Number.isSafeInteger(now)&&d?.symbol===symbol&&d.evaluatedMs!==null&&d.evaluatedMs<=now&&now-d.evaluatedMs<=3000?d:undefined;}
 const journalKey='snipers.route-observation.v1';
 const routeEtFormatter=new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York'});
 const et=(n:number)=>routeEtFormatter.format(n);
@@ -45,7 +52,7 @@ function record(payload:unknown,key:string){
  if(key===lastJournal)return;lastJournal=key;journal.push(payload);journal=journal.slice(-1000);
  try{let data=JSON.stringify(journal);while(data.length>1500000&&journal.length>1){journal.shift();data=JSON.stringify(journal);}localStorage.setItem(journalKey,data);storageFailed=false;}catch{storageFailed=true;}
 }
-function routeJournal(){return JSON.stringify({schema:'route-observation-v1',experimental:true,executionEnabled:false,formulaBaseline:formulaBaseline.export(),probabilityEndpoint,probabilitySamples:routeProbabilityCollector.snapshot(),quantSamples:quantRoute.engine.snapshot(),earlyRouteSamples:earlyEvaluation.engine.snapshot(),arrivalSamples:earlyEvaluation.arrivals.samples(),arrivalObservations:earlyEvaluation.arrivals.snapshot(),records:journal},null,2);}
+function routeJournal(){return JSON.stringify({schema:'route-observation-v1',experimental:true,executionEnabled:false,formulaBaseline:formulaBaseline.export(),probabilityEndpoint,probabilitySamples:routeProbabilityCollector.snapshot(),signalDiagnostics:signalDiagnostics??null,signalDiagnosticsStatus:signalDiagnosticsFailedAt?'failed':signalDiagnostics?'available':'missing',signalDiagnosticsMode:'snapshot-reference-only',signalDiagnosticsLive:false,quantSamples:quantRoute.engine.snapshot(),earlyRouteSamples:earlyEvaluation.engine.snapshot(),arrivalSamples:earlyEvaluation.arrivals.samples(),arrivalObservations:earlyEvaluation.arrivals.snapshot(),records:journal},null,2);}
 function bindRouteJournal(){
  const button=document.querySelector<HTMLButtonElement>('[data-route-export]');
  if(button)button.onclick=()=>{
@@ -80,7 +87,7 @@ function readRouteLive(s:LiveState|undefined,symbol:string,active:boolean,now=Da
  const blocks=s?.offExchange?.analytics?.blocks;
  const blockNote=blocks?.symbol===symbol&&blocks.date===et(now)?'Bloques: contexto separado de premarket y sesión':'Bloques: sin evidencia del día';
  const evidence:RouteEvidence={identity:next,now,levels,options:flowNote,delta:deltaNote,blocks:blockNote};
- const bars=currentSessionCandles(s?.chartHistory,1,now).filter(b=>b.complete&&b.sessionDate===et(now));
+ const bars=currentSessionCandles(s?.chartHistory,1,publicationCandleClock(s?.publishedMs,now)).filter(b=>b.complete&&b.sessionDate===et(now));
  const last=bars.at(-1);
  if(!price.ready||!last||expiry!==et(now)){engine.reset(expiry&&expiry!==et(now)?'Niveles de otro vencimiento: prueba intradía pendiente':'Esperando precio, conexión, velas y niveles de la sesión');}
  else{
@@ -114,6 +121,10 @@ function readRouteLive(s:LiveState|undefined,symbol:string,active:boolean,now=Da
    confluence:{version:'direction-confluence-40-40-20-v1',call:market.score.call,put:market.score.put,side:market.score.side,components:market.score.components},
    quant:{version:'quant-route-close-first-10m-v1',horizonMinutes:10,state:quant.state,at:quant.at,probabilities:quant.probabilities,sampleId:quant.sampleId,side:quant.side,upper:quant.upper,lower:quant.lower}};formulaBaseline.observe(packet);persistOptionBaseline(packet);}
  }
+ const assessment=assessRoute(result,market,now);
+ // Passive diagnostics must not suppress an existing source strategy or snapshot rendering.
+ signalDiagnostics=undefined;signalDiagnosticsFailedAt=undefined;
+ try{const coverage=readChartSignalCoverage(s,market,symbol,active,now,{closedMinuteBars:bars});signalDiagnostics=buildChartSignalDiagnostics({coverage,important:{result,assessmentQuality:assessment.quality,cvd,structure},intraday});}catch{signalDiagnosticsFailedAt={symbol,at:now};}
  chartReading={symbol,at:now,result:{...result},cvd:cvd.label,market,signals,probability,directional,intraday,quant,evaluation,emaContext};
  if(!background&&active&&s?.symbol===symbol){
   const key=JSON.stringify([next,last?.timestampMs,result.state,result.key,result.reason,structure.quality,structure.backing?.grade,structure.anchor?.grade,cvd.status,cvd.observations,intraday.state,intraday.result.key,intraday.reason,directional.state,directional.checks]);
@@ -121,7 +132,6 @@ function readRouteLive(s:LiveState|undefined,symbol:string,active:boolean,now=Da
    quality:{priceReady:price.ready,publishedMs:s.publishedMs,optionAt,executionConditionsVerified:false,combinedSignalValidated:false},
    marketEvidence:market,destinations,evaluation,emaContext,directional,intraday,quant,quantFrame,probability,signals,cvdSupport:cvd,cvdInput:s.cvd??null,flow:w??null,strikes:rows,blocks:blocks??null},key+JSON.stringify(destinations.map(d=>[d.target,d.strength,d.provisional]))+JSON.stringify([quantFrame.ready,quantFrame.reason,quant.samples]));
  }
- const assessment=assessRoute(result,market,now);
  return {result,structure,cvd,market,signals,assessment,probability,directional,intraday,quant,conclusion:assessment.label,reason:result.reason,target:result.target==null?null:`Siguiente referencia ${px(result.target)} · llegada no garantizada`,
   invalidation:result.stop==null?null:`Cierre ${result.level!=null&&result.stop>result.level?'sobre':'bajo'} ${px(result.stop)} invalida la prueba`,
   note:`Prueba en vivo · sin ejecución · ${flowNote} · ${deltaNote} · ${blockNote} · ${market.detail} · condiciones de ejecución pendientes`,
@@ -130,10 +140,11 @@ function readRouteLive(s:LiveState|undefined,symbol:string,active:boolean,now=Da
 
 
 
-return {readRouteLive,routeChartReading,routeJournal,bindRouteJournal};
+return {readRouteLive,routeChartReading,routeSignalDiagnosticsSnapshot,routeJournal,bindRouteJournal};
 }
 const selectedReader=createRouteReader();
 export const readRouteLive=selectedReader.readRouteLive;
 export const routeChartReading=selectedReader.routeChartReading;
+export const routeSignalDiagnosticsSnapshot=selectedReader.routeSignalDiagnosticsSnapshot;
 export const bindRouteJournal=selectedReader.bindRouteJournal;
 export const routeJournal=selectedReader.routeJournal;

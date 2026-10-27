@@ -1,3 +1,4 @@
+import {publicationCandleClock} from './publication-candle-clock';
 import type {LiveState} from './live';
 import type {Candle} from './model';
 import type {DirectionScore} from './direction-scanner';
@@ -38,7 +39,7 @@ export function readMarketEvidence(s:LiveState|undefined,symbol:string,active:bo
   const minute=new Date(v.startMs).toLocaleTimeString('en-GB',{timeZone:'America/New_York',hour12:false}).slice(0,5);
   if(minute>='09:30'&&[v.buy,v.sell,v.unknown,v.delta,total,coverage].every(finite)&&Math.min(v.buy,v.sell,v.unknown)>=0&&total>0&&coverage>=70&&Math.abs(v.delta-v.buy+v.sell)<=Math.max(1e-6,Math.abs(v.delta)*1e-9))cvd={signal:Math.abs(v.delta)>v.unknown?v.delta/total:0,coverage,at:v.endMs,reason:'CVD de acciones 5m · tramo completo observado · no atribuido a strikes'};
  }
- let bars=!input&&finite(now)?currentSessionCandles(s?.chartHistory,2,now):[];bars=bars.filter(b=>b.complete&&b.sessionDate===date).slice(-6);
+ let bars=!input&&finite(now)?currentSessionCandles(s?.chartHistory,2,publicationCandleClock(s?.publishedMs,now)):[];bars=bars.filter(b=>b.complete&&b.sessionDate===date).slice(-6);
  for(let i=bars.length-1;i>0;i--)if(bars[i].timestampMs-bars[i-1].timestampMs!==120000){bars=bars.slice(i);break;}
  if(!bars.length||now-bars.at(-1)!.timestampMs>300000)bars=[];
  const vw=own&&finite(s.metrics.asofMs)&&s.metrics.asofMs<=now&&now-s.metrics.asofMs<=180000?s.metrics.vwap:null;

@@ -11,7 +11,7 @@ export function visibleRouteReading(reading:ProbabilityReading,score:{call:numbe
 export function routePercentLabel(reading:VisibleRouteReading|undefined,direction:number):string {
  const percent=direction>0?reading?.call:reading?.put;
  const provisional=direction>0?reading?.provisional?.call:reading?.provisional?.put;
- return percent!=null?`P(ref) ${percent}% / 10 min`:provisional!=null?`Conf. ${provisional}% · provisional`:'P(ref) pendiente';
+ return percent!=null?`P(ref) ${percent}% / 10 min`:provisional!=null?`Confluencia ${provisional}/100 · índice provisional; no es probabilidad`:reading?'P(ref) sin probabilidad validada':'P(ref) sin escenario activo';
 }
 export function routeProbabilityReading(symbol:string,now:number,routeKey?:string):ProbabilityReading {
  const row=routeProbabilityCollector.current(symbol,now);

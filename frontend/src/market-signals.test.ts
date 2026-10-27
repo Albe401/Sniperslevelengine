@@ -60,3 +60,10 @@ it('uses amber for missing pressure and opposite flow even when the reported bia
  const opposite={...e(),flow:{...e().flow,at:660000,signal:-.5}};const mark=new MarketSignalTracker().read(opposite,r('sustained'),600000,true)[0];expect(mark.color).toBe('#ffb564');expect(mark.text).toContain('presión en contra');
  expect(new MarketSignalTracker().read(e(),r('sustained'),600000,true)[0].color).toBe('#25edac');
 });
+
+it('keeps incomplete support as a candidate and distinguishes an expired route',()=>{
+ const partial=new MarketSignalTracker().read(e(660000,'pending'),r('sustained'),600000,true,{call:null,put:null,state:'Sin probabilidad validada',detail:'',provisional:{call:75,put:25}})[0];
+ expect(partial.text).toContain('CANDIDATO CALL');expect(partial.text).not.toContain('POSIBLE LLEGADA');expect(partial.text).toContain('Confluencia 75/100');expect(partial.text).toContain('no es probabilidad');expect(partial.text).not.toContain('75%');
+ const expired=new MarketSignalTracker().read(e(),{...r('invalidated'),terminalCause:'expired'},600000,true)[0];
+ expect(expired.text).toContain('RUTA CADUCADA');expect(expired.color).toBe('#ffb564');
+});
