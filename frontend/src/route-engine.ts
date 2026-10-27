@@ -2,6 +2,12 @@ import type {Candle} from './model';
 import type {LevelRole,RouteStructure} from './route-level-context';
 import {ROUTE_BAR_MS,routeSequenceDeadlineMs,routeSequenceBarExpired} from './route-sequence-policy';
 export interface RouteLevel {name:string;price:number;observed:number;asof?:number;expiration:string;provisional:boolean;role?:LevelRole;strength?:number|null;change?:number|null;dynamicStrength?:number|null;source?:string;evidence?:import('./level-evidence').LevelEvidence}
+export interface RouteSequenceSnapshot {
+ identity:string;key:string;direction:number;phase:'recovery'|'test'|'sustained';
+ impulse:{startMs:number;endMs:number;close:number};continuation:{startMs:number;endMs:number;close:number}|null;
+ anchor:{name:string;price:number;expiration:string;firstObservedMs:number;asofMs:number|null;source:string|null};
+ destination:{name:string;price:number;expiration:string;firstObservedMs:number;asofMs:number|null;source:string|null;selectedMs:number|null}|null;
+}
 export interface RouteEvidence {identity:string;now:number;levels:RouteLevel[];options:string;delta:string;blocks:string;structure?:RouteStructure}
 export interface RouteResult {state:'waiting'|'range'|'recovery'|'test'|'sustained'|'invalidated'|'reached';direction:number;level:number|null;target:number|null;stop:number|null;reason:string;at:number;key:string;deadlineMs?:number;terminalCause?:'expired'}
 const empty=(reason='Esperando velas cerradas y niveles vigentes'):RouteResult=>({state:'waiting',direction:0,level:null,target:null,stop:null,reason,at:0,key:''});
@@ -9,7 +15,15 @@ const median=(n:number[])=>{const s=n.slice().sort((a,b)=>a-b);return s.length%2
 /** Experimental observation engine. No admission, broker or probability output. */
 export class RouteEngine {
  identity='';bars:Candle[]=[];result=empty();
- candidate?:{anchor:RouteLevel;direction:number;impulse:Candle;test?:Candle;follow?:Candle;phase:'recovery'|'test'|'sustained'};
+ candidate?:{anchor:RouteLevel;direction:number;impulse:Candle;test?:Candle;follow?:Candle;continuation?:Candle;targetRef?:RouteLevel;targetSelectedMs?:number;phase:'recovery'|'test'|'sustained'};
+ /** Detached source metadata; no feed, reset, price reconstruction or decision change. */
+ closedBarSnapshot(){const b=this.bars.at(-1);return b?Object.freeze({startMs:b.timestampMs,endMs:b.timestampMs+ROUTE_BAR_MS,close:b.close}):null;}
+ sequenceSnapshot():Readonly<RouteSequenceSnapshot>|undefined {
+  const k=this.candidate;if(!k)return undefined;
+  const bar=(b:Candle)=>Object.freeze({startMs:b.timestampMs,endMs:b.timestampMs+ROUTE_BAR_MS,close:b.close});
+  const level=(l:RouteLevel)=>({name:l.name,price:l.price,expiration:l.expiration,firstObservedMs:l.observed,asofMs:l.asof??null,source:l.source??null});
+  return Object.freeze({identity:this.identity,key:this.result.key,direction:k.direction,phase:k.phase,impulse:bar(k.impulse),continuation:k.continuation?bar(k.continuation):null,anchor:Object.freeze(level(k.anchor)),destination:k.targetRef?Object.freeze({...level(k.targetRef),selectedMs:k.targetSelectedMs??null}):null});
+ }
  reset(reason:string){this.bars=[];this.candidate=undefined;this.result=empty(reason);return this.result;}
  warm(bars:Candle[],identity:string){this.reset('Acumulando una nueva prueba en vivo');this.identity=identity;this.bars=bars.slice(-20);}
  feed(b:Candle,c:RouteEvidence):RouteResult {
@@ -47,7 +61,7 @@ export class RouteEngine {
     }
     const target=levels.filter(l=>(l.price-b.close)*k.direction>tol).sort((a,z)=>Math.abs(a.price-b.close)-Math.abs(z.price-b.close))[0];
     if(!target){this.result={...this.result,reason:'Secuencia de precio presente; siguiente referencia pendiente',at:c.now};return this.result;}
-    k.phase='sustained';this.result={...this.result,state:'sustained',target:target.price,reason:'Recuperación, prueba y continuación presentes; recorrido en observación',at:c.now};return this.result;
+    k.continuation=b;k.targetRef={...target};k.targetSelectedMs=c.now;k.phase='sustained';this.result={...this.result,state:'sustained',target:target.price,reason:'Recuperación, prueba y continuación presentes; recorrido en observación',at:c.now};return this.result;
    }
    if(k.phase==='test')k.follow=undefined;
    return this.result;

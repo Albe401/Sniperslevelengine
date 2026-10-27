@@ -1,6 +1,6 @@
 import {ROUTE_BAR_MS,routeSequenceDeadlineMs,routeSequenceBarExpired,routeSequenceAdmissionExpired} from './route-sequence-policy';
 
-/** Stage 1 foundation only: not connected to chart rendering, execution or persisted v1 histories. */
+/** Pure metadata reducer; Stage3 coordinates observations behind both charts. No rendering or execution. */
 export const CHART_SIGNAL_CONTRACT_VERSION='chart-signal-contract-v1' as const;
 export type ChartSignalState='candidate'|'confirmed'|'active'|'invalidated'|'reached'|'expired';
 export type ChartSignalStrategy='session-intraday-v1'|'important-level-route-v1';

@@ -39,6 +39,8 @@ export interface IntradayRouteRead {
 /** Independent visual strategy: 1m reclaim → later test → continuation; no 4H target. */
 export class SessionIntradayRoute {
  private engine=new RouteEngine();private cvd=new RouteCvdTracker();private identity='';private known=new Map<string,number>();private events:MarketSignal[]=[];private eventKey='';private lastRead=0;
+ sequenceSnapshot(){return this.engine.sequenceSnapshot();}
+ closedBarSnapshot(){return this.engine.closedBarSnapshot();}
  read(s:LiveState|undefined,symbol:string,active:boolean,market:MarketEvidence,now:number,atr?:AtrRead):IntradayRouteRead {
   const date=day(now),identity=`${symbol}:${date}:${s?.startedMs??0}`;
   const reset=()=>{this.engine.reset('Nueva prueba intradía requerida');this.cvd.reset();this.known.clear();this.events=[];this.eventKey='';};

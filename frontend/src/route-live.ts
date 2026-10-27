@@ -1,3 +1,5 @@
+import {RouteOpportunityRecorder} from './route-opportunity-source';
+import {ChartSignalCoordinator,type ChartSignalCoordinatorReport} from './chart-signal-coordinator';
 import {readChartSignalCoverage} from './chart-signal-coverage';
 import {buildChartSignalDiagnostics,type ChartSignalDiagnosticsReport} from './chart-signal-diagnostics';
 import {publicationCandleClock} from './publication-candle-clock';
@@ -27,12 +29,15 @@ const formulaBaseline=new OptionBaselineArchive(baselineStorage);
 /** Independent route state for the selected view and autonomous QQQ control. */
 export function createRouteReader(background=false){
 const engine=new RouteEngine();
+const opportunityRecorder=new RouteOpportunityRecorder();
 const sessionIntraday=new SessionIntradayRoute();
 const quantRoute=new QuantRouteMonitor(!background);
 
 const earlyEvaluation=new EarlyRouteEvaluation(!background);
 const cvdTracker=new RouteCvdTracker();
 const signalTracker=new MarketSignalTracker();
+const signalCoordinatorEngine=new ChartSignalCoordinator();
+let signalCoordinator:Readonly<ChartSignalCoordinatorReport>|undefined,signalCoordinatorFailedAt:{symbol:string;at:number}|undefined;
 let lastObserved=0;
 let identity='',known=new Map<string,RouteLevel>(),lastJournal='',storageFailed=false;
 let chartReading:{symbol:string;at:number;result:RouteResult;cvd:string;market:MarketEvidence;signals:MarketSignal[];probability:ProbabilityReading;directional:DirectionalRoute;intraday:IntradayRouteRead;quant:ReturnType<QuantRouteMonitor['read']>;evaluation:ReturnType<EarlyRouteEvaluation['read']>;emaContext:ReturnType<typeof routeEmaContext>}|undefined;
@@ -42,6 +47,8 @@ let signalDiagnosticsFailedAt:{symbol:string;at:number}|undefined;
 function routeChartReading(symbol:string,now=Date.now()){return chartReading?.symbol===symbol&&chartReading.at<=now&&now-chartReading.at<=3000?{...chartReading,result:{...chartReading.result},quant:{...chartReading.quant,probabilities:chartReading.quant.probabilities?.slice()??null,signals:chartReading.quant.signals.map(v=>({...v}))},intraday:{...chartReading.intraday,blockCodes:chartReading.intraday.blockCodes?.slice(),atr:chartReading.intraday.atr?{...chartReading.intraday.atr}:undefined,result:{...chartReading.intraday.result},signals:chartReading.intraday.signals.map(v=>({...v}))},signals:chartReading.signals.map(s=>({...s})),directional:{...chartReading.directional,checks:{...chartReading.directional.checks}}}:undefined;}
 /** Read-only diagnostic at its render clock; web exports remain snapshot references, never live signals. */
 function routeSignalDiagnosticsSnapshot(symbol:string,now=Date.now()){if(signalDiagnosticsFailedAt?.symbol===symbol&&signalDiagnosticsFailedAt.at===now)return null;const d=signalDiagnostics;return Number.isSafeInteger(now)&&d?.symbol===symbol&&d.evaluatedMs!==null&&d.evaluatedMs<=now&&now-d.evaluatedMs<=3000?d:undefined;}
+function routeSignalCoordinatorSnapshot(symbol:string,now=Date.now()){if(signalCoordinatorFailedAt?.symbol===symbol&&signalCoordinatorFailedAt.at===now)return null;const r=signalCoordinator;return Number.isSafeInteger(now)&&r?.symbol===symbol&&r.evaluatedMs!==null&&r.evaluatedMs<=now&&now-r.evaluatedMs<=3000?r:undefined;}
+function routeOpportunitySnapshot(symbol:string,now=Date.now()){return opportunityRecorder.snapshot(symbol,now);}
 const journalKey='snipers.route-observation.v1';
 const routeEtFormatter=new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York'});
 const et=(n:number)=>routeEtFormatter.format(n);
@@ -52,7 +59,7 @@ function record(payload:unknown,key:string){
  if(key===lastJournal)return;lastJournal=key;journal.push(payload);journal=journal.slice(-1000);
  try{let data=JSON.stringify(journal);while(data.length>1500000&&journal.length>1){journal.shift();data=JSON.stringify(journal);}localStorage.setItem(journalKey,data);storageFailed=false;}catch{storageFailed=true;}
 }
-function routeJournal(){return JSON.stringify({schema:'route-observation-v1',experimental:true,executionEnabled:false,formulaBaseline:formulaBaseline.export(),probabilityEndpoint,probabilitySamples:routeProbabilityCollector.snapshot(),signalDiagnostics:signalDiagnostics??null,signalDiagnosticsStatus:signalDiagnosticsFailedAt?'failed':signalDiagnostics?'available':'missing',signalDiagnosticsMode:'snapshot-reference-only',signalDiagnosticsLive:false,quantSamples:quantRoute.engine.snapshot(),earlyRouteSamples:earlyEvaluation.engine.snapshot(),arrivalSamples:earlyEvaluation.arrivals.samples(),arrivalObservations:earlyEvaluation.arrivals.snapshot(),records:journal},null,2);}
+function routeJournal(){return JSON.stringify({schema:'route-observation-v1',experimental:true,executionEnabled:false,formulaBaseline:formulaBaseline.export(),probabilityEndpoint,probabilitySamples:routeProbabilityCollector.snapshot(),signalCoordinator:signalCoordinator??null,signalCoordinatorStatus:signalCoordinatorFailedAt?'failed':signalCoordinator?'available':'missing',signalDiagnostics:signalDiagnostics??null,signalDiagnosticsStatus:signalDiagnosticsFailedAt?'failed':signalDiagnostics?'available':'missing',signalDiagnosticsMode:'snapshot-reference-only',signalDiagnosticsLive:false,quantSamples:quantRoute.engine.snapshot(),earlyRouteSamples:earlyEvaluation.engine.snapshot(),arrivalSamples:earlyEvaluation.arrivals.samples(),arrivalObservations:earlyEvaluation.arrivals.snapshot(),records:journal},null,2);}
 function bindRouteJournal(){
  const button=document.querySelector<HTMLButtonElement>('[data-route-export]');
  if(button)button.onclick=()=>{
@@ -126,6 +133,13 @@ function readRouteLive(s:LiveState|undefined,symbol:string,active:boolean,now=Da
  signalDiagnostics=undefined;signalDiagnosticsFailedAt=undefined;
  try{const coverage=readChartSignalCoverage(s,market,symbol,active,now,{closedMinuteBars:bars});signalDiagnostics=buildChartSignalDiagnostics({coverage,important:{result,assessmentQuality:assessment.quality,cvd,structure},intraday});}catch{signalDiagnosticsFailedAt={symbol,at:now};}
  chartReading={symbol,at:now,result:{...result},cvd:cvd.label,market,signals,probability,directional,intraday,quant,evaluation,emaContext};
+ opportunityRecorder.observe({symbol,publishedMs:s?.publishedMs??null,startedMs:s?.startedMs??null,at:now,market:{symbol:market.symbol,session:market.session,key:market.key,at:market.at},bars,strategies:[
+  {strategyId:'important-level-route-v1',state:result.state,reason:result.reason,result,signals,sequence:engine.sequenceSnapshot(),lastClosedBar:engine.closedBarSnapshot()},
+  {strategyId:'session-intraday-v1',state:intraday.state,reason:intraday.reason,result:intraday.result,signals:intraday.signals,sequence:sessionIntraday.sequenceSnapshot(),lastClosedBar:sessionIntraday.closedBarSnapshot()}
+ ]});
+ // Optional common projection is isolated from the existing source strategies and journal.
+ signalCoordinator=undefined;signalCoordinatorFailedAt=undefined;
+ try{signalCoordinator=signalCoordinatorEngine.observe({symbol,at:now,publishedMs:s?.publishedMs??null,startedMs:s?.startedMs??null,active,calendar:s?.chartHistory?.sessions.find(v=>v.date===et(now))??null,bars,source:opportunityRecorder.snapshot(symbol,now),diagnostics:signalDiagnostics});}catch{signalCoordinatorFailedAt={symbol,at:now};}
  if(!background&&active&&s?.symbol===symbol){
   const key=JSON.stringify([next,last?.timestampMs,result.state,result.key,result.reason,structure.quality,structure.backing?.grade,structure.anchor?.grade,cvd.status,cvd.observations,intraday.state,intraday.result.key,intraday.reason,directional.state,directional.checks]);
   record({capturedMs:now,symbol,session:et(now),expiration:expiry,bar:last?{timestampMs:last.timestampMs,open:last.open,high:last.high,low:last.low,close:last.close,volume:last.volume}:null,evidence,result,
@@ -140,7 +154,7 @@ function readRouteLive(s:LiveState|undefined,symbol:string,active:boolean,now=Da
 
 
 
-return {readRouteLive,routeChartReading,routeSignalDiagnosticsSnapshot,routeJournal,bindRouteJournal};
+return {readRouteLive,routeOpportunitySnapshot,routeChartReading,routeSignalCoordinatorSnapshot,routeSignalDiagnosticsSnapshot,routeJournal,bindRouteJournal};
 }
 const selectedReader=createRouteReader();
 export const readRouteLive=selectedReader.readRouteLive;
@@ -148,3 +162,7 @@ export const routeChartReading=selectedReader.routeChartReading;
 export const routeSignalDiagnosticsSnapshot=selectedReader.routeSignalDiagnosticsSnapshot;
 export const bindRouteJournal=selectedReader.bindRouteJournal;
 export const routeJournal=selectedReader.routeJournal;
+
+export const routeSignalCoordinatorSnapshot=selectedReader.routeSignalCoordinatorSnapshot;
+
+export const routeOpportunitySnapshot=selectedReader.routeOpportunitySnapshot;
