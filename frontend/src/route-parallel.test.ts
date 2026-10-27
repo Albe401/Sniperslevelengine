@@ -1,11 +1,15 @@
-import {it,expect} from 'vitest';
-import {parallelScenarios} from './route-parallel';
-import type {MarketEvidence} from './market-evidence';
-import type {RouteResult} from './route-engine';
-const now=1000000;
-const market=()=>({at:now,price:{ready:true,spot:100},levels:[98,99,101,102,103].map(price=>({price,observed:now,asof:now,role:'barrier',provisional:false}))} as unknown as MarketEvidence);
-const result=():RouteResult=>({state:'waiting',direction:0,level:null,target:null,stop:null,reason:'waiting',at:now,key:''});
-it('uses current distinct structural references for both conditional alternatives',()=>{const [call,put]=parallelScenarios(market(),result(),now);expect(call).toMatchObject({side:'CALL',trigger:101,target:102,next:103,actual:false,stop:null});expect(put).toMatchObject({side:'PUT',trigger:99,target:98,actual:false,stop:null});});
-it('does not manufacture an opposite stop or confirmed signal',()=>{const r={...result(),state:'sustained' as const,direction:1,level:99,target:101,stop:98};const [call,put]=parallelScenarios(market(),r,now);expect(call).toMatchObject({actual:true,target:101,stop:98});expect(put.actual).toBe(false);expect(put.stop).toBeNull();});
-it('suppresses scenarios with stale or missing own price and stale levels',()=>{const m=market();m.price.ready=false;expect(parallelScenarios(m,result(),now).every(s=>s.trigger===null&&s.target===null)).toBe(true);m.price.ready=true;m.at=now-3001;expect(parallelScenarios(m,result(),now)[0].trigger).toBeNull();m.at=now;m.levels.forEach(l=>l.asof=now-900001);expect(parallelScenarios(m,result(),now)[0].trigger).toBeNull();});
-it('does not turn pull or vacuum edges into activation levels',()=>{const m=market();m.levels.forEach(l=>l.role='pull');expect(parallelScenarios(m,result(),now).every(s=>s.trigger===null)).toBe(true);});
+import {it,expect} from 'vitest';
+import {parallelScenarios} from './route-parallel';
+import type {MarketEvidence} from './market-evidence';
+import type {RouteResult} from './route-engine';
+const now=1000000;
+const market=()=>({at:now,price:{ready:true,spot:100},levels:[98,99,101,102,103].map(price=>({price,observed:now,asof:now,role:'barrier',provisional:false}))} as unknown as MarketEvidence);
+const result=():RouteResult=>({state:'waiting',direction:0,level:null,target:null,stop:null,reason:'waiting',at:now,key:''});
+it('uses current distinct structural references for both conditional alternatives',()=>{const [call,put]=parallelScenarios(market(),result(),now);expect(call).toMatchObject({side:'CALL',trigger:101,target:102,next:103,actual:false,stop:null});expect(put).toMatchObject({side:'PUT',trigger:99,target:98,actual:false,stop:null});});
+it('does not manufacture an opposite stop or confirmed signal',()=>{const r={...result(),state:'sustained' as const,direction:1,level:99,target:101,stop:98};const [call,put]=parallelScenarios(market(),r,now);expect(call).toMatchObject({actual:true,target:101,stop:98});expect(put.actual).toBe(false);expect(put.stop).toBeNull();});
+it('suppresses scenarios with stale or missing own price and stale levels',()=>{const m=market();m.price.ready=false;expect(parallelScenarios(m,result(),now).every(s=>s.trigger===null&&s.target===null)).toBe(true);m.price.ready=true;m.at=now-3001;expect(parallelScenarios(m,result(),now)[0].trigger).toBeNull();m.at=now;m.levels.forEach(l=>l.asof=now-900001);expect(parallelScenarios(m,result(),now)[0].trigger).toBeNull();});
+it('does not turn pull or vacuum edges into activation levels',()=>{const m=market();m.levels.forEach(l=>l.role='pull');expect(parallelScenarios(m,result(),now).every(s=>s.trigger===null)).toBe(true);});
+
+it('keeps a source minute sequence between publications without renewing its clock',()=>{const m=market();m.at=now+10000;const r={...result(),state:'sustained' as const,direction:1,level:99,target:101,stop:98,deadlineMs:now+600000};expect(parallelScenarios(m,r,now+10000)[0]).toMatchObject({actual:true,trigger:99,target:101,stop:98});expect(r.at).toBe(now);m.at=now+90001;expect(parallelScenarios(m,r,m.at)[0].actual).toBe(false);});
+it('retains the original CALL and PUT target and stop across intrabar touches',()=>{for(const direction of [1,-1]){const r={...result(),state:'sustained' as const,direction,level:100,target:100+direction,stop:100-direction};for(const spot of [100+2*direction,100-2*direction]){const m=market();m.price.spot=spot;expect(parallelScenarios(m,r,now).find(s=>s.direction===direction)).toMatchObject({actual:true,trigger:100,target:r.target,stop:r.stop});}}});
+it('cannot display a source after its fixed deadline or with malformed/future clocks',()=>{const r={...result(),state:'sustained' as const,direction:1,level:99,target:101,stop:98};for(const bad of [{...r,deadlineMs:now-1},{...r,deadlineMs:NaN},{...r,at:now+1},{...r,level:NaN}])expect(parallelScenarios(market(),bad,now)[0].actual).toBe(false);expect(parallelScenarios(market(),r,NaN)[0].actual).toBe(false);});
