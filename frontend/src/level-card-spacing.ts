@@ -7,8 +7,8 @@ export function retainedCvdSpace(flowWidth:number):number {
  // in a narrow flow column. These include its margins and the column gap.
  return Number.isFinite(flowWidth)&&flowWidth<=264?180:166;
 }
-export function levelCardPositions(heights:number[],availableHeight=0):{column:number;top:number;height:number}[]{
- const bottoms=[0,0],counts=[0,0],gap=6;
+export function levelCardPositions(heights:number[]):{column:number;top:number;height:number}[]{
+ const bottoms=[0,0],gap=6;
  const sizes=heights.map(v=>Number.isFinite(v)?Math.max(0,v):0);
  // Small maps can use the best height partition, avoiding greedy overflow
  // when a tall CALL/PUT card arrives after several short cards.
@@ -23,16 +23,12 @@ export function levelCardPositions(heights:number[],availableHeight=0):{column:n
   }
  }
  // Assign by occupied height, never by a fixed count of cards per side.
- const positions=heights.map((value,index)=>{
+ return heights.map((value,index)=>{
   const height=Number.isFinite(value)?Math.max(0,value):0;
   const column=assignment?.[index]??(bottoms[0]<=bottoms[1]?0:1);
-  const top=bottoms[column];counts[column]++;bottoms[column]+=height+gap;
+  const top=bottoms[column];bottoms[column]+=height+gap;
   return {column,top,height};
  });
- // Fill spare height inside cards; keep a fixed small gap between their borders.
- const extra=counts.map((count,c)=>count?Math.max(0,availableHeight-(bottoms[c]-gap))/count:0);
- const cursor=[0,0];
- return positions.map(p=>{const top=cursor[p.column],height=p.height+extra[p.column];cursor[p.column]+=height+gap;return {...p,top,height};});
 }
 /** Shared panel height follows the targets column; cards move within it. */
 export function bindLevelCardSpacing():void {
@@ -60,9 +56,9 @@ export function bindLevelCardSpacing():void {
   const restoreScroll=captureReadingScroll();
   fitOverview();
   cards.forEach(card=>card.style.removeProperty('min-height'));
-  levelCardPositions(cards.map(card=>card.offsetHeight),track.clientHeight).forEach((position,i)=>{
+  // Keep natural content height; the panel's spare space must not stretch cards.
+  levelCardPositions(cards.map(card=>card.offsetHeight)).forEach((position,i)=>{
    cards[i].style.top=`${position.top}px`;
-   cards[i].style.minHeight=`${position.height}px`;
    cards[i].dataset.levelColumn=String(position.column);
   });
   restoreScroll();
