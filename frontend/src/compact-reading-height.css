@@ -40,7 +40,9 @@
 [data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed>.auction-map-stack>.structural-map-preview:not(.auction-map-panel):not(.quant-fall-panel):not(.massive-exposure-standalone){flex:none}
 @media(max-width:1150px){[data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed{height:auto;min-height:0;max-height:none;grid-template-rows:var(--level-overview-height) var(--level-overview-height)}}
 @media(max-width:700px){
- [data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed>.levels-route-design{grid-template-rows:minmax(0,1.2fr) minmax(0,1fr)}
+ [data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed>.levels-route-design{grid-template-columns:minmax(0,1fr) minmax(240px,.8fr);grid-template-rows:minmax(0,1fr)}
+ [data-live-view="detailed"] .levels-route-design .reading-toolbar.direction-header{grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr)}
+ [data-live-view="detailed"] .levels-route-design .flow-column{display:flex;flex-direction:column}
  [data-live-view="detailed"] .levels-route-design .flow-column>*{flex-shrink:0}
 }
 
