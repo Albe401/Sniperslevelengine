@@ -15,7 +15,7 @@
 [data-live-view="detailed"] .levels-route-design .flow-column{align-self:start}
 
 /* Keep the shared exterior short; long readings scroll inside their panels. */
-[data-live-view="detailed"] .quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation{height:calc(var(--level-overview-height,680px) - 24px);min-height:0;max-height:calc(var(--level-overview-height,680px) - 24px);overflow:hidden}
+[data-live-view="detailed"] .quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation{height:calc(var(--level-overview-height,760px) - 24px);min-height:0;max-height:calc(var(--level-overview-height,760px) - 24px);overflow:hidden}
 [data-live-view="detailed"] .levels-route-design .day-map.day-map-constellation>header{flex-shrink:0}
 [data-live-view="detailed"] .quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation .day-map-track.level-cards-close{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;scrollbar-gutter:stable;scrollbar-width:thin;overscroll-behavior:contain}
 [data-live-view="detailed"] .quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation .day-map-track.level-cards-close>.day-map-node[data-level-column="0"]{left:10px;right:auto}
@@ -25,8 +25,8 @@
 [data-live-view="detailed"] .quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation .day-map-track.level-cards-close>.day-map-node[data-level-column="0"]:after{left:calc(100% + 12px);right:auto}
 [data-live-view="detailed"] .quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation .day-map-track.level-cards-close>.day-map-node[data-level-column="1"]:after{left:auto;right:calc(100% + 12px)}
 /* Keep the adjacent readings from increasing the enclosing map panel. */
-[data-live-view="detailed"] .quick-command-layout.route-command-layout>.levels-route-design{height:var(--level-overview-height,680px);min-height:0;max-height:var(--level-overview-height,680px);overflow:hidden}
-[data-live-view="detailed"] .levels-route-design .flow-column{height:calc(var(--level-overview-height,680px) - 24px);min-height:0;max-height:calc(var(--level-overview-height,680px) - 24px);overflow-y:auto;overscroll-behavior:contain}
+[data-live-view="detailed"] .quick-command-layout.route-command-layout>.levels-route-design{height:var(--level-overview-height,760px);min-height:0;max-height:var(--level-overview-height,760px);overflow:hidden}
+[data-live-view="detailed"] .levels-route-design .flow-column{height:calc(var(--level-overview-height,760px) - 24px);min-height:0;max-height:calc(var(--level-overview-height,760px) - 24px);overflow-y:auto;overscroll-behavior:contain}
 /* No legacy CVD reservation or content-driven growth of the shared block. */
 [data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed{height:var(--level-overview-height);min-height:var(--level-overview-height);max-height:var(--level-overview-height);grid-template-rows:minmax(0,1fr);align-items:stretch}
 [data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed>.levels-route-design{height:100%;min-height:0;max-height:100%;grid-template-rows:minmax(0,1fr);align-self:stretch}
@@ -36,7 +36,7 @@
 [data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed>.auction-map-stack:focus-visible{outline:1px solid #56dcf5;outline-offset:2px}
 [data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed>.auction-map-stack>.auction-map-panel,[data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed>.auction-map-stack>:is(.quant-fall-panel,.massive-exposure-standalone){flex:1 0 240px;min-height:240px;overflow-y:auto}
 [data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed>.auction-map-stack>.massive-exposure-standalone{flex:1 0 auto;min-height:180px;overflow:visible}
-[data-live-view="detailed"] .auction-map-stack>.massive-exposure-standalone>.massive-exposure-table{flex:none;height:100px;min-height:96px}
+[data-live-view="detailed"] .auction-map-stack>.massive-exposure-standalone>.massive-exposure-table{flex:none;height:180px;min-height:96px}
 [data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed>.auction-map-stack>.structural-map-preview:not(.auction-map-panel):not(.quant-fall-panel):not(.massive-exposure-standalone){flex:none}
 @media(max-width:1150px){[data-live-view="detailed"] .quick-command-layout.route-command-layout.level-overview-fixed{height:auto;min-height:0;max-height:none;grid-template-rows:var(--level-overview-height) var(--level-overview-height)}}
 @media(max-width:700px){

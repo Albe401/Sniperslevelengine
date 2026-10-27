@@ -2,7 +2,7 @@ import {captureReadingScroll} from './reading-scroll';
 let observer:ResizeObserver|undefined;
 let frame=0;
 /** Shared height of the complete levels + GEX + structure overview. */
-export const detailedOverviewHeight=680;
+export const detailedOverviewHeight=760;
 export function levelCardPositions(heights:number[]):{column:number;top:number;height:number}[]{
  const bottoms=[0,0],gap=6;
  const sizes=heights.map(v=>Number.isFinite(v)?Math.max(0,v):0);
