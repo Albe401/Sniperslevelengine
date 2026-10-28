@@ -282,3 +282,7 @@ body:has([data-live-view="quick"],[data-live-view="detailed"]){background:linear
 .atr-readable-gauge>small{font-size:8px;color:#a9bfd1;line-height:9px}
 .atr-readable-gauge .atr-meter{margin:0;font-size:9px;max-width:80px}
 .atr-readable-gauge .atr-meter-track{width:26px}
+
+/* Raise only the levels grid by tightening its existing header separation. */
+.quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation>.reading-toolbar.direction-header{padding-bottom:0;margin-bottom:0}
+.quick-command-layout.route-command-layout .levels-route-design .day-map.day-map-constellation>.day-map-track{padding-top:4px}

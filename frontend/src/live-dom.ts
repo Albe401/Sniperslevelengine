@@ -32,6 +32,7 @@ function patch(old:Node,next:Node):void {
  // Chart renderers own attributes as well as children (canvas sizing and SVG
  // viewBox). Reconciliation must not clear either between market frames.
  if(old.hasAttribute('data-chart-preserve'))return;
+ retainLevelGeometry(old,next);
  const focused=document.activeElement===old;
  const preserve=(name:string)=>old instanceof HTMLDetailsElement&&name==='open'||focused&&['value','checked','selected'].includes(name);
  for(const attr of [...old.attributes])if(!preserve(attr.name)&&!next.hasAttribute(attr.name))old.removeAttribute(attr.name);
@@ -59,4 +60,22 @@ function patch(old:Node,next:Node):void {
  }
  while(cursor){const following=cursor.nextSibling;old.removeChild(cursor);cursor=following;}
  if(old instanceof HTMLSelectElement&&selectedValue!=null&&old.value!==selectedValue)old.value=selectedValue;
+}
+
+/** The level-spacing renderer owns these geometry fields between publications.
+ * Keep its rail and card positions while patching live values; bindLevelCardSpacing
+ * may remeasure changed content afterward without first collapsing the whole map.
+ */
+function retainLevelGeometry(old:Element,next:Element):void {
+ if(!(old instanceof HTMLElement)||!(next instanceof HTMLElement))return;
+ const style=(name:string)=>{const value=old.style.getPropertyValue(name);if(value)next.style.setProperty(name,value,old.style.getPropertyPriority(name));};
+ if(old.matches('.quick-command-layout.route-command-layout.level-overview-fixed')&&next.matches('.quick-command-layout.route-command-layout')){
+  next.classList.add('level-overview-fixed');style('--level-overview-height');
+ }
+ if(old.matches('.day-map-track.level-cards-close')&&next.matches('.day-map-track')){
+  next.classList.add('level-cards-close');const label=old.getAttribute('aria-label');if(label)next.setAttribute('aria-label',label);
+ }
+ if(old.matches('.day-map-track.level-cards-close > .day-map-node')&&next.matches('.day-map-node')){
+  style('top');style('min-height');const column=old.getAttribute('data-level-column');if(column==='0'||column==='1')next.setAttribute('data-level-column',column);
+ }
 }
