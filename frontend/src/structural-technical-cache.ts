@@ -26,7 +26,7 @@ export function cachedTechnical(bars:readonly PriceBar[],key:string):TechnicalRe
  let record=cache.get(key),prefix=!!record&&bars.length>=record.bars.length&&record.bars.every((b,i)=>same(b,bars[i]));
  if(!prefix){record={bars:[],state:initial()};resets++;}else if(record!.bars.length===bars.length){hits++;}else{appends++;}
  for(let i=record!.bars.length;i<bars.length;i++){advance(record!.state,bars[i]);record!.bars.push({...bars[i]});}
- cache.delete(key);cache.set(key,record!);while(cache.size>10)cache.delete(cache.keys().next().value!);
+ cache.delete(key);cache.set(key,record!);while(cache.size>12)cache.delete(cache.keys().next().value!);
  const s=record!.state;return {ema9:s.ema9,ema20:s.ema20,ema21:s.ema21,ema21ThreeAgo:s.ema21ThreeAgo,plusDi:s.plusDi,minusDi:s.minusDi,adx:s.adx};
 }
 export function structuralIndicatorCacheStats(){return {hits,appends,resets,processedBars,entries:cache.size,retainedBars:[...cache.values()].reduce((n,c)=>n+c.bars.length,0)};}
