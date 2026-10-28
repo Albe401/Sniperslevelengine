@@ -1,4 +1,4 @@
-import {cachedTechnical} from './structural-technical-cache';
+import {cachedTechnical,directionalMovement} from './structural-technical-cache';
 import type {PriceBar,PriceAnalysisInterval} from './price-structure';
 
 /** Documented recurrences; periods, slope horizon and convergence tolerances are project conventions. */
@@ -21,9 +21,9 @@ export function emaSeries(bars:readonly PriceBar[],period:number):number[] {
 export function dmi14(bars:readonly PriceBar[]):{plusDi:number|null;minusDi:number|null;adx:number|null} {
  let tr=0,plus=0,minus=0,adx:number|null=null;const dxs:number[]=[];let plusDi:number|null=null,minusDi:number|null=null;
  for(let i=1;i<bars.length;i++){
-  const b=bars[i],p=bars[i-1],u=b.high-p.high,d=p.low-b.low;
+  const b=bars[i],p=bars[i-1];
   const t=Math.max(b.high-b.low,Math.abs(b.high-p.close),Math.abs(b.low-p.close));
-  const up=u>d&&u>0?u:0,down=d>u&&d>0?d:0;
+  const {up,down}=directionalMovement(b,p);
   if(i<=14){tr+=t;plus+=up;minus+=down;}else{tr=tr-tr/14+t;plus=plus-plus/14+up;minus=minus-minus/14+down;}
   if(i<14)continue;
   plusDi=tr>0?100*plus/tr:0;minusDi=tr>0?100*minus/tr:0;

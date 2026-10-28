@@ -1,4 +1,15 @@
 import type {PriceBar} from './price-structure';
+
+/** Wilder DM: equal expansions contribute to neither side. Bound only binary price
+ * representation/subtraction error; this is not a market-direction threshold.
+ * Four ulps at the input price scale conservatively cover both input differences.
+ */
+export function directionalMovement(b:Pick<PriceBar,'high'|'low'>,p:Pick<PriceBar,'high'|'low'>):{up:number;down:number} {
+ const u=b.high-p.high,d=p.low-b.low;
+ const resolution=4*Number.EPSILON*Math.max(1,Math.abs(b.high),Math.abs(p.high),Math.abs(b.low),Math.abs(p.low));
+ return {up:u>0&&u-d>resolution?u:0,down:d>0&&d-u>resolution?d:0};
+}
+
 export interface TechnicalRead {ema9:number|null;ema20:number|null;ema21:number|null;ema21ThreeAgo:number|null;plusDi:number|null;minusDi:number|null;adx:number|null}
 interface State extends TechnicalRead {count:number;sum9:number;sum20:number;sum21:number;tr:number;plus:number;minus:number;dxSum:number;dxCount:number;tail:number[];previous:PriceBar|null}
 const cache=new Map<string,{bars:PriceBar[];state:State}>();
@@ -11,7 +22,7 @@ function advance(s:State,b:PriceBar):void {
   if(index<period){s[sum]+=b.close;if(index===period-1)s[ema]=s[sum]/period;}else{s[ema]!+=2/(period+1)*(b.close-s[ema]!);}
  }
  if(s.ema21!==null){s.tail.push(s.ema21);if(s.tail.length>4)s.tail.shift();}s.ema21ThreeAgo=s.tail.length===4?s.tail[0]:null;
- if(s.previous){const p=s.previous,u=b.high-p.high,d=p.low-b.low,t=Math.max(b.high-b.low,Math.abs(b.high-p.close),Math.abs(b.low-p.close)),up=u>d&&u>0?u:0,down=d>u&&d>0?d:0;
+ if(s.previous){const p=s.previous,t=Math.max(b.high-b.low,Math.abs(b.high-p.close),Math.abs(b.low-p.close)),{up,down}=directionalMovement(b,p);
   if(index<=14){s.tr+=t;s.plus+=up;s.minus+=down;}else{s.tr=s.tr-s.tr/14+t;s.plus=s.plus-s.plus/14+up;s.minus=s.minus-s.minus/14+down;}
   if(index>=14){s.plusDi=s.tr>0?100*s.plus/s.tr:0;s.minusDi=s.tr>0?100*s.minus/s.tr:0;const dx=s.plusDi+s.minusDi>0?100*Math.abs(s.plusDi-s.minusDi)/(s.plusDi+s.minusDi):0;
    if(s.dxCount<14){s.dxSum+=dx;s.dxCount++;if(s.dxCount===14)s.adx=s.dxSum/14;}else{s.adx=(s.adx!*13+dx)/14;}
