@@ -1,6 +1,7 @@
+import {publicationCandleClock} from './publication-candle-clock';
 import {structuralIndicators,type StructuralIndicators} from './structural-indicators';
 import {longStructureBars} from './price-structure-long';
-import {mergeStructureMinutes,type PriceStructureHistory} from './price-structure-history';
+import {mergeStructureMinutes,structurePriceBasisConflict,type PriceStructureHistory} from './price-structure-history';
 import type {Candle} from './model';
 import type {ChartHistory} from './candle-series';
 import type {LiveState} from './live';
@@ -8,14 +9,15 @@ import type {LiveState} from './live';
 /** Descriptive project convention; no fitted probability or trading authorization. */
 export const PRICE_STRUCTURE_RULE = Object.freeze({atrPeriod:14,pivotLeft:2,pivotRight:2,pivotLookback:100,thresholdAtr:0,minimumBars:100,seedTolerance:.005});
 export type PriceInterval=15|60|240|1440|10080;
+export type PriceAnalysisInterval=5|PriceInterval;
 export const PRICE_INTERVALS=[15,60,240,1440,10080] as const;
-const names:Record<PriceInterval,[string,string]>={15:['15 MINUTOS','CERCANA'],60:['1 HORA','INTERMEDIA'],240:['4 HORAS','AMPLIA'],1440:['DIARIO','PRINCIPAL'],10080:['SEMANAL','MAYOR']};
+const names:Record<PriceAnalysisInterval,[string,string]>={5:['5 MINUTOS','SESIÓN'],15:['15 MINUTOS','CERCANA'],60:['1 HORA','INTERMEDIA'],240:['4 HORAS','AMPLIA'],1440:['DIARIO','PRINCIPAL'],10080:['SEMANAL','MAYOR']};
 export type PriceStructureSide = 'CALL'|'PUT'|'MIXTA'|'SIN DATOS';
 export interface PriceBar extends Candle {endMs:number;sessionDate:string;tradingMinutes?:number}
 export interface PricePivot {kind:'high'|'low';price:number;index:number;at:number;confirmedMs:number}
-export interface PriceStructureCard {
+export interface PriceStructureCard<I extends PriceAnalysisInterval=PriceInterval> {
  indicators?:StructuralIndicators;
- interval:PriceInterval;name:string;role:string;side:PriceStructureSide;reason:string;
+ interval:I;name:string;role:string;side:PriceStructureSide;reason:string;
  bars:number;atr:number|null;highChange:number|null;lowChange:number|null;
  highs:PricePivot[];lows:PricePivot[];lastClose:number|null;endMs:number|null;
  reference:boolean;gaps:number;invalidated:boolean;lastDuration:number|null;seedDifference:number|null;
@@ -29,7 +31,7 @@ export interface PriceBarSeries {bars:PriceBar[];gaps:number;reason:string}
  * Intraday buckets start at the session open; the final session bucket closes at the actual exchange close.
  * A daily candle requires every official minute of its actual session, including half days.
  */
-export function priceStructureBars(history:ChartHistory|undefined,interval:15|60|240|1440,now:number):PriceBarSeries {
+export function priceStructureBars(history:ChartHistory|undefined,interval:5|15|60|240|1440,now:number):PriceBarSeries {
  const fail=(reason:string):PriceBarSeries=>({bars:[],gaps:0,reason});
  if(!history||!finite(now)||!Array.isArray(history.minutes)||!Array.isArray(history.sessions))return fail('Sin historial RTH verificable.');
  const sessions=[...history.sessions].sort((a,b)=>a.openMs-b.openMs);
@@ -89,10 +91,10 @@ export function priceStructurePivots(bars:PriceBar[]):PricePivot[] {
  return pivots;
 }
 
-export function classifyPriceStructure(series:PriceBarSeries,interval:PriceInterval,now:number):PriceStructureCard {
+export function classifyPriceStructure<I extends PriceAnalysisInterval>(series:PriceBarSeries,interval:I,now:number):PriceStructureCard<I> {
  const bars=series.bars,last=bars.at(-1),atr=priceStructureAtr(bars),pivots=priceStructurePivots(bars);
  const highs=pivots.filter(p=>p.kind==='high').slice(-2),lows=pivots.filter(p=>p.kind==='low').slice(-2);
- const card:PriceStructureCard={interval,name:names[interval][0],role:names[interval][1],side:'SIN DATOS',reason:series.reason,bars:bars.length,atr,highChange:null,lowChange:null,highs,lows,lastClose:last?.close??null,endMs:last?.endMs??null,reference:!!last&&day.format(last.endMs)!==day.format(now),gaps:series.gaps,invalidated:false,seedDifference:null,lastDuration:last?(last.endMs-last.timestampMs)/60000:null};
+ const card:PriceStructureCard<I>={interval,name:names[interval][0],role:names[interval][1],side:'SIN DATOS',reason:series.reason,bars:bars.length,atr,highChange:null,lowChange:null,highs,lows,lastClose:last?.close??null,endMs:last?.endMs??null,reference:!!last&&day.format(last.endMs)!==day.format(now),gaps:series.gaps,invalidated:false,seedDifference:null,lastDuration:last?(last.endMs-last.timestampMs)/60000:null};
  if(!last||atr==null){card.reason ||= 'Se necesitan 15 velas cerradas continuas para ATR14.';return card;}
  if(highs.length<2||lows.length<2){card.reason='Faltan dos máximos y dos mínimos confirmados en las últimas 100 velas.';return card;}
  card.highChange=(highs[1].price-highs[0].price)/atr;
@@ -106,20 +108,26 @@ export function classifyPriceStructure(series:PriceBarSeries,interval:PriceInter
  return card;
 }
 
-export function priceStructureCards(s:LiveState|undefined,symbol:string,active:boolean,now=Date.now(),history:ChartHistory|undefined=s?.chartHistory,longHistory?:PriceStructureHistory):PriceStructureCard[] {
- const own=active&&s?.symbol===symbol&&finite(s.publishedMs)&&s.publishedMs<=now&&now-s.publishedMs<=15000;
- const minutes=longHistory?.symbol===symbol&&longHistory.asOfMs<=now&&day.format(longHistory.asOfMs)===day.format(now)?mergeStructureMinutes(longHistory.intraday,s?.chartHistory):history;
- return PRICE_INTERVALS.map(interval=>{
-  if(!own)return classifyPriceStructure({bars:[],gaps:0,reason:!active?'Data desconectada.':s?.symbol!==symbol?'Historial de otro activo.':'Publicación sin vigencia.'},interval,now);
-  const series=interval===1440||interval===10080?longStructureBars(longHistory,symbol,interval,now):priceStructureBars(minutes,interval,now);
-  const card=classifyPriceStructure(series,interval,now);
+/** Shared unchanged readiness and numerical rules for canonical cards and the 5m study. */
+export function readPriceStructureSeries<I extends PriceAnalysisInterval>(series:PriceBarSeries,interval:I,now:number,cacheKey?:string):PriceStructureCard<I> {
+ const card=classifyPriceStructure(series,interval,now);
   if(series.bars.length>0&&series.bars.length<PRICE_STRUCTURE_RULE.minimumBars){card.side='SIN DATOS';card.reason='Estabilizando historial: '+series.bars.length+'/100 velas cerradas.';}
   if(series.bars.length>=PRICE_STRUCTURE_RULE.minimumBars&&card.atr!=null){
    const alternative=priceStructureAtr(series.bars.slice(14));
    card.seedDifference=alternative==null?null:Math.abs(alternative/card.atr-1);
    if(card.seedDifference==null||card.seedDifference>PRICE_STRUCTURE_RULE.seedTolerance){card.side='SIN DATOS';card.reason='ATR sensible a su inicio; esperando más historial.';}
   }
-  if(series.bars.length)card.indicators=structuralIndicators(series.bars,interval,card.atr,symbol+':'+interval);
+  if(series.bars.length)card.indicators=structuralIndicators(series.bars,interval,card.atr,cacheKey?cacheKey+':'+interval:undefined);
+ return card;
+}
+
+export function priceStructureCards(s:LiveState|undefined,symbol:string,active:boolean,now=Date.now(),history:ChartHistory|undefined=s?.chartHistory,longHistory?:PriceStructureHistory):PriceStructureCard[] {
+ const own=active&&s?.symbol===symbol&&finite(s.publishedMs)&&s.publishedMs<=now&&now-s.publishedMs<=15000;
+ const minutes=longHistory?.symbol===symbol&&longHistory.asOfMs<=now&&day.format(longHistory.asOfMs)===day.format(now)?mergeStructureMinutes(longHistory.intraday,s?.chartHistory):history;
+ return PRICE_INTERVALS.map(interval=>{
+  if(!own)return classifyPriceStructure({bars:[],gaps:0,reason:!active?'Data desconectada.':s?.symbol!==symbol?'Historial de otro activo.':'Publicación sin vigencia.'},interval,now);
+  const series=interval===1440||interval===10080?longStructureBars(longHistory,symbol,interval,now):priceStructureBars(minutes,interval,now);
+  const card=readPriceStructureSeries(series,interval,now,symbol);
   return card;
  });
 }
@@ -134,4 +142,23 @@ export function priceStructureSummary(cards:PriceStructureCard[]):StructureSumma
  const side=missing?'PARCIAL':call===5?'CALL':put===5?'PUT':'MIXTA';
  return {label:side==='PARCIAL'?'LECTURA PARCIAL':side==='MIXTA'?'DIVERGENCIA':'ALINEACIÓN '+side,side,call:unique?call:0,put:unique?put:0,mixed:unique?mixed:0,missing,complete,
  detail:missing?'Faltan '+missing+' temporalidades verificables; no se concluye alineación de las cinco.':side==='MIXTA'?'Las cinco escalas no comparten la misma estructura direccional.':'Las cinco temporalidades tienen estructura '+side+'. Alineación descriptiva de escalas solapadas; no probabilidad ni orden.'};
+}
+
+export type FiveMinuteStructureCard=PriceStructureCard<5>&{sourceSymbol:string|null;sourcePublishedMs:number|null};
+
+/** Same RTH source and guards as the five canonical cards. No feed request, timer or entry change. */
+export function fiveMinuteStructure(s:LiveState|undefined,symbol:string,active:boolean,now:number,history:ChartHistory|undefined=s?.chartHistory,longHistory?:PriceStructureHistory):FiveMinuteStructureCard {
+ const candleNow=publicationCandleClock(s?.publishedMs,now);
+ const associate=(card:PriceStructureCard<5>):FiveMinuteStructureCard=>({...card,sourceSymbol:s?.symbol??null,sourcePublishedMs:s?.publishedMs??null});
+ const missing=(reason:string)=>associate(readPriceStructureSeries({bars:[],gaps:0,reason},5,now));
+ if(!finite(now)||!active||s?.symbol!==symbol||!finite(s.publishedMs)||s.publishedMs>now||now-s.publishedMs>15000)return missing('Sin publicación vigente y asociada para 5m.');
+ const currentLong=longHistory?.symbol===symbol&&longHistory.asOfMs<=now&&day.format(longHistory.asOfMs)===day.format(now);
+ if(currentLong&&structurePriceBasisConflict(longHistory!.intraday,s.chartHistory,candleNow))return missing('Historial ajustado y live discrepan en la escala de precios de 5m.');
+ const minutes=currentLong?mergeStructureMinutes(longHistory!.intraday,s.chartHistory):history;
+ const series=priceStructureBars(minutes,5,candleNow);
+ const session=minutes?.sessions.filter(v=>v.openMs<=candleNow).sort((a,b)=>a.openMs-b.openMs).at(-1);
+ const expected=session?(candleNow>=session.closeMs?session.closeMs:session.openMs+Math.floor((candleNow-session.openMs)/300000)*300000):null;
+ if(!session||expected==null||expected<=session.openMs)return missing('Esperando el primer cierre RTH de 5m.');
+ if(series.bars.at(-1)?.endMs!==expected)return missing(series.reason||'Falta el último cierre esperado de 5m.');
+ return associate(readPriceStructureSeries(series,5,now,symbol));
 }

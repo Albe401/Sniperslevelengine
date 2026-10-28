@@ -15,15 +15,6 @@
 .price-structure-map .structural-options-link{display:block;margin:8px 0 0;padding:0;border:0;background:none;color:#9cddff;font:10px Arial,sans-serif;line-height:14px;cursor:pointer;text-align:left}
 .price-structure-map .structural-options-link:hover{text-decoration:underline}
 .price-structure-map .structural-options-link:focus-visible{outline:2px solid #b7d8ed;outline-offset:3px}
-.price-structure-map .structural-dex-context{grid-column:1/-1;display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0;padding:6px 9px;border:1px solid #2b5a72;border-radius:7px;background:#071c2a;color:#bbd3e1;font-size:10px}
-.price-structure-map .structural-dex-caption{display:flex;flex-direction:column;gap:2px;min-width:0}
-.price-structure-map .structural-dex-caption strong{color:#d6eafa;font-size:10px;letter-spacing:.03em}
-.price-structure-map .structural-dex-caption small{color:#9bbbcf;font-size:9px}
-.price-structure-map .structural-dex-scopes{display:flex;align-items:center;gap:7px;flex-wrap:wrap;min-width:0}
-.price-structure-map .structural-dex-scope{display:inline-flex;align-items:center;gap:5px;padding-left:7px;border-left:1px solid #355268;white-space:nowrap;font-variant-numeric:tabular-nums}
-.price-structure-map .structural-dex-scope b{color:#e9f5ff}
-.price-structure-map .structural-dex-scope .call-delta{color:#2bf4aa}
-.price-structure-map .structural-dex-scope .put-delta{color:#ff5a79}
 
 /* Six cards preserve each original 222px card and the three-column widths.
    The parent flex stack absorbs the added 231px above the unchanged lower edge. */
@@ -48,3 +39,6 @@
 .price-structure-map [data-structure-display-state="FORMANDO"] .ring strong{font-size:13px}
 .price-structure-map .price-summary .deltas dd{font-size:10px;overflow-wrap:anywhere}
 .price-structure-map .price-summary .deltas dt{font-size:9px}
+
+/* Keep wrapped pending labels and both status lines inside the original card. */
+.price-structure-map .price-summary .deltas>div{padding:4px 3px;gap:1px 4px}

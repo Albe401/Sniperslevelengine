@@ -1,5 +1,5 @@
 import {cachedTechnical} from './structural-technical-cache';
-import type {PriceBar,PriceInterval} from './price-structure';
+import type {PriceBar,PriceAnalysisInterval} from './price-structure';
 
 /** Documented recurrences; periods, slope horizon and convergence tolerances are project conventions. */
 export const STRUCTURAL_INDICATOR_VERSION='structural-indicators-v1';
@@ -34,7 +34,7 @@ export function dmi14(bars:readonly PriceBar[]):{plusDi:number|null;minusDi:numb
  return {plusDi,minusDi,adx};
 }
 /** Strict comparable closed bars; no fallback to an earlier offset or extrapolation of open candles. */
-export function comparableRvol(bars:readonly PriceBar[],interval:PriceInterval):StructuralIndicators['rvol'] {
+export function comparableRvol(bars:readonly PriceBar[],interval:PriceAnalysisInterval):StructuralIndicators['rvol'] {
  const last=bars.at(-1),method=interval<1440?'20 sesiones previas, misma hora ET y duración RTH':interval===1440?'20 sesiones previas de igual duración RTH':'20 semanas previas de igual duración bursátil';
  const result:StructuralIndicators['rvol']={value:null,references:0,required:20,mean:null,method};if(!last)return result;
  const duration=(b:PriceBar)=>b.tradingMinutes??(b.endMs-b.timestampMs)/60000;
@@ -42,7 +42,7 @@ export function comparableRvol(bars:readonly PriceBar[],interval:PriceInterval):
  result.references=matches.length;if(matches.length!==20)return result;
  result.mean=matches.reduce((n,b)=>n+b.volume,0)/20;if(result.mean>0&&finite(last.volume)&&last.volume>=0)result.value=last.volume/result.mean;return result;
 }
-export function structuralIndicators(bars:readonly PriceBar[],interval:PriceInterval,atr:number|null,cacheKey?:string):StructuralIndicators {
+export function structuralIndicators(bars:readonly PriceBar[],interval:PriceAnalysisInterval,atr:number|null,cacheKey?:string):StructuralIndicators {
  const primary=cacheKey?cachedTechnical(bars,cacheKey):undefined;
  const last=bars.at(-1),e21=primary?[]:emaSeries(bars,21),e9=primary?[]:emaSeries(bars,9),e20=primary?[]:emaSeries(bars,20),di=primary?{plusDi:primary.plusDi,minusDi:primary.minusDi,adx:primary.adx}:dmi14(bars);
  const number=(x:number|undefined)=>finite(x)?x:null,ema21=primary?primary.ema21:number(e21.at(-1));

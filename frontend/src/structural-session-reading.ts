@@ -6,11 +6,12 @@ export interface SessionDirectionEvidence {
 }
 
 /** Presentation states only: never promote a pending engine result or authorize an entry. */
-export function structureDisplayState(card:PriceStructureCard):string {
+export function structureDisplayState(card:PriceStructureCard<5>|PriceStructureCard):string {
  if(card.side!=='SIN DATOS')return card.side;
- const measured=card.bars>0&&Number.isFinite(card.endMs)&&card.endMs!>0&&Number.isFinite(card.lastClose)&&card.lastClose!>0&&Number.isFinite(card.atr)&&card.atr!>0;
+ const measured=card.bars>0&&Number.isFinite(card.endMs)&&card.endMs!>0&&Number.isFinite(card.lastClose)&&card.lastClose!>0;
  if(!measured)return 'SIN DATOS';
  if(card.bars<PRICE_STRUCTURE_RULE.minimumBars)return 'HISTORIAL';
+ if(card.atr==null||!Number.isFinite(card.atr)||card.atr<=0)return 'SIN VERIFICAR';
  if(card.seedDifference!=null&&Number.isFinite(card.seedDifference)&&card.seedDifference>=0&&card.seedDifference<=PRICE_STRUCTURE_RULE.seedTolerance&&(card.highs.length<2||card.lows.length<2))return 'FORMANDO';
  return 'SIN VERIFICAR';
 }
