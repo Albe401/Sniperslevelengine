@@ -2,8 +2,8 @@
    The existing flex stack anchors the map's bottom; extra height consumes space above. */
 .price-structure-map .horizon.price-neutral{--edge:#667989;--tone:#aab9c4;--wash:#4a5b681b}
 .price-structure-map .price-neutral .ring-core{background:radial-gradient(#25323b,#06151f 75%)}
-.structural-map-preview.price-structure-map .ring strong{font-size:19px}
-.structural-map-preview.price-structure-map .ring span{font-size:8px;letter-spacing:.02em}
+.price-structure-map .ring strong{font-size:19px}
+.price-structure-map .ring span{font-size:8px;letter-spacing:.02em}
 .price-structure-map .deltas dd{color:#d5e7f2}
 .price-structure-map .price-change-row{grid-template-columns:36px minmax(0,1fr) 49px}
 .price-structure-map .price-change-track{position:relative;overflow:hidden}
@@ -11,30 +11,40 @@
 .price-structure-map .price-change-track i{position:absolute;height:100%;border-radius:3px}
 .price-structure-map .price-change-track i.positive{background:#24eda1}
 .price-structure-map .price-change-track i.negative{background:#ff5a79}
-.price-structure-map .price-change-row .share{width:auto;white-space:nowrap}
-.price-structure-map .price-change-row>span:first-child{font-size:9px;white-space:nowrap}
 .price-structure-map .price-structure-status{white-space:normal;min-height:24px;line-height:12px;overflow-wrap:anywhere}
 .price-structure-map .structural-options-link{display:block;margin:8px 0 0;padding:0;border:0;background:none;color:#9cddff;font:10px Arial,sans-serif;line-height:14px;cursor:pointer;text-align:left}
 .price-structure-map .structural-options-link:hover{text-decoration:underline}
 .price-structure-map .structural-options-link:focus-visible{outline:2px solid #b7d8ed;outline-offset:3px}
+.price-structure-map .structural-dex-context{grid-column:1/-1;display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0;padding:6px 9px;border:1px solid #2b5a72;border-radius:7px;background:#071c2a;color:#bbd3e1;font-size:10px}
+.price-structure-map .structural-dex-caption{display:flex;flex-direction:column;gap:2px;min-width:0}
+.price-structure-map .structural-dex-caption strong{color:#d6eafa;font-size:10px;letter-spacing:.03em}
+.price-structure-map .structural-dex-caption small{color:#9bbbcf;font-size:9px}
+.price-structure-map .structural-dex-scopes{display:flex;align-items:center;gap:7px;flex-wrap:wrap;min-width:0}
+.price-structure-map .structural-dex-scope{display:inline-flex;align-items:center;gap:5px;padding-left:7px;border-left:1px solid #355268;white-space:nowrap;font-variant-numeric:tabular-nums}
+.price-structure-map .structural-dex-scope b{color:#e9f5ff}
+.price-structure-map .structural-dex-scope .call-delta{color:#2bf4aa}
+.price-structure-map .structural-dex-scope .put-delta{color:#ff5a79}
 
-/* Preserve this web layout's original 225px cards and three-column widths.
-   The parent flex stack absorbs the added row above the unchanged lower edge. */
-.price-structure-map .horizon{height:225px;box-sizing:border-box;overflow:hidden}
+/* Six cards preserve each original 222px card and the three-column widths.
+   The parent flex stack absorbs the added 231px above the unchanged lower edge. */
+.price-structure-map .horizon{height:222px;box-sizing:border-box;overflow:hidden}
 .price-structure-map .price-structure-status{height:24px;max-height:24px;overflow:hidden}
 .price-structure-map .summary-scales{font-size:10px;line-height:12px;gap:3px;color:#c8deeb}
 .price-structure-map .price-summary .subtitle{font-size:10px}
 .price-structure-map .price-summary h3{font-size:13px}
-.structural-map-preview.price-structure-map .price-summary .ring strong{font-size:18px}
+.price-structure-map .price-summary .ring strong{font-size:18px}
 @media(max-width:650px){.price-structure-map .horizon{height:auto;min-height:222px}}
 /* The panel can be narrow inside a wide desktop window. Follow its original
    container breakpoint as well as the viewport, so stacked values never clip. */
 @container(max-width:650px){.price-structure-map .horizon{height:auto;min-height:0}.price-structure-map .summary-scales{font-size:9px}}
-@container(max-width:650px){
- .structural-map-preview.price-structure-map .price-summary h3{font-size:11px;white-space:nowrap}
- .price-structure-map .price-structure-status{height:12px;min-height:12px;max-height:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-}
 
-/* Reuse the existing heading space; saved direction remains a neutral reference. */
+/* Reuse the existing heading space; all six cards retain their dimensions. */
 .price-structure-map .section-head .intraday-direction{font-weight:700;font-size:10px;line-height:14px;white-space:normal;text-align:right}
+.price-structure-map .section-head .intraday-direction.call{color:#24eda1}
+.price-structure-map .section-head .intraday-direction.put{color:#ff5a79}
 .price-structure-map .section-head .intraday-direction.neutral{color:#aab9c4}
+
+/* Availability labels remain inside the original card dimensions. */
+.price-structure-map [data-structure-display-state="FORMANDO"] .ring strong{font-size:13px}
+.price-structure-map .price-summary .deltas dd{font-size:10px;overflow-wrap:anywhere}
+.price-structure-map .price-summary .deltas dt{font-size:9px}
