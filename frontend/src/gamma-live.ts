@@ -1,4 +1,5 @@
 import {ChartSignalDisplay,signalDisplayToolbar} from './chart-signal-display';
+import {CapturedChartPaint} from './captured-chart-paint';
 import {ChartSignalDisplayLayer} from './chart-signal-display-layer';
 import {routeSignalCoordinatorSnapshot} from './route-live';
 import './chart-signal-display.css';
@@ -58,6 +59,7 @@ import './gamma-live.css';
 let interval=2,expanded=false,profileMetric:"gex"|"oi"|"volume"|"bidask"="oi",profileCenter:number|undefined,profileSymbol='';
 let profileHorizon:ProfileHorizon='NEXT4';
 let capturedProfileClock:number|undefined;
+const capturedPaint=new CapturedChartPaint();
 let capturedReferencePrices:number[]=[];
 /** Saved-data viewer uses its capture clock; desktop defaults remain wall-clock based. */
 export function setCapturedProfileClock(at:number|undefined){capturedProfileClock=at;}
@@ -227,6 +229,7 @@ function drawRoute(){
 }
 function cleanup(){callPutLayer?.dispose();callPutLayer=undefined;massiveLayer?.dispose();massiveLayer=undefined;massiveContext=undefined;massiveBars=[];capturedReferencePrices=[];chartAuctionReading=undefined;chartAuctionSymbol='';chartAuctionActive=false;executionAbsorptionRead=undefined;executionAbsorptionBars=[];executionAbsorptionActive=false;chartAlarmPicker?.dispose();chartAlarmPicker=undefined;chartAlerts?.dispose();chartAlerts=undefined;routeDrawings?.dispose();routeDrawings=undefined;markers?.detach();markers=undefined;routeSvg?.remove();routeSvg=undefined;technical=undefined;technicalKey='';routeCurrent=false;routeChartBarMs=undefined;routeStatsPrefix='';chart?.remove();chart=undefined;host=undefined;candles=undefined;lines=[];chartKey='';profileKey='';dataKey='';lineKey='';cancelAnimationFrame(scaleFrame);}
 export function bindGammaLive(s:LiveState|undefined,symbol:string,active:boolean,refresh:()=>void,now=Date.now()) {
+ capturedPaint.invalidate();
  const root=document.querySelector<HTMLElement>('.gamma-live'),node=document.getElementById('gamma-live-chart');
  if(profileSymbol!==symbol){profileCenter=undefined;profileSymbol=symbol;}
  if(!root||!node){stopFourHour();if(chart)cleanup();return;}
@@ -254,7 +257,21 @@ export function bindGammaLive(s:LiveState|undefined,symbol:string,active:boolean
  root.querySelectorAll<HTMLButtonElement>('[data-gl-action]').forEach(b=>b.onclick=()=>{if(b.dataset.glAction==='expand'){expanded=!expanded;refresh();}else if(b.dataset.glAction==='follow'){chart?.priceScale('right').setAutoScale(true);chart?.timeScale().scrollToRealTime();}else{chart?.priceScale('right').setAutoScale(true);chart?.timeScale().fitContent();}});
  if(host!==node){cleanup();host=node;chart=createChart(node,{autoSize:true,layout:{background:{type:ColorType.Solid,color:'rgba(6,19,38,0)'},textColor:'#9bb7cf',fontFamily:'Inter Variable',fontSize:13,attributionLogo:true,panes:{enableResize:true,separatorColor:"#35d4df",separatorHoverColor:"#17e3be"}},grid:{vertLines:{visible:false},horzLines:{visible:false}},crosshair:{mode:CrosshairMode.Normal},rightPriceScale:{borderColor:'#244a70',scaleMargins:{top:.08,bottom:.08}},timeScale:{borderColor:'#244a70',timeVisible:true,rightOffset:6,barSpacing:9,tickMarkFormatter:(t:import('lightweight-charts').Time)=>interval===1440?new Date(Number(t)*1000).toLocaleDateString('es',{timeZone:'America/New_York',day:'2-digit',month:'short'}):new Date(Number(t)*1000).toLocaleTimeString('es',{timeZone:'America/New_York',hour:'2-digit',minute:'2-digit'})},handleScroll:{mouseWheel:true,pressedMouseMove:true,horzTouchDrag:true,vertTouchDrag:true},handleScale:{mouseWheel:true,pinch:true,axisPressedMouseMove:{time:true,price:true},axisDoubleClickReset:{time:true,price:true}},localization:{locale:'es',timeFormatter:(t:import('lightweight-charts').Time)=>new Date(Number(t)*1000).toLocaleString('es',{timeZone:'America/New_York'})}});
  candles=chart.addSeries(CandlestickSeries,{upColor:'#17d6a2',downColor:'#ff6273',borderVisible:false,wickUpColor:'#17d6a2',wickDownColor:'#ff6273',priceLineColor:'#35d4df',autoscaleInfoProvider:(base:()=>AutoscaleInfo|null)=>{const info=base();return info?.priceRange?{...info,priceRange:gammaPriceRange(Math.min(info.priceRange.minValue,...capturedReferencePrices),Math.max(info.priceRange.maxValue,...capturedReferencePrices),latest)}:info;}});vol=chart.addSeries(LineSeries,{color:'#17e3be',lineWidth:2,title:'CVD · operaciones',priceFormat:{type:'volume'},lastValueVisible:true,priceLineVisible:true},1);chart.panes()[1].setHeight(160);vol.createPriceLine({price:0,color:"#8493a8",lineWidth:1,lineStyle:2,axisLabelVisible:true,title:"0"});vwap=chart.addSeries(LineSeries,{color:'#ff9800',lineWidth:2,lastValueVisible:false,priceLineVisible:false,crosshairMarkerVisible:false});
- let lastProfile=-Infinity;const sync=(at:number)=>{if(!host?.isConnected){cleanup();return;}if(at-lastProfile>=100){host.dataset.pricePaneHeight=String(chart?.panes()[0].getHeight()??host.clientHeight);const label=host.querySelector<HTMLElement>('.gl-cvd-label');if(label&&chart)label.style.top=(chart.panes()[0].getHeight()+7)+'px';profile();paintRouteProfiles();drawRoute();routeDrawings?.paint();paintBigTrades();paintExecutionAbsorption();paintAuctionBars();callPutLayer?.paint();paintWebMassive();lastProfile=at;}scaleFrame=requestAnimationFrame(sync);};scaleFrame=requestAnimationFrame(sync);
+ let lastProfile=-Infinity;const sync=(at:number)=>{
+  if(!host?.isConnected){cleanup();return;}
+  if(at-lastProfile>=100){
+   lastProfile=at;
+   const paneHeight=chart?.panes()[0].getHeight()??host.clientHeight;
+   let paint=true;
+   if(capturedProfileClock!=null){
+    const rect=host.getBoundingClientRect();
+    paint=capturedPaint.shouldPaint(true,!document.hidden&&rect.bottom>0&&rect.top<innerHeight,
+     [host.clientWidth,host.clientHeight,paneHeight,chart?.timeScale().getVisibleLogicalRange(),candles?.coordinateToPrice(0),candles?.coordinateToPrice(paneHeight),profileMetric,profileCenter],Date.now());
+   }
+   if(paint){host.dataset.pricePaneHeight=String(paneHeight);const label=host.querySelector<HTMLElement>('.gl-cvd-label');if(label&&chart)label.style.top=(paneHeight+7)+'px';profile();paintRouteProfiles();drawRoute();routeDrawings?.paint();paintBigTrades();paintExecutionAbsorption();paintAuctionBars();callPutLayer?.paint();paintWebMassive();}
+  }
+  scaleFrame=requestAnimationFrame(sync);
+ };scaleFrame=requestAnimationFrame(sync);
  }
  flowRows=[];
  if(profileMetric==='bidask'){const dates=profileExpirations(s?.symbol===symbol?s.optionSnapshotStatus?.structuralEnrichment:undefined,profileHorizon,now);const strikes=s?.symbol===symbol?s.optionSnapshotStatus?.structuralEnrichment?.rows.map(r=>r.strike)??[]:[];const fresh=active&&s?.symbol===symbol&&s.optionSnapshotStatus.structuralEnrichment?.symbol===symbol&&s.options.phase==='streaming'&&s.publishedMs<=now&&now-s.publishedMs<=3000&&s.flow.asof_ms!=null&&s.flow.asof_ms<=now&&now-s.flow.asof_ms<=3000;flowRows=strikeBidAsk(s?.flow.bid_ask,dates,strikes,fresh);}

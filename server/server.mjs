@@ -71,7 +71,16 @@ export function applySecurityHeaders(res){
 export function makeHandler({provider=latest}={}){
  return async(req,res)=>{
   applySecurityHeaders(res);
-  const json=(status,body)=>{let bytes=Buffer.from(JSON.stringify(body));const headers={'Content-Type':'application/json','Cache-Control':'no-store','Vary':'Accept-Encoding'};if(bytes.length>1024&&/\bgzip\b/.test(req.headers['accept-encoding']??'')){bytes=gzipSync(bytes);headers['Content-Encoding']='gzip';}res.writeHead(status,headers);res.end(bytes)};
+  const json=(status,body,conditional=false)=>{
+   let bytes=Buffer.from(JSON.stringify(body));const headers={'Content-Type':'application/json','Cache-Control':'no-store','Vary':'Accept-Encoding'};
+   if(conditional){
+    const tag='"'+hash(bytes)+'"';headers.ETag='W/'+tag;
+    const matches=String(req.headers['if-none-match']??'').split(',').some(v=>v.trim()==='*'||v.trim().replace(/^W\//,'')===tag);
+    if(matches){res.writeHead(304,headers);res.end();return;}
+   }
+   if(bytes.length>1024&&/\bgzip\b/.test(req.headers['accept-encoding']??'')){bytes=gzipSync(bytes);headers['Content-Encoding']='gzip';}
+   res.writeHead(status,headers);res.end(bytes)
+  };
   try{
    const url=new URL(req.url,'http://localhost');
    if(url.pathname.startsWith('/api/')){
@@ -84,7 +93,7 @@ export function makeHandler({provider=latest}={}){
     const extras=Object.fromEntries(Object.entries(bundle.extras??{}).filter(([,r])=>['get_contract_inventory','get_fmp_targets','preview_route_4h','get_block_alerts'].includes(r.command)&&(r.command!=='get_contract_inventory'||r.args?.symbol===symbol)));
     const frame=Object.fromEntries(Object.entries(bundle.frames[symbol]).filter(([key])=>quickFields.has(key)));
     if(frame.gexbotDominants)frame.gexbotDominants=publicGexbot(frame.gexbotDominants,symbol,bundle.capturedMs);
-    return json(200,{available:true,id:bundle.id,capturedMs:bundle.capturedMs,coverage:bundle.coverage,frame,extras});
+    return json(200,{available:true,id:bundle.id,capturedMs:bundle.capturedMs,coverage:bundle.coverage,frame,extras},true);
    }
    if(req.method!=='GET'&&req.method!=='HEAD')return json(405,{error:'read_only'});
    const base=resolve(root,'frontend/dist');const decoded=decodeURIComponent(url.pathname);

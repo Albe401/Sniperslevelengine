@@ -1,4 +1,5 @@
 import {captureReadingScroll} from './reading-scroll';
+import {WebFrameLoader,FrameReadError} from './web-frame-loader';
 import {bindMassiveExposurePanel} from './massive-exposure-panel';
 import {savedWeeklyRanges} from './saved-weekly-ranges';
 import {webAutoRefreshAllowed,webRefreshLabel} from './web-refresh-policy';
@@ -29,6 +30,8 @@ import './styles.css';import './restrained.css';import './visual-readings.css';i
 const symbols=['AAPL','MSFT','AMZN','GOOGL','META','NVDA','TSLA','QQQ','SPY','IWM'];
 type Extra={command:string;args?:{symbol?:string};observedMs:number;value:unknown};
 type Saved={available:boolean;id:string;capturedMs:number;frame:LiveState;extras:Record<string,Extra>;coverage:Record<string,unknown>};
+const frameLoader=new WebFrameLoader<Saved>();
+let seededSaved:Saved|undefined;
 let selected='QQQ',view:'detailed'|'maps'|'chain'|'blocks'|'weekly'='detailed',generation=0,saved:Saved|undefined,expiry='',horizon:InventoryHorizon='SIX_MONTHS',blockQuery='',blockSide='all';
 const app=document.querySelector<HTMLDivElement>('#app')!;
 app.innerHTML=`<div class="web-shell"><aside class="web-sidebar"><img src="/assets/route-lion.png" alt="Snipers"><h2>SNIPERS</h2><button data-view="detailed">Lectura detallada</button><button data-view="maps">Mapas</button><button data-view="blocks">Bloques de compra y venta</button><button data-view="chain">Radar de inversión<br><small>Cadena de opciones</small></button><button data-view="weekly">Radar de inversión<br><small>Radar semanal de precios</small></button><small>Datos guardados por el escritorio<br>Actualización lunes a viernes · cada cinco minutos ET</small></aside><main class="web-main"><header class="web-topbar"><strong>Algoritmo de probabilidad</strong><span id="web-status">Leyendo la base de datos…</span></header><nav class="web-assets">${symbols.map(s=>`<button data-symbol="${s}">${s}</button>`).join('')}</nav><section id="web-content"></section></main></div>`;
@@ -36,8 +39,14 @@ const content=document.querySelector<HTMLElement>('#web-content')!;
 const search=document.createElement('div');search.className='web-ticker-search';search.innerHTML=`<label for="ticker-search">Buscar ticker del watchlist (${watchlist.length})</label><input id="ticker-search" type="search" placeholder="Escribe un ticker…" autocomplete="off"><select id="ticker-select" aria-label="Seleccionar ticker">${watchlist.map(a=>`<option value="${esc(a.symbol)}" ${a.symbol===selected?'selected':''}>${esc(a.symbol)} · ${esc(a.name)}</option>`).join('')}</select><small id="ticker-results">${watchlist.length} tickers</small>`;document.querySelector('.web-assets')!.before(search);
 const searchInput=document.querySelector<HTMLInputElement>('#ticker-search')!,tickerSelect=document.querySelector<HTMLSelectElement>('#ticker-select')!;
 searchInput.oninput=()=>{const q=searchInput.value.trim().toUpperCase(),rows=watchlist.filter(a=>a.symbol.includes(q));tickerSelect.innerHTML=rows.map(a=>`<option value="${esc(a.symbol)}">${esc(a.symbol)} · ${esc(a.name)}</option>`).join('');document.querySelector('#ticker-results')!.textContent=`${rows.length} tickers`;};
-const selectTicker=(symbol:string)=>{selected=symbol;searchInput.value='';tickerSelect.innerHTML=watchlist.map(a=>`<option value="${esc(a.symbol)}" ${a.symbol===selected?'selected':''}>${esc(a.symbol)} · ${esc(a.name)}</option>`).join('');document.querySelector('#ticker-results')!.textContent=`${watchlist.length} tickers`;saved=undefined;expiry='',horizon='SIX_MONTHS',blockQuery='',blockSide='all';content.innerHTML='<section class="panel">Cargando datos guardados…</section>';void pull();};
+const selectTicker=(symbol:string)=>{selected=symbol;searchInput.value='';tickerSelect.innerHTML=watchlist.map(a=>`<option value="${esc(a.symbol)}" ${a.symbol===selected?'selected':''}>${esc(a.symbol)} · ${esc(a.name)}</option>`).join('');document.querySelector('#ticker-results')!.textContent=`${watchlist.length} tickers`;saved=frameLoader.peek(symbol);expiry='',horizon='SIX_MONTHS',blockQuery='',blockSide='all';if(saved)paint();else content.innerHTML='<section class="panel">Cargando datos guardados…</section>';void pull();};
 tickerSelect.onchange=()=>selectTicker(tickerSelect.value);searchInput.onkeydown=e=>{if(e.key==='Enter'&&tickerSelect.value)selectTicker(tickerSelect.value)};
+function updateSavedStatus(){
+ if(!saved?.available)return;
+ const display=savedReadingDisplay(saved.frame,selected,saved.capturedMs,Date.now());
+ const text=`Captura ${new Date(saved.capturedMs).toLocaleString('es',{timeZone:'America/New_York'})} ET · ${display.label}${display.partial?' · cobertura parcial':''} · ${webRefreshLabel()}`;
+ const status=document.querySelector<HTMLElement>('#web-status')!;if(status.textContent!==text)status.textContent=text;
+}
 function paint(){
  if(document.activeElement?.hasAttribute('data-massive-gex-window'))return;
  const restoreReadingScroll=captureReadingScroll();
@@ -50,11 +59,14 @@ function paint(){
  const fields=frame as LiveState&{ivHistory?:{observation:Extra};qqqReport?:ComponentRead};
  const iv=fields.ivHistory?.observation;
  const inventory=(frame as LiveState&{contractChain?:{observation:Extra}}).contractChain?.observation;
+ if(seededSaved!==data){
  seedCapturedInventory(inventory&&inventory.observedMs<=now?inventory.value as EtfReport:undefined,selected,now);
  seedCapturedIvHistory(iv&&iv.observedMs<=now?iv.value:undefined,selected,now);
  seedCapturedComponentRead(frame.qqq_report??fields.qqqReport,now);
  const targets=Object.values(data.extras??{}).filter(r=>r.command==='get_fmp_targets'&&r.observedMs<=now).sort((a,b)=>b.observedMs-a.observedMs)[0];
  if(targets&&(targets.value as {rows?:unknown})?.rows)seedCapturedAnalystTargets((targets.value as {rows:Record<string,TargetRow>}).rows,now);
+ seededSaved=data;
+ }
  document.querySelector<HTMLElement>('#web-status')!.textContent=`Captura ${new Date(now).toLocaleString('es',{timeZone:'America/New_York'})} ET · ${display.label}${display.partial?' · cobertura parcial':''} · ${webRefreshLabel()}`;
  if(view==='detailed'){
   if(!display.valid){content.innerHTML=savedReadingNotice(frame,selected,now,clock);return;}
@@ -95,17 +107,7 @@ function paint(){
 async function pull(){
  const token=++generation,requested=view==='blocks'?'QQQ':selected;
  try{
-  const response=await fetch(`/api/frame?symbol=${encodeURIComponent(requested)}`,{cache:'no-store',signal:AbortSignal.timeout(60000)});
-  if(!response.ok){
-   const failure=await response.json().catch(()=>({}));if(token!==generation)return;
-   if(failure.error==='database_quota_exceeded'){
-    document.querySelector<HTMLElement>('#web-status')!.textContent='Neon: cuota excedida · comprobación automática cada 5 min de lunes a viernes ET';
-    if(!saved)content.innerHTML='<section class="panel">Neon ha bloqueado la base de datos porque se superó una cuota. Hay que revisar los límites o el plan del proyecto en Neon. La web volverá a comprobar la conexión automáticamente.</section>';
-    return;
-   }
-   throw Error('Base de datos no disponible');
-  }
-  const value=await response.json() as Saved;if(token!==generation)return;
+  const value=await frameLoader.read(requested);if(token!==generation)return;
   if(!value.available){
    const isIndex=watchlist.some(asset=>asset.symbol===selected&&asset.kind==='INDEX');
    document.querySelector<HTMLElement>('#web-status')!.textContent=`${selected} · ${isIndex?'índice sin cobertura de snapshot':'pendiente de datos guardados'}`;
@@ -114,8 +116,14 @@ async function pull(){
    return;
   }
   if(value.frame.symbol!==requested||value.capturedMs>Date.now())throw Error('Lote inválido');
-  saved=value;paint();
- }catch(e){if(token!==generation)return;document.querySelector<HTMLElement>('#web-status')!.textContent='Conexión pendiente · reintento automático';if(!saved)content.innerHTML=`<section class="panel">${esc(String(e))}</section>`;setTimeout(()=>{if(token===generation&&webAutoRefreshAllowed())void pull()},15000);}
+  if(saved!==value){saved=value;paint();}else updateSavedStatus();
+ }catch(e){if(token!==generation)return;
+  if(e instanceof FrameReadError&&e.code==='database_quota_exceeded'){
+   document.querySelector<HTMLElement>('#web-status')!.textContent='Neon: cuota excedida · comprobación automática cada 5 min de lunes a viernes ET';
+   if(!saved)content.innerHTML='<section class="panel">Neon ha bloqueado la base de datos porque se superó una cuota. Hay que revisar los límites o el plan del proyecto en Neon. La web volverá a comprobar la conexión automáticamente.</section>';
+   return;
+  }
+  document.querySelector<HTMLElement>('#web-status')!.textContent='Conexión pendiente · reintento automático';if(!saved)content.innerHTML=`<section class="panel">${esc(String(e))}</section>`;setTimeout(()=>{if(token===generation&&webAutoRefreshAllowed())void pull()},15000);}
 }
 document.querySelectorAll<HTMLButtonElement>('[data-symbol]').forEach(b=>b.onclick=()=>selectTicker(b.dataset.symbol!));
 document.querySelectorAll<HTMLButtonElement>('[data-view]').forEach(b=>b.onclick=()=>{view=b.dataset.view as 'detailed'|'maps'|'chain'|'blocks'|'weekly';if(saved&&saved.frame.symbol===(view==='blocks'?'QQQ':selected))paint();else void pull()});

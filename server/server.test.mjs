@@ -14,6 +14,16 @@ test('quota failure gives safe actionable message and five-minute retry',async()
  try{const r=await fetch(`http://127.0.0.1:${server.address().port}/api/frame?symbol=QQQ`);const body=await r.json();assert.equal(r.status,503);assert.equal(r.headers.get('retry-after'),'300');assert.equal(body.error,'database_quota_exceeded');assert.equal(body.retryAfterMs,300000);assert(!JSON.stringify(body).includes('private diagnostic'));}finally{await new Promise(r=>server.close(r))}
 });
 const bundle=()=>({available:true,id:'test',capturedMs:Date.now()-300001,frames:Object.fromEntries(symbols.map(symbol=>[symbol,{symbol,publishedMs:Date.now()-300002}]))});
+test('conditional frame reads return no body for exact unchanged data and preserve every strike on revisions',async()=>{
+ const b=bundle();b.frames.QQQ.rawOptions={strikes:[450,500,695,700,900]};const server=makeServer({provider:async()=>b});await new Promise(r=>server.listen(0,'127.0.0.1',r));
+ try{
+  const url=`http://127.0.0.1:${server.address().port}/api/frame?symbol=QQQ`,first=await fetch(url),tag=first.headers.get('etag'),data=await first.json();
+  assert(tag);assert.deepEqual(data.frame.rawOptions.strikes,[450,500,695,700,900]);
+  const same=await fetch(url,{headers:{'If-None-Match':tag}});assert.equal(same.status,304);assert.equal(await same.text(),'');assert.equal(same.headers.get('cache-control'),'no-store');
+  b.frames.QQQ.rawOptions.strikes.push(1000);const revised=await fetch(url,{headers:{'If-None-Match':tag}});assert.equal(revised.status,200);assert.notEqual(revised.headers.get('etag'),tag);assert.deepEqual((await revised.json()).frame.rawOptions.strikes,[450,500,695,700,900,1000]);
+  const foreign=await fetch(url.replace('QQQ','SPY'),{headers:{'If-None-Match':tag}});assert.equal(foreign.status,200);assert.equal((await foreign.json()).frame.symbol,'SPY');
+ }finally{await new Promise(r=>server.close(r));}
+});
 test('rejects future data and requires correct identity for all ten',()=>{const b=bundle();assert(validBundle(b));b.frames.AAPL.symbol='QQQ';assert(!validBundle(b));b.frames.AAPL.symbol='AAPL';b.capturedMs=Date.now()+1000;assert(!validBundle(b))});
 test('archives are exact and corruption fails',()=>{const raw=Buffer.from('{"symbol":"AAPL","price":123.45}');const f={compressedBase64:gzipSync(raw).toString('base64'),sha256:createHash('sha256').update(raw).digest('hex')};assert.equal(decodeFrame(f).price,123.45);assert.throws(()=>decodeFrame({...f,sha256:'bad'}))});
 test('public service starts without password',()=>{makeServer().close()});

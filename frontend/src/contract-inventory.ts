@@ -39,8 +39,9 @@ export function selectInventoryOiHorizon(mode:InventoryHorizon):void {horizon=mo
 let scoped:{report:EtfReport;key:string;value:EtfReport}|undefined;
 export function inventoryProfile(symbol:string,now:number):EtfReport|undefined {
  const entry=memory.get(symbol),r=entry?.report;if(!r||r.symbol!==symbol||r.at>now||entry?.capturedMs!==now&&now-r.at>300000||day(r.at)!==day(now))return;
- const dates=inventoryDates(r,horizon,now).filter(d=>!expiry||d===expiry),key=symbol+':'+day(now)+':'+horizon+':'+expiry;
+ const key=symbol+':'+day(now)+':'+horizon+':'+expiry;
  if(scoped?.report===r&&scoped.key===key)return scoped.value;
+ const dates=inventoryDates(r,horizon,now).filter(d=>!expiry||d===expiry);
  const value=scopeContractReport(r,dates);scoped={report:r,key,value};return value;
 }
 let panelCache:{report:EtfReport|undefined;key:string;html:string}|undefined;
