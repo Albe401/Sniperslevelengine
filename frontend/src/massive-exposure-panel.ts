@@ -14,7 +14,9 @@ const viewports=new Map<string,{top:number;left:number}>();
 const rowHtmlCache=new WeakMap<object,string>();
 export function massiveExposurePanel(s:LiveState|undefined,symbol:string,active:boolean,now:number,standalone=false):string {
  const rootClass=standalone?'structural-map-preview massive-exposure-panel massive-exposure-standalone':'massive-exposure-panel';
- const selector=`<select class="massive-gex-window" data-massive-gex-window data-gex-symbol="${esc(symbol)}" aria-label="Plazo acumulado GEX" title="Vencimientos acumulados desde la fecha de captura; meses naturales">${GEX_WINDOWS.map(([m,label])=>`<option value="${m}" ${selectedGexWindow(symbol)===m?'selected':''}>${label}</option>`).join('')}</select>`;
+ // Keep the nine-window source contract for saved captures; present one calendar-month choice.
+ if(selectedGexWindow(symbol)==='WEEKS_4')selectGexWindow(symbol,'MONTH_1');
+ const selector=`<select class="massive-gex-window" data-massive-gex-window data-gex-symbol="${esc(symbol)}" aria-label="Plazo acumulado GEX" title="Vencimientos acumulados desde la fecha de captura; meses naturales">${GEX_WINDOWS.filter(([mode])=>mode!=='WEEKS_4').map(([m,label])=>`<option value="${m}" ${selectedGexWindow(symbol)===m?'selected':''}>${label}</option>`).join('')}</select>`;
  const view=readMassiveExposure(s,symbol,active,now),title='<strong>EXPOSICIÓN GEX · MASSIVE</strong>';
  if(view.reason)return `<section class="${rootClass}" data-massive-exposure aria-label="Exposición gamma propia por strike"><header>${title}${selector}</header>${view.at?`<p class="massive-exposure-source">${esc(symbol)} · ${esc(view.start??view.expiry)} → ${esc(view.end??view.expiry)} · captura ${esc(clockFormat.format(view.at))} ET${view.historical?' · HISTÓRICO':''}</p>`:''}<p class="massive-exposure-empty">${esc(view.reason)}. Sin datos no equivale a exposición cero.</p></section>`;
  const verifiedNet=(r:import('./massive-exposure').MassiveExposureRow)=>r.callComplete!==false&&r.putComplete!==false;
